@@ -1,0 +1,160 @@
+/* app css stylesheet */
+
+
+@font-face {
+  font-family: FreeSerif;
+  src: url(fonts/FreeSerif.otf);
+}
+
+nav {
+  margin-bottom: 20px;
+}
+
+.music-notes {
+
+}
+
+.note-text,
+.note-text-outline {
+    font-weight: bold;
+}
+
+.note-text-outline,
+.editable .note-text-outline.clickable:hover {
+    stroke: white; 
+    stroke-width: 4;
+}
+
+.measure {
+    display: inline-block;
+}
+
+.measure .string,
+.measure .measure-begin {
+  stroke: #000000; 
+  stroke-width: 0.5;
+}
+
+.ruler-tick {
+    stroke: #BABABA;
+}
+
+.ruler-tick-1 {
+  stroke-width: 1.5;
+}
+
+.ruler-tick-2 {
+  stroke-width: 1.25;
+}
+
+.transparent {
+  fill-opacity: 0;
+}
+.string-3 {
+  /* stroke: #008A00; */
+  fill: #008A00; 
+}
+
+.string-1 {
+  fill: #FF0000; 
+ }
+
+.string-2 {
+  fill: #0000FF; 
+}
+
+.string-5 {
+  fill: #F78C00; 
+}
+
+.string-4 {
+  fill: #D149BD; 
+}
+
+.string-6 {
+  fill: #7300FF;
+}
+
+.selected-note,
+.selected-measure {
+  fill: #70FFB5;
+}
+
+.selected-measure {
+    fill-opacity: 0.5;
+}
+
+.form-inline .form-group {
+  margin-top: 10px;
+}
+
+.panel > .arrow,
+.panel > .arrow:after {
+  position: absolute;
+  display: block;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+}
+.panel > .arrow {
+  border-width: 11px;
+}
+.panel > .arrow:after {
+  content: "";
+  border-width: 10px;
+}
+.panel.top > .arrow {
+  bottom: -11px;
+  left: 50%;
+  margin-left: -11px;
+  border-top-color: #999;
+  border-top-color: rgba(0, 0, 0, .25);
+  border-bottom-width: 0;
+}
+.panel.top > .arrow:after {
+  bottom: 1px;
+  margin-left: -10px;
+  content: " ";
+  border-top-color: #fff;
+  border-bottom-width: 0;
+}
+
+.panel.bottom > .arrow {
+  top: -11px;
+  left: 50%;
+  margin-left: -11px;
+  border-top-width: 0;
+  border-bottom-color: #999;
+  border-bottom-color: rgba(0, 0, 0, .25);
+}
+.panel.bottom > .arrow:after {
+  top: 1px;
+  margin-left: -10px;
+  content: " ";
+  border-top-width: 0;
+  border-bottom-color: #fff;
+}
+
+
+.editable .clickable {
+    cursor: pointer;
+}
+
+.editable .clickable:hover,
+.editable .transparent.clickable:hover{
+    fill: rgb(108, 211, 245);
+    fill-opacity: .5;
+}
+
+.editable .note-text.clickable:hover {
+    stroke: rgb(108, 211, 245);
+    stroke-opacity: 0.5;
+    stroke-width: 2;
+    fill: #000000;
+    fill-opacity: 1;
+}
+
+.btn.disabled, .btn[disabled] {
+    background-color: #cccccc;
+};
