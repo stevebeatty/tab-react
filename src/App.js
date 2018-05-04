@@ -70,8 +70,13 @@ var layout = {
 	},
 	measureSideOffset: function () {
 		return 1;
+	},
+	stringClickBoxHeight: function () {
+        return 0.4 * this.stringSpacing();
+	},
+	measureClickBoxWidth: function() {
+		return 0.6;
 	}
-
 };
 
 
@@ -119,8 +124,11 @@ class App extends Component {
 		
 		this.state = {
 			song: song,
-			layout: layout
+			layout: layout,
+			selectedMeasure: {}
 		};
+		
+		this.handleMeasureSelect = this.handleMeasureSelect.bind(this);
 	}
 	
 	processSong(song) {
@@ -130,6 +138,14 @@ class App extends Component {
 		}
 		
 		return i;
+	}
+	
+	handleMeasureSelect(measure) {
+		console.log('click ' + measure);
+		
+		this.setState(prevState => ({
+		  selectedMeasure: measure
+		}));
 	}
 	
 	
@@ -150,7 +166,8 @@ class App extends Component {
 		<h6>{this.state.song.author}</h6>
 		
 			 {this.state.song.measures.map((measure, idx) =>
-				<Measure key={measure.key} measure={measure} layout={this.state.layout} duration={measure.d || this.state.song.d} interval={measure.i || this.state.song.i} />
+				<Measure key={measure.key} measure={measure} layout={this.state.layout} duration={measure.d || this.state.song.d} interval={measure.i || this.state.song.i} 
+					onMeasureSelect={this.handleMeasureSelect} selected={this.state.selectedMeasure.key} />
 			  )}
 		
       </div>
@@ -163,28 +180,31 @@ class Measure extends Component {
 	constructor(props) {
 		super(props);
 		
-	const intervals = [this.props.interval];
-	const strings = this.props.measure.strings;
-	for (var i=0; i < strings.length; i++) {
-		var str = strings[i];
-		for (var j=0; j < str.length; j++) {
-			var o = str[j];
-			if (o.i) {
-				intervals.push(o.i);
+		const intervals = [this.props.interval];
+		const strings = this.props.measure.strings;
+		for (var i=0; i < strings.length; i++) {
+			var str = strings[i];
+			for (var j=0; j < str.length; j++) {
+				var o = str[j];
+				if (o.i) {
+					intervals.push(o.i);
+				}
 			}
 		}
-	}
-	const maxI = Math.max(...intervals);
-	const subdivisions = maxI/this.props.interval;
+		const maxI = Math.max(...intervals);
+		const subdivisions = maxI/this.props.interval;
 	
 		this.state = {
-			subdivisions: subdivisions
+			subdivisions: subdivisions,
+			isClicked: false
 		};
+		
+		this.handleClick = this.handleClick.bind(this);
 	}
 	
 	stringYOffset(stringNum) {
 		const layout = this.props.layout;
-		return layout.topStringOffset() + (stringNum - 1) * layout.stringSpacing()
+		return layout.topStringOffset() + (stringNum - 1) * layout.stringSpacing();
 	}
 	
 	rulerBottom() {
@@ -192,8 +212,8 @@ class Measure extends Component {
 	}
 	
 	measureHeight() {
-            return this.rulerBottom() + this.props.layout.topStringOffset();
-        };
+		return this.rulerBottom() + this.props.layout.topStringOffset();
+	};
 		
 	measureWidth() {
 		const layout = this.props.layout;
@@ -213,27 +233,34 @@ class Measure extends Component {
 		return note.d * subDivSize * this.state.subdivisions * this.props.interval / note.i;
 	}
 	
-	
+	handleClick() {
+		this.props.onMeasureSelect(this);
+	}
 	
   render() {
 
 	  const noteTextOffset = this.props.layout.noteTextOffset();
 	  const beginningOffset = this.props.layout.measureSideOffset();
 	  const subDivSize = this.props.layout.subdivisionOffset();
+	  const clickBoxHeight = this.props.layout.stringClickBoxHeight();
 	  
 	  return (
 	  <svg className="measure" width={this.measureWidth() + 'em'}>
 
 		  <g className="strings">
 			{this.props.measure.strings.map((str, idx) =>
-				<String key={idx} index={idx} offset={this.stringYOffset(idx + 1) + 'em'}/>
+				<String key={idx} index={idx} offset={this.stringYOffset(idx + 1)} boxHeight={clickBoxHeight}/>
 			)}
 		  </g>
 		  
-		  <g>
+		  <g className="etc">
             <line className="measure-begin" x1="1" x2="1" 
-                  y1={this.stringYOffset(1) + 'em'}
+                  y1={this.stringYOffset(1) + 'em'} onClick={this.handleClick}
                   y2={this.stringYOffset(this.props.measure.strings.length) + 'em'} />
+			<rect className={"transparent clickable" + (this.props.selected ? ' selected-measure' : '')}
+                  x1="1" y={this.stringYOffset(1) + 'em'} onClick={this.handleClick}
+                  width={this.props.layout.measureClickBoxWidth() + 'em'} 
+                  height={(this.props.measure.strings.length - 1) * this.props.layout.stringSpacing() + 'em'} />
           </g>
 
 		<Ruler y={this.rulerBottom()} d={this.props.duration} dx={beginningOffset} subdivisions={this.state.subdivisions} subdivisionSpacing={subDivSize}/>
@@ -253,9 +280,31 @@ class Measure extends Component {
 }
 
 class String extends Component {
+	
+	constructor(props) {
+		super(props);
+		this.state = {isToggleOn: true};
+
+		// This binding is necessary to make `this` work in the callback
+		this.handleClick = this.handleClick.bind(this);
+	  }
+	  
+	  handleClick() {
+		this.setState(prevState => ({
+		  isToggleOn: !prevState.isToggleOn
+		}));
+	  }
+	
   render() {
+	  const offset = this.props.offset + 'em';
+	  
 	  return (
-		<line className="string clickable" x1="0" x2="100%" y1={this.props.offset} y2={this.props.offset}/>
+		<g>
+			<line className={"string clickable " + this.state.isToggleOn} x1="0" x2="100%" y1={offset} y2={offset} onClick={this.handleClick}/>
+			<rect className="transparent clickable" onClick={this.handleClick}
+						  x1="0" y={this.props.offset - this.props.boxHeight/2 + 'em'}
+						  width="100%" height={this.props.boxHeight + 'em'} />
+		</g>
 	  )
   }
 }
