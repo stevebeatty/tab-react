@@ -120,15 +120,21 @@ class App extends Component {
 	constructor(props) {
 		super(props);
 		
-		this.processSong(song);
+        this.measureIndex = this.processSong(song);
 		
 		this.state = {
 			song: song,
 			layout: layout,
-			selectedMeasure: {}
+            selectedMeasure: {},
+            selectedNote: {},
+            measureRef: React.createRef()
 		};
-		
-		this.handleMeasureSelect = this.handleMeasureSelect.bind(this);
+
+        this.measureRef = React.createRef();
+
+        this.handleMeasureSelect = this.handleMeasureSelect.bind(this);
+        this.handleStringClick = this.handleStringClick.bind(this);
+        this.handleNoteClick = this.handleNoteClick.bind(this);
 	}
 	
 	processSong(song) {
@@ -140,16 +146,78 @@ class App extends Component {
 		return i;
 	}
 	
-	handleMeasureSelect(measure) {
-		console.log('click ' + measure);
+    handleMeasureSelect(measure) {
+        console.log('click ' + Object.keys(measure.state));
 		
 		this.setState(prevState => ({
-		  selectedMeasure: measure
+            selectedMeasure: measure.props.measure
 		}));
 	}
-	
-	
-  render() {
+
+    clearSelectedMeasure() {
+        this.setState({ selectedMeasure: {} });
+    }
+
+    findMeasureIndex(measure) {
+        return this.state.song.measures.findIndex(x => x.key === measure.key);
+    }
+
+    newMeasure() {
+        const strings = [];
+
+        for (var m = 0; m < 6; m++) {
+            strings.push([]);
+        }
+
+        return {
+            key: this.measureIndex++,
+            strings: strings
+        };
+    }
+
+    insertNewBeforeSelectedMeasure() {
+        const idx = this.findMeasureIndex(this.state.selectedMeasure);
+        const strings = [];
+
+        for (let m = 0; m < 6; m++) {
+            strings.push([]);
+        }
+
+        const m = this.newMeasure();
+
+        this.state.song.measures.splice(idx, 0, m);
+        this.setState(prevState => ({
+            song: this.state.song
+        }));
+    }
+
+    handleStringClick(measure, stringIndex, e) {
+        console.log('handleStringClick ', stringIndex, measure);
+    }
+
+    handleNoteClick(measure, stringIndex, note, e) {
+        console.log('handleNoteClick ', note, stringIndex, measure.props.measure.key);
+        this.setState({ selectedNote: { measure: measure.props.measure.key, string: stringIndex, note: note } });
+    }
+
+    measureNeedsRef(measure) {
+        const hasSelectedNote = this.state.selectedNote.note !== undefined;
+        const hasSelectedMeasure = this.state.selectedMeasure.key !== undefined;
+
+        if (hasSelectedNote) {
+            return measure.key === this.state.selectedNote.measure;
+        } else if (hasSelectedMeasure) {
+            return measure.key === this.state.selectedMeasure.key;
+        } else {
+            return false;
+        }
+    }
+
+    render() {
+        const hasSelectedNote = this.state.selectedNote.note !== undefined;
+        const hasSelectedMeasure = this.state.selectedMeasure.key !== undefined;
+
+        console.log('selnote: ', this.state.selectedNote);
     return (
 	<div>
 		<nav className="navbar navbar-default">
@@ -165,11 +233,19 @@ class App extends Component {
 		<h4>{this.state.song.name}</h4>
 		<h6>{this.state.song.author}</h6>
 		
-			 {this.state.song.measures.map((measure, idx) =>
-				<Measure key={measure.key} measure={measure} layout={this.state.layout} duration={measure.d || this.state.song.d} interval={measure.i || this.state.song.i} 
-					onMeasureSelect={this.handleMeasureSelect} selected={this.state.selectedMeasure.key} />
-			  )}
-		
+                {this.state.song.measures.map((measure, idx) => !this.measureNeedsRef(measure) ?
+
+                    <Measure key={measure.key} measure={measure} layout={this.state.layout} duration={measure.d || this.state.song.d} interval={measure.i || this.state.song.i}
+                        onMeasureSelect={this.handleMeasureSelect} selected={false} onStringClick={this.handleStringClick} onNoteClick={this.handleNoteClick} />
+                    :
+
+                    <Measure key={measure.key} forwardedRef={this.measureRef} measure={measure} layout={this.state.layout} duration={measure.d || this.state.song.d} interval={measure.i || this.state.song.i}
+                        onMeasureSelect={this.handleMeasureSelect} selected={measure.key === this.state.selectedMeasure.key} onStringClick={this.handleStringClick} onNoteClick={this.handleNoteClick} selectedNote={this.state.selectedNote} />
+                )}
+
+                {hasSelectedMeasure ? <MeasureEditor measureRef={this.measureRef} measure={this.state.selectedMeasure} controller={this} /> : ''}
+                {hasSelectedNote ? <NoteEditor measureRef={this.measureRef} note={this.state.selectedNote} controller={this} /> : ''}
+
       </div>
 	</div>
     );
@@ -199,7 +275,11 @@ class Measure extends Component {
 			isClicked: false
 		};
 		
-		this.handleClick = this.handleClick.bind(this);
+        this.handleClick = this.handleClick.bind(this);
+        this.handleStringClick = this.handleStringClick.bind(this);
+        this.handleNoteClick = this.handleNoteClick.bind(this);
+
+        
 	}
 	
 	stringYOffset(stringNum) {
@@ -235,21 +315,49 @@ class Measure extends Component {
 	
 	handleClick() {
 		this.props.onMeasureSelect(this);
-	}
-	
-  render() {
+    }
 
+    handleStringClick(index, e) {
+        this.props.onStringClick(this, index, e);
+    }
+
+    handleNoteClick(string, index, e) {
+       // this.props.onStringClick(this, index, e);
+        console.log("noteClick ", string, index);
+        this.props.onNoteClick(this, string, index, e);
+    }
+
+    isNoteSelected(noteIndex, stringIndex) {
+        console.log(this.props.selectedNote);
+        if (!this.props.selectedNote) return false;
+
+        console.log('? ', noteIndex, stringIndex, this.props.selectedNote);
+
+        return this.props.selectedNote &&
+            this.props.selectedNote.note === noteIndex &&
+            this.props.selectedNote.string === stringIndex;
+    }
+
+    render() {
 	  const noteTextOffset = this.props.layout.noteTextOffset();
 	  const beginningOffset = this.props.layout.measureSideOffset();
 	  const subDivSize = this.props.layout.subdivisionOffset();
-	  const clickBoxHeight = this.props.layout.stringClickBoxHeight();
-	  
-	  return (
-	  <svg className="measure" width={this.measureWidth() + 'em'}>
+      const clickBoxHeight = this.props.layout.stringClickBoxHeight();
+
+        console.log('sel note ', this.props.measure.key, ' ', this.props.selectedNote);
+
+      const refAtt = {};
+      if (this.props.forwardedRef) {
+          refAtt.ref = this.props.forwardedRef;
+          console.log('measure ref: ', this.props.measure.key, ' :',  refAtt);
+      }
+      
+      return (
+          <svg key={this.props.measure.key} className="measure" width={this.measureWidth() + 'em'} height={this.measureHeight() + 'em'} alt={this.props.selected.toString()} {...refAtt}>
 
 		  <g className="strings">
-			{this.props.measure.strings.map((str, idx) =>
-				<String key={idx} index={idx} offset={this.stringYOffset(idx + 1)} boxHeight={clickBoxHeight}/>
+                  {this.props.measure.strings.map((str, idx) =>
+                      <String key={idx} index={idx} offset={this.stringYOffset(idx + 1)} boxHeight={clickBoxHeight} onClick={this.handleStringClick} />
 			)}
 		  </g>
 		  
@@ -267,9 +375,9 @@ class Measure extends Component {
 		<g className="notes">
 			
 			{this.props.measure.strings.map((str, idx) => (
-				str.map((note, nidx) =>
-				<Note key={idx + '-' + nidx} x={this.noteXPosition(note)} y={this.stringYOffset(idx + 1)} fret={note.f} dy={noteTextOffset}
-					d={this.noteDurationSize(note) + 'em'}/>
+                      str.map((note, nidx) =>
+                          <Note key={idx + '-' + nidx} x={this.noteXPosition(note)} y={this.stringYOffset(idx + 1)} fret={note.f} string={idx} dy={noteTextOffset}
+                              d={this.noteDurationSize(note) + 'em'} index={nidx} onClick={this.handleNoteClick} selected={this.isNoteSelected(nidx, idx)} />
 				)
 			))}
 			
@@ -279,34 +387,34 @@ class Measure extends Component {
   }
 }
 
+
+
+
 class String extends Component {
 	
 	constructor(props) {
 		super(props);
-		this.state = {isToggleOn: true};
 
 		// This binding is necessary to make `this` work in the callback
 		this.handleClick = this.handleClick.bind(this);
 	  }
 	  
-	  handleClick() {
-		this.setState(prevState => ({
-		  isToggleOn: !prevState.isToggleOn
-		}));
+    handleClick(e) {
+        this.props.onClick(this.props.index, e);
 	  }
 	
-  render() {
-	  const offset = this.props.offset + 'em';
+    render() {
+	    const offset = this.props.offset + 'em';
 	  
-	  return (
+	    return (
 		<g>
-			<line className={"string clickable " + this.state.isToggleOn} x1="0" x2="100%" y1={offset} y2={offset} onClick={this.handleClick}/>
+			<line className="string clickable"  x1="0" x2="100%" y1={offset} y2={offset} onClick={this.handleClick}/>
 			<rect className="transparent clickable" onClick={this.handleClick}
-						  x1="0" y={this.props.offset - this.props.boxHeight/2 + 'em'}
-						  width="100%" height={this.props.boxHeight + 'em'} />
+						    x1="0" y={this.props.offset - this.props.boxHeight/2 + 'em'}
+						    width="100%" height={this.props.boxHeight + 'em'} />
 		</g>
-	  )
-  }
+	    )
+    }
 }
 
 class Ruler extends Component {
@@ -319,65 +427,205 @@ class Ruler extends Component {
 		return this.props.y - 0.15 * this.props.subdivisionSpacing - 0.65 * this.props.subdivisionSpacing / subdivs;
 	}
 	
-  render() {
+    render() {
   
-	  const ticks = getRuler(this.props.d, this.props.subdivisions);
+	    const ticks = getRuler(this.props.d, this.props.subdivisions);
 	  
-	  return (
+	    return (
 		<g className="ruler">
             <line className="string"
-                  x1="0" y1={this.props.y + 'em'}
-                  x2="100%" y2={this.props.y + 'em'}
-                  />
+                    x1="0" y1={this.props.y + 'em'}
+                    x2="100%" y2={this.props.y + 'em'}
+                    />
 			<g>
 			{ticks.map((i, idx) => (
 				<line key={idx} className={"ruler-tick ruler-tick-" + i}
-					  x1={this.tickXPostition(idx) + 'em'} 
-					  x2={this.tickXPostition(idx) + 'em'} 
-					  y1={this.tickHeight(idx, i) + 'em'}
-					  y2={this.props.y + 'em'}
+					    x1={this.tickXPostition(idx) + 'em'} 
+					    x2={this.tickXPostition(idx) + 'em'} 
+					    y1={this.tickHeight(idx, i) + 'em'}
+					    y2={this.props.y + 'em'}
 				/>
 			))}
 			
 			
 			</g>
 		</g>
-	  )
-  }
+	    )
+    }
 }
 
 class Note extends Component {
-  render() {
-	  const x = this.props.x + 'em';
-	  const y = this.props.y + 'em';
+
+    constructor(props) {
+        super(props);
+        this.handleClick = this.handleClick.bind(this);
+    }
+
+    handleClick(e) {
+        this.props.onClick(this.props.string, this.props.index, e);
+    }
+
+    render() {
+	    const x = this.props.x + 'em';
+	    const y = this.props.y + 'em';
 	  
-	  return (
-	  <g>
-		<rect className="string-1"
-            x={x}
-			y={this.props.y - 0.1 + 'em'}
-            width={this.props.d} 
-            height="0.2em" />
+	    return (
+	    <g>
+            <rect className={"string-" + this.props.string}
+                x={x}
+			    y={this.props.y - 0.1 + 'em'}
+                width={this.props.d} 
+                    height="0.2em" />
+
+            {this.props.selected &&
+                <circle class="selected-note" cx={x}
+                cy={y}
+                r={layout.noteRadius() + 'em'} />}
 	  
-		<text className="note-text-outline clickable"
-			  x={x}
-			  y={y}
-			  dy={this.props.dy + 'em'}
-			  textAnchor="middle"
-			  >{this.props.fret}</text>
+            <text className="note-text-outline clickable"
+                x={x}
+                y={y}
+                dy={this.props.dy + 'em'}
+                textAnchor="middle"
+                onClick={this.handleClick}
+			    >{this.props.fret}</text>
 	  
-		<text className="note-text clickable"
-			  x={x}
-			  y={y}
-			  dy={this.props.dy + 'em'} 
-			  textAnchor="middle"
-			  >{this.props.fret}</text>
-	</g>
-	  )
-  }
+		    <text className="note-text clickable"
+			        x={x}
+			        y={y}
+			        dy={this.props.dy + 'em'} 
+                    textAnchor="middle"
+                    onClick={this.handleClick}
+			        >{this.props.fret}</text>
+	    </g>
+	    )
+    }
 }
 
+class MeasureEditor extends Component {
 
+    constructor(props) {
+        super(props);
+        this.editorRef = React.createRef();
+
+        this.updatePosition = this.updatePosition.bind(this);
+        this.insertBefore = this.insertBefore.bind(this);
+    }
+
+    componentDidMount() {
+        console.log('mounted:', this.props);
+        this.updatePosition();
+        window.addEventListener("resize", this.updatePosition);
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener("resize", this.updatePosition);
+    }
+
+    componentDidUpdate(prevProps) {
+        console.log('did update, old props:', prevProps);
+        console.log('new props:', this.props);
+        this.updatePosition();
+    }
+
+    updatePosition() {
+        if (this.props.measureRef.current) {
+            const rect = this.props.measureRef.current.getBoundingClientRect();
+            console.log(rect.top, rect.right, rect.bottom, rect.left);
+
+            const style = this.editorRef.current.style;
+            style.position = 'absolute';
+            style.top = rect.bottom + 'px';
+            style.left = rect.left + 'px';
+        }
+    }
+
+    insertBefore() {
+        this.props.controller.insertNewBeforeSelectedMeasure();
+    }
+
+    render() {
+
+        return (
+            <div ref={this.editorRef} className="measure-edit-panel panel panel-primary" >
+                <div className="panel-body form-inline">
+                    <form>
+                        <button type="button" className="close pull-right" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <div className="form-group">
+                            <label>Insert Empty</label>
+                            <button type="button" onClick={this.insertBefore} className="btn btn-default" aria-label="">
+                                <span aria-hidden="true">Before</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        )
+    }
+}
+
+class NoteEditor extends Component {
+
+    constructor(props) {
+        super(props);
+        this.editorRef = React.createRef();
+
+        this.updatePosition = this.updatePosition.bind(this);
+        this.insertBefore = this.insertBefore.bind(this);
+    }
+
+    componentDidMount() {
+        console.log('mounted:', this.props);
+        this.updatePosition();
+        window.addEventListener("resize", this.updatePosition);
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener("resize", this.updatePosition);
+    }
+
+    componentDidUpdate(prevProps) {
+        console.log('did update, old props:', prevProps);
+        console.log('new props:', this.props);
+        this.updatePosition();
+    }
+
+    updatePosition() {
+        if (this.props.measureRef.current) {
+            const rect = this.props.measureRef.current.getBoundingClientRect();
+            console.log(rect.top, rect.right, rect.bottom, rect.left);
+
+            const style = this.editorRef.current.style;
+            style.position = 'absolute';
+            style.top = rect.bottom + 'px';
+            style.left = rect.left + 'px';
+        }
+    }
+
+    insertBefore() {
+        this.props.controller.insertNewBeforeSelectedMeasure();
+    }
+
+    render() {
+
+        return (
+            <div ref={this.editorRef} className="panel panel-default" >
+                <div className="panel-body form-inline">
+                    <form>
+                        <button type="button" className="close pull-right" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <div className="form-group">
+                            <label>String</label>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        )
+    }
+}
 
 
 export default App;

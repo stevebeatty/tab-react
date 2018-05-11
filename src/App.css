@@ -32,7 +32,7 @@ nav {
 .measure .string,
 .measure .measure-begin {
   stroke: #000000; 
-  stroke-width: 0.5;
+  stroke-width: 0.5px;
 }
 
 .ruler-tick {
@@ -40,11 +40,11 @@ nav {
 }
 
 .ruler-tick-1 {
-  stroke-width: 1.5;
+  stroke-width: 1.5px;
 }
 
 .ruler-tick-2 {
-  stroke-width: 1.25;
+  stroke-width: 1.25px;
 }
 
 .transparent {
@@ -157,4 +157,9 @@ nav {
 
 .btn.disabled, .btn[disabled] {
     background-color: #cccccc;
-};
+}
+
+.measure-editor {
+    width: 10em;
+    border: 1px solid black;
+}
