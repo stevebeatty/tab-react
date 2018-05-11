@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import './App.css';
 import tab1 from './tab.js';
+import Layout from './Layout.js';
 
 console.log(tab1);
 
@@ -52,7 +53,7 @@ var song = {
 	]
 };
 
-var layout = {
+var layout = new Layout(); /*{
 	topStringOffset: function() {
 		return 1;
 	},
@@ -77,7 +78,7 @@ var layout = {
 	measureClickBoxWidth: function() {
 		return 0.6;
 	}
-};
+};*/
 
 
 var rulers = {};
@@ -218,6 +219,7 @@ class App extends Component {
         const hasSelectedMeasure = this.state.selectedMeasure.key !== undefined;
 
         console.log('selnote: ', this.state.selectedNote);
+        console.log('layout2 ', this.state.layout);
     return (
 	<div>
 		<nav className="navbar navbar-default">
@@ -255,7 +257,7 @@ class App extends Component {
 class Measure extends Component {
 	constructor(props) {
 		super(props);
-		
+        console.log('layoutM ', this.props.layout);
 		const intervals = [this.props.interval];
 		const strings = this.props.measure.strings;
 		for (var i=0; i < strings.length; i++) {
@@ -336,6 +338,15 @@ class Measure extends Component {
         return this.props.selectedNote &&
             this.props.selectedNote.note === noteIndex &&
             this.props.selectedNote.string === stringIndex;
+    }
+
+    doNotesOverlap(a, b) {
+        const mi = this.props.measure.i;
+        //     b~~~~~~a~~~~
+        // -----------------------------
+        //     ^      ^
+        return b.p + (b.d * mi / b.i) > a.p ||
+               a.p + (a.d * mi / a.i) > b.p
     }
 
     render() {
@@ -628,4 +639,4 @@ class NoteEditor extends Component {
 }
 
 
-export default App;
+export { App, Measure };
