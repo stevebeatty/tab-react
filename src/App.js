@@ -96,17 +96,17 @@ function getRuler(intervals, subdivisions) {
 			const r = getRuler(intervals, subdivisions / 2).slice();
 			
 			// insertBetween
-			const newSize = r.length * 2 - 1;
+			const newSize = r.length * 2;
 			if (newSize === 1) {
 				return r;
 			}
 			
 			arr = new Array(newSize);
-			for (var i = 0; i < r.length - 1; i++) {
+			for (var i = 0; i < r.length; i++) {
 				arr[2 * i] = r[i];
 				arr[2 * i + 1] = subdivisions;
 			}
-			arr[newSize - 1] = r[r.length - 1];
+			//arr[newSize - 1] = r[r.length - 1];
 		}
 		
 		rulers[idx] = arr;
@@ -193,12 +193,32 @@ class App extends Component {
     }
 
     handleStringClick(measure, stringIndex, e) {
-        console.log('handleStringClick ', stringIndex, measure);
+        const bound = e.target.getBoundingClientRect(),
+            x = e.clientX - bound.left,
+            w = x / bound.width,
+            pos = measure.closestPosition(w),
+            dist = measure.nextNoteDistance(stringIndex, pos);
+
+        if (dist !== 0) {
+            measure.addNote(stringIndex, { p: pos, d: 1, f: 0 })
+
+            this.setState({
+                song: this.state.song
+            });
+        }
+
+        console.log('handleStringClick ', stringIndex, x, w, pos, dist);
     }
 
-    handleNoteClick(measure, stringIndex, note, e) {
-        console.log('handleNoteClick ', note, stringIndex, measure.props.measure.key);
-        this.setState({ selectedNote: { measure: measure.props.measure.key, string: stringIndex, note: note } });
+    handleNoteClick(measure, stringIndex, noteIndex, e) {
+        console.log('handleNoteClick ', noteIndex, stringIndex, measure.props.measure.key);
+        this.setState({
+            selectedNote: {
+                measure: measure.props.measure.key,
+                string: stringIndex,
+                note: measure.props.measure.strings[stringIndex][noteIndex]
+            }
+        });
     }
 
     measureNeedsRef(measure) {
@@ -218,8 +238,8 @@ class App extends Component {
         const hasSelectedNote = this.state.selectedNote.note !== undefined;
         const hasSelectedMeasure = this.state.selectedMeasure.key !== undefined;
 
-        console.log('selnote: ', this.state.selectedNote);
-        console.log('layout2 ', this.state.layout);
+    //    console.log('selnote: ', this.state.selectedNote);
+     //   console.log('layout2 ', this.state.layout);
     return (
 	<div>
 		<nav className="navbar navbar-default">
@@ -257,7 +277,7 @@ class App extends Component {
 class Measure extends Component {
 	constructor(props) {
 		super(props);
-        console.log('layoutM ', this.props.layout);
+        
 		const intervals = [this.props.interval];
 		const strings = this.props.measure.strings;
 		for (var i=0; i < strings.length; i++) {
@@ -299,7 +319,7 @@ class Measure extends Component {
 		
 	measureWidth() {
 		const layout = this.props.layout;
-       return layout.measureSideOffset() + this.state.subdivisions * layout.subdivisionOffset() * this.props.duration;
+        return layout.measureSideOffset() + this.state.subdivisions * layout.subdivisionOffset() * this.props.duration;
     };
 	
 	noteXPosition(note) {
@@ -330,7 +350,7 @@ class Measure extends Component {
     }
 
     isNoteSelected(noteIndex, stringIndex) {
-        console.log(this.props.selectedNote);
+        //console.log(this.props.selectedNote);
         if (!this.props.selectedNote) return false;
 
         console.log('? ', noteIndex, stringIndex, this.props.selectedNote);
@@ -342,12 +362,71 @@ class Measure extends Component {
 
     doNotesOverlap(a, b) {
         const mi = this.props.measure.i;
-        //     b~~~~~~a~~~~
+        //     b~~~~~~
+        //            a~~~~
         // -----------------------------
         //     ^      ^
-        return b.p + (b.d * mi / b.i) > a.p ||
-               a.p + (a.d * mi / a.i) > b.p
+        //console.log(' | ', b.p + (b.d * mi / b.i), a.p, a.p + (a.d * mi / a.i), b.p);
+
+        if (b.p <= a.p) {
+            return b.p + (b.d * mi / b.i) > a.p
+        } else {
+            return a.p + (a.d * mi / a.i) > b.p;
+        }               
     }
+
+    closestPosition(xNormalized) {
+        const layout = this.props.layout,
+            widEm = this.measureWidth(),
+            xPos = Math.min(Math.max(xNormalized * widEm, layout.measureSideOffset()), widEm - layout.measureSideOffset()),
+            pos = (xPos - layout.measureSideOffset()) / (layout.subdivisionOffset() * this.state.subdivisions),
+            subSize = 1 / this.state.subdivisions,
+            remain = pos % 1,
+            remainSubs = Math.floor(remain / subSize),
+            fr = Math.round((remain % subSize) / subSize),
+            rnd = Math.floor(pos) + remainSubs * subSize + fr * subSize,
+            clm = Math.min(this.props.duration + 1 - subSize, rnd);
+
+        console.log('closestPosition: ', xNormalized, widEm, xPos, pos, clm);
+
+        return clm;
+    }
+
+    nextNoteDistance(string, pos) {
+        const notes = this.props.measure.strings[string];
+        let min = -1;
+        console.log('notes ', notes);
+        for (let i = 0; i < notes.length; i++) {
+            let n = notes[i];
+            console.log('n ', n, pos);
+            if (n.p < pos) {
+                if (n.p + (n.d/n.i) > pos) {
+                    return 0;
+                }
+            } else {
+                return n.p - pos;
+            }
+        }
+
+        return -1;
+    }
+
+    addNote(string, note) {
+        const notes = this.props.measure.strings[string];
+
+        if (!note.i) {
+            note.i = this.state.subdivisions;
+        }
+
+        notes.push(note);
+        this.sortNotes(notes);
+    }
+
+    sortNotes(arr) {
+        arr.sort( (a, b) => {
+            return a.p - b.p;
+        });
+    };
 
     render() {
 	  const noteTextOffset = this.props.layout.noteTextOffset();
@@ -489,7 +568,7 @@ class Note extends Component {
                     height="0.2em" />
 
             {this.props.selected &&
-                <circle class="selected-note" cx={x}
+                <circle className="selected-note" cx={x}
                 cy={y}
                 r={layout.noteRadius() + 'em'} />}
 	  
@@ -630,6 +709,15 @@ class NoteEditor extends Component {
                         </button>
                         <div className="form-group">
                             <label>String</label>
+                            {this.props.note.string}
+                        </div>
+                        <div className="form-group">
+                            <label>Interval</label>
+                            {this.props.note.note.i}
+                        </div>
+                        <div className="form-group">
+                            <label>Fret</label>
+                            {this.props.note.note.f}
                         </div>
                     </form>
                 </div>
