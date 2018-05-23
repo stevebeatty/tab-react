@@ -52,7 +52,7 @@ describe('Measure test', () => {
         expect(m.instance().nextNoteDistance(0, 1)).toEqual(1);
         expect(m.instance().nextNoteDistance(0, 2)).toEqual(0);
         expect(m.instance().nextNoteDistance(0, 2.125)).toEqual(0);
-        expect(m.instance().nextNoteDistance(0, 2.5)).toEqual(-1);
+        expect(m.instance().nextNoteDistance(0, 2.5)).toEqual(0);
         expect(m.instance().nextNoteDistance(0, 3)).toEqual(-1);
 
         expect(m.instance().nextNoteDistance(1, 1)).toEqual(-1);
@@ -60,5 +60,21 @@ describe('Measure test', () => {
         expect(m.instance().nextNoteDistance(1, 2.5)).toEqual(-1);
         expect(m.instance().nextNoteDistance(1, 3)).toEqual(-1);
 
+    });
+
+    test('prevNoteDistance', () => {
+        const m = shallow(<Measure measure={measure} layout={layout} duration={measure.d} interval={measure.i} selected={false} />);
+        expect(m.instance().prevNoteDistance(0, 1)).toEqual(-1);
+        expect(m.instance().prevNoteDistance(0, 2)).toEqual(0);
+        expect(m.instance().prevNoteDistance(0, 2.5)).toEqual(0);
+        expect(m.instance().prevNoteDistance(0, 3)).toEqual(0);
+        expect(m.instance().prevNoteDistance(0, 4)).toEqual(1);
+
+        expect(m.instance().prevNoteDistance(1, 1)).toEqual(-1);
+        expect(m.instance().prevNoteDistance(1, 2)).toEqual(-1);
+        expect(m.instance().prevNoteDistance(1, 3)).toEqual(-1);
+
+        console.log('strs ', m.instance().validStringsForPosition(3));
+        console.log('strs ', m.instance().validStringsForPosition(2));
     });
 });
