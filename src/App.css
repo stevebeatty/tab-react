@@ -35,6 +35,10 @@ nav {
   stroke-width: 0.5px;
 }
 
+.measure .etc {
+    position: absolute;
+}
+
 .ruler-tick {
     stroke: #BABABA;
 }

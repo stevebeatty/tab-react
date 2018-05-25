@@ -91,6 +91,7 @@ class App extends Component {
         this.handleChangeSelectedNoteString = this.handleChangeSelectedNoteString.bind(this);
         this.handleLock = this.handleLock.bind(this);
         this.handleDrag = this.handleDrag.bind(this);
+        this.handleDragOver = this.handleDragOver.bind(this);
 	}
 	
 	processSong(song) {
@@ -270,6 +271,17 @@ class App extends Component {
         console.log('drag')
     }
 
+    handleDragOver(evt) {
+        console.log('dragover')
+        evt.preventDefault()
+        evt.dataTransfer.dropEffect = 'move'
+    }
+
+    handleDrop(evt) {
+        evt.preventDefault()
+        console.log('drop', evt.dataTransfer.getData("text/measure"), evt.dataTransfer.getData("text/string"), evt.dataTransfer.getData("text/note"))
+    }
+
     render() {
         const hasSelectedNote = this.state.selectedNote.note !== undefined;
         const hasSelectedMeasure = this.state.selectedMeasure.key !== undefined;
@@ -314,6 +326,9 @@ class App extends Component {
             </div>
 
             <span draggable="true" onDragStart={this.handleDrag} >Hi</span>
+            <div onDragOver={this.handleDragOver} onDrop={this.handleDrop} >
+                Drop Target
+            </div>
             </React.Fragment>
     );
   }
