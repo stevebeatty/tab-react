@@ -90,6 +90,7 @@ class App extends Component {
         this.clearSelectedNote = this.clearSelectedNote.bind(this);
         this.handleChangeSelectedNoteString = this.handleChangeSelectedNoteString.bind(this);
         this.handleLock = this.handleLock.bind(this);
+        this.handleDrag = this.handleDrag.bind(this);
 	}
 	
 	processSong(song) {
@@ -203,7 +204,6 @@ class App extends Component {
 
             this.setSelectedNote(measure, stringIndex, idx)
         }
-
         
     }
 
@@ -266,6 +266,10 @@ class App extends Component {
         }));
     }
 
+    handleDrag(evt) {
+        console.log('drag')
+    }
+
     render() {
         const hasSelectedNote = this.state.selectedNote.note !== undefined;
         const hasSelectedMeasure = this.state.selectedMeasure.key !== undefined;
@@ -296,17 +300,20 @@ class App extends Component {
                 {this.state.song.measures.map((measure, idx) => !this.measureNeedsRef(measure) ?
 
                     <Measure key={measure.key} measure={measure} layout={this.state.layout} duration={measure.d || this.state.song.d} interval={measure.i || this.state.song.i}
-                        onMeasureSelect={this.handleMeasureSelect} selected={false} onStringClick={this.handleStringClick} onNoteClick={this.handleNoteClick} />
+                        onMeasureSelect={this.handleMeasureSelect} selected={false} onStringClick={this.handleStringClick} onNoteClick={this.handleNoteClick} onNoteDragStart={this.handleDrag} />
                     :
 
                     <Measure key={measure.key} forwardedRef={this.measureRef} measure={measure} layout={this.state.layout} duration={measure.d || this.state.song.d} interval={measure.i || this.state.song.i}
-                        onMeasureSelect={this.handleMeasureSelect} selected={measure.key === this.state.selectedMeasure.key} onStringClick={this.handleStringClick} onNoteClick={this.handleNoteClick} selectedNote={this.state.selectedNote} />
+                        onMeasureSelect={this.handleMeasureSelect} selected={measure.key === this.state.selectedMeasure.key} onStringClick={this.handleStringClick} onNoteClick={this.handleNoteClick} selectedNote={this.state.selectedNote}
+                        onNoteDragStart={this.handleDrag} />
                 )}
 
                 {hasSelectedMeasure ? <MeasureEditor measureRef={this.measureRef} measure={this.state.selectedMeasure} controller={this} /> : ''}
                 {hasSelectedNote ? <NoteEditor measureRef={this.measureRef} note={this.state.selectedNote} controller={this} frets={this.frets} /> : ''}
 
-      </div>
+            </div>
+
+            <span draggable="true" onDragStart={this.handleDrag} >Hi</span>
             </React.Fragment>
     );
   }

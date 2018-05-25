@@ -64,7 +64,8 @@ class Measure extends Component {
         this.handleClick = this.handleClick.bind(this);
         this.handleStringClick = this.handleStringClick.bind(this);
         this.handleNoteClick = this.handleNoteClick.bind(this);
-
+        this.handleNoteDrag = this.handleNoteDrag.bind(this);
+        this.handleMouseUp = this.handleMouseUp.bind(this);
         
 	}
 	
@@ -111,6 +112,15 @@ class Measure extends Component {
        // this.props.onStringClick(this, index, e);
         console.log("noteClick ", string, index);
         this.props.onNoteClick(this, string, index, e);
+    }
+
+    handleNoteDrag(e) {
+        const bound = e.target.getBoundingClientRect(),
+            x = e.clientX - bound.left,
+            w = x / bound.width,
+            pos = this.closestPosition(w)
+
+        console.log('pos ', pos, e.clientX, e.clientY, e.target.getBoundingClientRect())
     }
 
     isNoteSelected(noteIndex, stringIndex) {
@@ -243,6 +253,11 @@ class Measure extends Component {
         arr.sort( (a, b) => a.p - b.p);
     };
 
+    handleMouseUp(evt) {
+        console.log('mouse up - measure', evt.pageX, evt.pageY)
+
+    }
+
     render() {
 	  const noteTextOffset = this.props.layout.noteTextOffset();
 	  const beginningOffset = this.props.layout.measureSideOffset();
@@ -258,7 +273,8 @@ class Measure extends Component {
       }
       
       return (
-          <svg key={this.props.measure.key} className="measure" width={this.measureWidth() + 'em'} height={this.measureHeight() + 'em'} alt={this.props.selected.toString()} {...refAtt}>
+          <svg key={this.props.measure.key} className="measure" width={this.measureWidth() + 'em'} height={this.measureHeight() + 'em'} alt={this.props.selected.toString()} {...refAtt}
+              onMouseUp={this.handleMouseUp}>
 
 		      <g className="strings">
                       {this.props.measure.strings.map((str, idx) =>
@@ -280,10 +296,10 @@ class Measure extends Component {
 		    <g className="notes">
 			
 			    {this.props.measure.strings.map((str, idx) => (
-                          str.map((note, nidx) =>
-                              <Note key={idx + '-' + nidx} x={this.noteXPosition(note)} y={this.stringYOffset(idx + 1)} fret={note.f} string={idx} dy={noteTextOffset}
-                                  d={this.noteDurationSize(note) + 'em'} index={nidx} onClick={this.handleNoteClick} selected={this.isNoteSelected(nidx, idx)}
-                                  layout={this.props.layout}/>
+                      str.map((note, nidx) =>
+                          <Note key={idx + '-' + nidx} x={this.noteXPosition(note)} y={this.stringYOffset(idx + 1)} fret={note.f} string={idx} dy={noteTextOffset}
+                              d={this.noteDurationSize(note)} index={nidx} onClick={this.handleNoteClick} onDrag={this.handleNoteDrag} onDragStart={this.props.onNoteDragStart} selected={this.isNoteSelected(nidx, idx)}
+                                  layout={this.props.layout} />
 				    )
 			    ))}
 			
@@ -302,22 +318,28 @@ class String extends Component {
 		super(props);
 
 		// This binding is necessary to make `this` work in the callback
-		this.handleClick = this.handleClick.bind(this);
+        this.handleClick = this.handleClick.bind(this);
+        this.handleMouseUp = this.handleMouseUp.bind(this);
 	  }
 	  
     handleClick(e) {
         this.props.onClick(this.props.index, e);
-	  }
+    }
+
+    handleMouseUp(evt) {
+        console.log('mouse up - string', evt)
+
+    }
 	
     render() {
 	    const offset = this.props.offset + 'em';
 	  
 	    return (
-		<g>
-			<line className="string clickable"  x1="0" x2="100%" y1={offset} y2={offset} onClick={this.handleClick}/>
-			<rect className="transparent clickable" onClick={this.handleClick}
+            <g onMouseUp={this.handleMouseUp}>
+                <line className="string clickable" x1="0" x2="100%" y1={offset} y2={offset} onClick={this.handleClick} />
+                <rect className="clickable" onClick={this.handleClick} fillOpacity="0.2" onMouseUp={this.handleMouseUp}
 						    x1="0" y={this.props.offset - this.props.boxHeight/2 + 'em'}
-						    width="100%" height={this.props.boxHeight + 'em'} />
+						    width="100%" height={2 * this.props.boxHeight + 'em'} />
 		</g>
 	    )
     }
@@ -364,23 +386,66 @@ class Note extends Component {
 
     constructor(props) {
         super(props);
+
+        this.state = {
+            x: 0,
+            y: 0
+        }
+
         this.handleClick = this.handleClick.bind(this);
+        this.handleMouseDown = this.handleMouseDown.bind(this);
+        this.handleMouseUp = this.handleMouseUp.bind(this);
+        this.handleMouseMove = this.handleMouseMove.bind(this);
     }
 
     handleClick(e) {
         this.props.onClick(this.props.string, this.props.index, e);
     }
 
+    handleMouseDown(evt) {
+        console.log('mouse down', evt.pageY)
+
+        this.coords = {
+            x: evt.pageX,
+            y: evt.pageY
+        }
+        document.addEventListener('mousemove', this.handleMouseMove);
+        this.props.onDragStart()
+    }
+
+    handleMouseUp(evt) {
+        console.log('mouse up - note', evt)
+        document.removeEventListener('mousemove', this.handleMouseMove);
+        this.coords = {}
+
+        this.props.onDrag(evt)
+    }
+
+    handleMouseMove(evt) {
+        console.log('mouse move', evt.pageX, evt.pageY)
+
+        const xDiff = this.coords.x - evt.pageX;
+        const yDiff = this.coords.y - evt.pageY;
+
+        this.coords.x = evt.pageX;
+        this.coords.y = evt.pageY;
+
+        this.setState({
+            x: this.state.x - xDiff,
+            y: this.state.y - yDiff
+        });
+    }
+
     render() {
 	    const x = this.props.x + 'em';
 	    const y = this.props.y + 'em';
 	  
-	    return (
-	    <g>
-            <rect className={"string-" + this.props.string}
+        return (
+            <g onMouseDown={this.handleMouseDown} onMouseUp={this.handleMouseUp} transform={"translate(" + this.state.x + ", " + this.state.y + ")"}>
+                <rect className={"string-" + this.props.string} 
                 x={x}
 			    y={this.props.y - 0.1 + 'em'}
-                width={this.props.d} 
+                    width={this.props.d + 'em'} 
                     height="0.2em" />
 
             {this.props.selected &&
@@ -396,7 +461,7 @@ class Note extends Component {
                 onClick={this.handleClick}
 			    >{this.props.fret}</text>
 	  
-		    <text className="note-text clickable"
+            <text className="note-text clickable" 
 			    x={x}
 			    y={y}
 			    dy={this.props.dy + 'em'} 
