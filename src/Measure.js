@@ -66,7 +66,8 @@ class Measure extends Component {
         this.handleNoteClick = this.handleNoteClick.bind(this);
         this.handleNoteDrag = this.handleNoteDrag.bind(this);
         this.handleMouseUp = this.handleMouseUp.bind(this);
-        
+        this.handleStringDrop = this.handleStringDrop.bind(this);
+		this.handleStringDragOver = this.handleStringDragOver.bind(this);
 	}
 	
 	stringYOffset(stringNum) {
@@ -106,6 +107,15 @@ class Measure extends Component {
 
     handleStringClick(index, e) {
         this.props.onStringClick(this, index, e);
+    }
+
+	handleStringDrop(index, e) {
+        this.props.onStringDrop(this, index, e);
+    }
+
+	handleStringDragOver(index, e) {
+		
+        this.props.onStringDragOver(this, index, e);
     }
 
     handleNoteClick(string, index, e) {
@@ -250,7 +260,7 @@ class Measure extends Component {
     }
 
     sortNotes(arr) {
-        arr.sort( (a, b) => a.p - b.p);
+        arr.sort( (a, b) => a.p - b.p );
     };
 
     handleMouseUp(evt) {
@@ -278,7 +288,8 @@ class Measure extends Component {
 
 		      <div className="strings">
                       {this.props.measure.strings.map((str, idx) =>
-                          <String key={idx} index={idx} offset={this.stringYOffset(idx + 1)} boxHeight={clickBoxHeight} onClick={this.handleStringClick} />
+                          <String key={idx} index={idx} offset={this.stringYOffset(idx + 1)} boxHeight={clickBoxHeight} onClick={this.handleStringClick}
+								onDrop={this.handleStringDrop} onDragOver={this.handleStringDragOver} />
 			    )}
 		      </div>
 		  
@@ -328,6 +339,7 @@ class String extends Component {
         this.handleClick = this.handleClick.bind(this);
         this.handleMouseUp = this.handleMouseUp.bind(this);
         this.handleDragOver = this.handleDragOver.bind(this);
+		this.handleDrop = this.handleDrop.bind(this);
 	  }
 	  
     handleClick(e) {
@@ -340,9 +352,17 @@ class String extends Component {
     }
 
     handleDragOver(evt) {
-        console.log('dragover')
+        console.log('dragover', evt.dataTransfer.getData("text/measure"))
+        //evt.preventDefault()
+        //evt.dataTransfer.dropEffect = 'move'
+		this.props.onDragOver(this.props.index, evt)
+    }
+
+	handleDrop(evt) {
+        console.log('drop', evt.dataTransfer.getData("text/measure"))
         evt.preventDefault()
-        evt.dataTransfer.dropEffect = 'move'
+     
+		this.props.onDrop(this.props.index, evt)
     }
 	
     render() {
@@ -350,10 +370,11 @@ class String extends Component {
 	  
         return (
             <div onMouseUp={this.handleMouseUp} style={{ position: 'relative', backgroundColor: 'blue' }}  >
-                <div className="string clickable" x1="0" x2="100%" style={{ height: '1px', width: '100%', backgroundColor: 'black', position: 'absolute', top: offset }} onClick={this.handleClick} />
+                <div className="string clickable" style={{ height: '1px', width: '100%', backgroundColor: 'black', position: 'absolute', top: offset }} onClick={this.handleClick} />
                 <div className="clickable" onClick={this.handleClick} onMouseUp={this.handleMouseUp} onDragOver={this.handleDragOver}
-                    style={{
-                        height: 2 * this.props.boxHeight + 'em', position: 'absolute', top: this.props.offset - this.props.boxHeight / 2 + 'em', width: '100%'  }} 
+					onDrop={this.handleDrop}
+                    style={{ zIndex: 10,
+                        height: 2 * this.props.boxHeight + 'em', position: 'absolute', top: this.props.offset - this.props.boxHeight  + 'em', width: '100%'  }} 
 						    />
 		</div>
 	    )
@@ -483,37 +504,38 @@ class Note extends Component {
 	    const y = this.props.y + 'em';
 	  
         return (
-            <div draggable="true" onDragStart={this.handleDrag} style={{ position: 'absolute', width: this.props.d + 2 + 'em', left: this.props.x - imgLeft + 'em', top: this.props.y - imgHeight / 2 + 'em', height: imgHeight + 'em' }}>
-            <svg 
-                 style={{ width: this.props.d + 2 + 'em', height: imgHeight + 'em' }}>
+            <div draggable="true" onDragStart={this.handleDrag} style={{ position: 'absolute', width: this.props.d + imgLeft + 'em',
+				left: this.props.x - imgLeft + 'em', top: this.props.y - imgHeight / 2 + 'em', height: imgHeight + 'em', zIndex: 20 }}>
+				<svg 
+					 style={{ width: this.props.d + imgLeft + 'em', height: imgHeight + 'em' }}>
 
-            <rect className={"string-" + this.props.string} 
-                    x={imgLeft + 'em'}
-                    y={imgMiddle - rectHeight/2 + 'em'}
-                    width={this.props.d + 'em'} 
-                    height="0.2em" />
+					<rect className={"string-" + this.props.string} 
+							x={imgLeft + 'em'}
+							y={imgMiddle - rectHeight/2 + 'em'}
+							width={this.props.d + 'em'} 
+							height="0.2em" />
 
-            {this.props.selected &&
-                <circle className="selected-note" cx={0}
-                    cy={imgMiddle + 'em'}
-                r={this.props.layout.noteRadius() + 'em'} />}
+					{this.props.selected &&
+						<circle className="selected-note" cx={0}
+							cy={imgMiddle + 'em'}
+						r={this.props.layout.noteRadius() + 'em'} />}
 	  
-            <text className="note-text-outline clickable"
-                    x={imgLeft + 'em'}
-                    y={imgMiddle + 'em'}
-                dy={this.props.dy + 'em'}
-                textAnchor="middle"
-                onClick={this.handleClick}
-			    >{this.props.fret}</text>
+					<text className="note-text-outline clickable"
+							x={imgLeft + 'em'}
+							y={imgMiddle + 'em'}
+						dy={this.props.dy + 'em'}
+						textAnchor="middle"
+						onClick={this.handleClick}
+						>{this.props.fret}</text>
 	  
-            <text className="note-text clickable" 
-                    x={imgLeft + 'em'}
-                    y={imgMiddle + 'em'}
-			    dy={this.props.dy + 'em'} 
-                textAnchor="middle"
-                onClick={this.handleClick}
-			    >{this.props.fret}</text>
-                </svg>
+					<text className="note-text clickable" 
+							x={imgLeft + 'em'}
+							y={imgMiddle + 'em'}
+						dy={this.props.dy + 'em'} 
+						textAnchor="middle"
+						onClick={this.handleClick}
+						>{this.props.fret}</text>
+				</svg>
             </div>
 	    )
     }

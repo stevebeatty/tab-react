@@ -92,6 +92,7 @@ class App extends Component {
         this.handleLock = this.handleLock.bind(this);
         this.handleDrag = this.handleDrag.bind(this);
         this.handleDragOver = this.handleDragOver.bind(this);
+		this.handleStringDrop = this.handleStringDrop.bind(this);
 	}
 	
 	processSong(song) {
@@ -172,26 +173,35 @@ class App extends Component {
         this.setSelectedNote(measure, stringIndex, noteIndex);
     }
 
-    handleStringClick(measure, stringIndex, e) {
-        if (this.state.locked) return
-
-        const bound = e.target.getBoundingClientRect(),
-            x = e.clientX - bound.left,
+	stringEventDistance(measure, stringIndex, e) {
+		const bound = e.target.getBoundingClientRect(),
+            x = e.pageX - bound.left,
             w = x / bound.width,
             pos = measure.closestPosition(w),
             dist = measure.nextNoteDistanceOrRemaining(stringIndex, pos);
 
-        console.log('handleStringClick ', stringIndex, x, w, pos, dist);
+		 console.log('stringEventDistance ', stringIndex, x, w, pos, dist);
 
-        if (dist !== 0) {
+		return {
+			p: pos,
+			d: dist
+		}
+	}
+
+    handleStringClick(measure, stringIndex, e) {
+        if (this.state.locked) return
+
+        const stringDist = this.stringEventDistance(measure, stringIndex, e)
+
+        if (stringDist.d !== 0) {
             // doing calcs in larger values and then simplifying to avoid fractions
-            const dur = Math.min(dist, 1) * measure.state.subdivisions,
+            const dur = Math.min(stringDist.d, 1) * measure.state.subdivisions,
                 int = measure.props.interval * measure.state.subdivisions
 
-            console.log('dur ', dur, ' dist ', dist, measure.state.subdivisions * Math.min(dist, 1)  );
+            console.log('dur ', dur, ' dist ', stringDist.d, measure.state.subdivisions * Math.min(stringDist.d, 1)  );
 
             const note = {
-                p: pos, d: dur, f: 0, i: int
+                p: stringDist.p, d: stringDist.d, f: 0, i: int
             }
             this.simplifyNoteTiming(note);
 
@@ -207,6 +217,44 @@ class App extends Component {
         }
         
     }
+
+	getMeasure(measureKey) {
+		return this.state.song.measures.find( x => x.key === measureKey )
+	}
+
+	getNote(measureKey, stringIndex, noteIndex) {
+		const m = this.getMeasure(measureKey)
+		console.log('getNote ', measureKey, m)
+		return m.strings[stringIndex][noteIndex]
+	}
+
+	handleStringDrop(measure, stringIndex, e) {
+		const stringDist = this.stringEventDistance(measure, stringIndex, e)
+			
+		console.log('handleStringDrop string ', stringIndex, ' dist ', stringDist.d)
+		console.log('drop', e.dataTransfer.getData("text/measure"), e.dataTransfer.getData("text/string"), e.dataTransfer.getData("text/note"))
+ 
+		if (stringDist.d !== 0) {
+            // doing calcs in larger values and then simplifying to avoid fractions
+            const dur = Math.min(stringDist.d, 1) * measure.state.subdivisions,
+                int = measure.props.interval * measure.state.subdivisions
+
+			const note = this.getNote(
+				parseInt(e.dataTransfer.getData("text/measure"), 10),
+				parseInt(e.dataTransfer.getData("text/string"), 10),
+				parseInt(e.dataTransfer.getData("text/note"), 10)
+			)
+
+			console.log('string drop: dur ', dur, ' dist ', stringDist.d, ' note ', note );
+			console.log('pos ', stringDist.p, ' end ',  note.d + stringDist.p)
+
+			if (stringDist.d < note.d) {
+				console.log('cant fit')
+			}
+		}
+	}
+
+
 
     simplifyNoteTiming(note) {
         while (note.d % 2 === 0 && note.i % 2 === 0) {
@@ -271,10 +319,38 @@ class App extends Component {
         console.log('drag')
     }
 
-    handleDragOver(evt) {
-        console.log('dragover')
-        evt.preventDefault()
-        evt.dataTransfer.dropEffect = 'move'
+    handleDragOver(measure, stringIndex, evt) {
+        //console.log('dragover', measure, evt)
+		//console.log('handleDragOver ', evt.dataTransfer.getData("text/measure"), evt.dataTransfer.getData("text/string"), evt.dataTransfer.getData("text/note"))
+ 
+        
+		evt.preventDefault()
+		evt.dataTransfer.dropEffect = 'move'
+
+		return
+
+		const stringDist = this.stringEventDistance(measure, stringIndex, evt)
+			
+		if (stringDist.d !== 0) {
+            // doing calcs in larger values and then simplifying to avoid fractions
+            const dur = Math.min(stringDist.d, 1) * measure.state.subdivisions,
+                int = measure.props.interval * measure.state.subdivisions
+
+			const note = this.getNote(
+				parseInt(evt.dataTransfer.getData("text/measure"), 10),
+				parseInt(evt.dataTransfer.getData("text/string"), 10),
+				parseInt(evt.dataTransfer.getData("text/note"), 10)
+			)
+
+			console.log('string dragover: dur ', dur, ' dist ', stringDist.d, ' note ', note );
+			console.log('pos ', stringDist.p, ' end ',  note.d + stringDist.p)
+
+			if (stringDist.d < note.d) {
+				console.log('cant fit')
+			}
+		}
+
+        
     }
 
     handleDrop(evt) {
@@ -312,12 +388,13 @@ class App extends Component {
                 {this.state.song.measures.map((measure, idx) => !this.measureNeedsRef(measure) ?
 
                     <Measure key={measure.key} measure={measure} layout={this.state.layout} duration={measure.d || this.state.song.d} interval={measure.i || this.state.song.i}
-                        onMeasureSelect={this.handleMeasureSelect} selected={false} onStringClick={this.handleStringClick} onNoteClick={this.handleNoteClick} onNoteDragStart={this.handleDrag} />
+                        onMeasureSelect={this.handleMeasureSelect} selected={false} onStringClick={this.handleStringClick} onNoteClick={this.handleNoteClick} 
+						onNoteDragStart={this.handleDrag} onStringDrop={this.handleStringDrop} onStringDragOver={this.handleDragOver} />
                     :
 
                     <Measure key={measure.key} forwardedRef={this.measureRef} measure={measure} layout={this.state.layout} duration={measure.d || this.state.song.d} interval={measure.i || this.state.song.i}
                         onMeasureSelect={this.handleMeasureSelect} selected={measure.key === this.state.selectedMeasure.key} onStringClick={this.handleStringClick} onNoteClick={this.handleNoteClick} selectedNote={this.state.selectedNote}
-                        onNoteDragStart={this.handleDrag} />
+                        onNoteDragStart={this.handleDrag} onStringDrop={this.handleStringDrop} onStringDragOver={this.handleDragOver} />
                 )}
 
                 {hasSelectedMeasure ? <MeasureEditor measureRef={this.measureRef} measure={this.state.selectedMeasure} controller={this} /> : ''}
