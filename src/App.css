@@ -27,6 +27,7 @@ nav {
 
 .measure {
     display: inline-block;
+    position: relative;
 }
 
 .measure .string,

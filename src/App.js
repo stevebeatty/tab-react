@@ -72,7 +72,8 @@ class App extends Component {
 			layout: layout,
             selectedMeasure: {},
             selectedNote: {},
-            locked: false
+            locked: false,
+            dragging: {}
 		};
 
         this.measureRef = React.createRef();
@@ -90,7 +91,8 @@ class App extends Component {
         this.clearSelectedNote = this.clearSelectedNote.bind(this);
         this.handleChangeSelectedNoteString = this.handleChangeSelectedNoteString.bind(this);
         this.handleLock = this.handleLock.bind(this);
-        this.handleDrag = this.handleDrag.bind(this);
+        this.handleDragStart = this.handleDragStart.bind(this);
+        this.handleDragEnd = this.handleDragEnd.bind(this);
         this.handleDragOver = this.handleDragOver.bind(this);
 		this.handleStringDrop = this.handleStringDrop.bind(this);
 	}
@@ -180,7 +182,7 @@ class App extends Component {
             pos = measure.closestPosition(w),
             dist = measure.nextNoteDistanceOrRemaining(stringIndex, pos);
 
-		 console.log('stringEventDistance ', stringIndex, x, w, pos, dist);
+		// console.log('stringEventDistance ', stringIndex, x, w, pos, dist);
 
 		return {
 			p: pos,
@@ -224,7 +226,6 @@ class App extends Component {
 
 	getNote(measureKey, stringIndex, noteIndex) {
 		const m = this.getMeasure(measureKey)
-		console.log('getNote ', measureKey, m)
 		return m.strings[stringIndex][noteIndex]
 	}
 
@@ -235,22 +236,24 @@ class App extends Component {
 		console.log('drop', e.dataTransfer.getData("text/measure"), e.dataTransfer.getData("text/string"), e.dataTransfer.getData("text/note"))
  
 		if (stringDist.d !== 0) {
-            // doing calcs in larger values and then simplifying to avoid fractions
-            const dur = Math.min(stringDist.d, 1) * measure.state.subdivisions,
-                int = measure.props.interval * measure.state.subdivisions
+            const note = this.getNote(
+                this.state.dragging.measure,
+                this.state.dragging.string,
+                this.state.dragging.note
+            )
 
-			const note = this.getNote(
-				parseInt(e.dataTransfer.getData("text/measure"), 10),
-				parseInt(e.dataTransfer.getData("text/string"), 10),
-				parseInt(e.dataTransfer.getData("text/note"), 10)
-			)
+            console.log('pos ', stringDist.p, ' end ', note.d + stringDist.p, 'dist & d ', stringDist.d, note.d )
 
-			console.log('string drop: dur ', dur, ' dist ', stringDist.d, ' note ', note );
-			console.log('pos ', stringDist.p, ' end ',  note.d + stringDist.p)
+            if (stringDist.d < note.d) {
+                console.log('cant fit')
+                return
+            } else {
+                const m = this.getMeasure(this.state.dragging.measure)
+                m.strings[this.state.dragging.string].splice(this.state.dragging.note, 1)
 
-			if (stringDist.d < note.d) {
-				console.log('cant fit')
-			}
+                note.p = stringDist.p
+                measure.addNote(stringIndex, note)
+            }
 		}
 	}
 
@@ -315,8 +318,18 @@ class App extends Component {
         }));
     }
 
-    handleDrag(evt) {
-        console.log('drag')
+    handleDragStart(info, evt) {
+        console.log('dragstart')
+        this.setState({
+            dragging: info
+        })
+    }
+
+    handleDragEnd(evt) {
+        console.log('dragend')
+        this.setState({
+            dragging: {}
+        })
     }
 
     handleDragOver(measure, stringIndex, evt) {
@@ -325,32 +338,30 @@ class App extends Component {
  
         
 		evt.preventDefault()
-		evt.dataTransfer.dropEffect = 'move'
-
-		return
-
+		
 		const stringDist = this.stringEventDistance(measure, stringIndex, evt)
-			
+
+
 		if (stringDist.d !== 0) {
-            // doing calcs in larger values and then simplifying to avoid fractions
-            const dur = Math.min(stringDist.d, 1) * measure.state.subdivisions,
-                int = measure.props.interval * measure.state.subdivisions
+
+            const m = this.getMeasure(this.state.dragging.measure)
 
 			const note = this.getNote(
-				parseInt(evt.dataTransfer.getData("text/measure"), 10),
-				parseInt(evt.dataTransfer.getData("text/string"), 10),
-				parseInt(evt.dataTransfer.getData("text/note"), 10)
+                this.state.dragging.measure,
+                this.state.dragging.string,
+                this.state.dragging.note
 			)
 
-			console.log('string dragover: dur ', dur, ' dist ', stringDist.d, ' note ', note );
-			console.log('pos ', stringDist.p, ' end ',  note.d + stringDist.p)
+            //console.log('pos ', stringDist.p, ' end ', note.d + stringDist.p, 'dist & d ', stringDist.d, note.d)
 
-			if (stringDist.d < note.d) {
-				console.log('cant fit')
+            if (stringDist.d < note.d) {
+                console.log('cant fit')
+                evt.dataTransfer.dropEffect = 'none'
+                return
 			}
 		}
 
-        
+        evt.dataTransfer.dropEffect = 'move'
     }
 
     handleDrop(evt) {
@@ -389,12 +400,14 @@ class App extends Component {
 
                     <Measure key={measure.key} measure={measure} layout={this.state.layout} duration={measure.d || this.state.song.d} interval={measure.i || this.state.song.i}
                         onMeasureSelect={this.handleMeasureSelect} selected={false} onStringClick={this.handleStringClick} onNoteClick={this.handleNoteClick} 
-						onNoteDragStart={this.handleDrag} onStringDrop={this.handleStringDrop} onStringDragOver={this.handleDragOver} />
+                        onNoteDragStart={this.handleDragStart} onNoteDragEnd={this.handleDragEnd} canDragNote={!this.state.locked}
+                        onStringDrop={this.handleStringDrop} onStringDragOver={this.handleDragOver} />
                     :
 
                     <Measure key={measure.key} forwardedRef={this.measureRef} measure={measure} layout={this.state.layout} duration={measure.d || this.state.song.d} interval={measure.i || this.state.song.i}
                         onMeasureSelect={this.handleMeasureSelect} selected={measure.key === this.state.selectedMeasure.key} onStringClick={this.handleStringClick} onNoteClick={this.handleNoteClick} selectedNote={this.state.selectedNote}
-                        onNoteDragStart={this.handleDrag} onStringDrop={this.handleStringDrop} onStringDragOver={this.handleDragOver} />
+                        onNoteDragStart={this.handleDragStart} onNoteDragEnd={this.handleDragEnd} canDragNote={!this.state.locked}
+                        onStringDrop={this.handleStringDrop} onStringDragOver={this.handleDragOver} />
                 )}
 
                 {hasSelectedMeasure ? <MeasureEditor measureRef={this.measureRef} measure={this.state.selectedMeasure} controller={this} /> : ''}
@@ -402,10 +415,6 @@ class App extends Component {
 
             </div>
 
-            <span draggable="true" onDragStart={this.handleDrag} >Hi</span>
-            <div onDragOver={this.handleDragOver} onDrop={this.handleDrop} >
-                Drop Target
-            </div>
             </React.Fragment>
     );
   }

@@ -76,7 +76,7 @@ class Measure extends Component {
 	}
 	
 	rulerBottom() {
-		return this.stringYOffset(this.props.measure.strings.length + 1) + 0.2*this.props.layout.stringSpacing();
+		return this.stringYOffset(this.props.measure.strings.length) + 0.2*this.props.layout.stringSpacing();
 	}
 	
 	measureHeight() {
@@ -112,6 +112,7 @@ class Measure extends Component {
 	handleStringDrop(index, e) {
         this.props.onStringDrop(this, index, e);
     }
+
 
 	handleStringDragOver(index, e) {
 		
@@ -176,7 +177,7 @@ class Measure extends Component {
             rnd = Math.floor(pos) + remainSubs * subSize + fr * subSize,
             closestInMeasure = Math.min(this.props.duration + 1 - subSize, rnd);
 
-        console.log('closestPosition: ', xNormalized, widEm, xPos, pos, closestInMeasure);
+        //console.log('closestPosition: ', xNormalized, widEm, xPos, pos, closestInMeasure);
 
         return closestInMeasure;
     }
@@ -297,11 +298,9 @@ class Measure extends Component {
                   <div className="measure-begin" x1="1" x2="1" style={{
                       width: '1px', height: this.stringYOffset(this.props.measure.strings.length) - this.stringYOffset(1) + 'em', backgroundColor: 'black',
                       top: this.stringYOffset(1) + 'em', position: 'absolute'
-                  }}
-                      y1={this.stringYOffset(1) + 'em'} onClick={this.handleClick}
-                      y2={this.stringYOffset(this.props.measure.strings.length) + 'em'} />
+                  }} />
 			    <div className={"transparent clickable" + (this.props.selected ? ' selected-measure' : '')}
-                      x1="1"  onClick={this.handleClick}
+                        onClick={this.handleClick}
                       style={{
                           position: 'absolute',
                           width: this.props.layout.measureClickBoxWidth() + 'em', 
@@ -310,18 +309,21 @@ class Measure extends Component {
                       }} />
               </div>
 
-              <Ruler y={this.rulerBottom()} d={this.props.duration} dx={beginningOffset} subdivisions={this.state.subdivisions} subdivisionSpacing={subDivSize} width={this.measureWidth()}/>
+              
               <div className="notes" style={{ position: 'relative' }}>
 			
 			    {this.props.measure.strings.map((str, idx) => (
                       str.map((note, nidx) =>
                           <Note key={idx + '-' + nidx} x={this.noteXPosition(note)} y={this.stringYOffset(idx + 1)} fret={note.f} string={idx} dy={noteTextOffset} measure={this.props.measure.key}
-                              d={this.noteDurationSize(note)} index={nidx} onClick={this.handleNoteClick} onDrag={this.handleNoteDrag} onDragStart={this.props.onNoteDragStart} selected={this.isNoteSelected(nidx, idx)}
-                                  layout={this.props.layout} />
+                              d={this.noteDurationSize(note)} index={nidx} onClick={this.handleNoteClick} selected={this.isNoteSelected(nidx, idx)}
+                              onDrag={this.handleNoteDrag} onDragStart={this.props.onNoteDragStart} onDragEnd={this.props.onNoteDragEnd} canDrag={this.props.canDragNote}
+                              layout={this.props.layout}  />
 				    )
 			    ))}
 			
-		    </div>
+              </div>
+
+              <Ruler y={this.rulerBottom()} d={this.props.duration} dx={beginningOffset} subdivisions={this.state.subdivisions} subdivisionSpacing={subDivSize} width={this.measureWidth()} />
 	      </div>
 	  )
   }
@@ -388,34 +390,33 @@ class Ruler extends Component {
 	}
 	
 	tickHeight(index, subdivs) {
-		return this.props.y - 0.15 * this.props.subdivisionSpacing - 0.65 * this.props.subdivisionSpacing / subdivs;
+		return 0.8 * this.props.subdivisionSpacing - 0.65 * this.props.subdivisionSpacing / subdivs;
 	}
 	
     render() {
   
-	    const ticks = getRuler(this.props.d, this.props.subdivisions);
+        const ticks = getRuler(this.props.d, this.props.subdivisions);
+        const bottom = this.props.subdivisionSpacing - 0.1
 	  
         return (
-            <svg width={this.props.width + 'em'} style={{position: 'absolute'}}>
-		<g className="ruler">
-            <line className="string"
-                    x1="0" y1={this.props.y + 'em'}
-                    x2="100%" y2={this.props.y + 'em'}
-                    />
-			<g>
-			{ticks.map((i, idx) => (
-				<line key={idx} className={"ruler-tick ruler-tick-" + i}
-					    x1={this.tickXPostition(idx) + 'em'} 
-					    x2={this.tickXPostition(idx) + 'em'} 
-					    y1={this.tickHeight(idx, i) + 'em'}
-					    y2={this.props.y + 'em'}
-				/>
-			))}
-			
-			
-			</g>
-                </g>
-                </svg>
+            <svg width={this.props.width + 'em'} height={this.props.subdivisionSpacing + 'em'} style={{ position: 'absolute', top: this.props.y + 'em' }}>
+		    <g className="ruler">
+                <line className="string"
+                        x1="0" y1={bottom + 'em'}
+                        x2="100%" y2={bottom + 'em'}  />
+			    <g>
+			    {ticks.map((i, idx) => (
+				    <line key={idx} className={"ruler-tick ruler-tick-" + i}
+					        x1={this.tickXPostition(idx) + 'em'} 
+					        x2={this.tickXPostition(idx) + 'em'} 
+					        y1={this.tickHeight(idx, i) + 'em'}
+                                y2={bottom + 'em'}
+				    />
+			    ))}
+                    </g>
+
+            </g>
+            </svg>
 	    )
     }
 }
@@ -425,73 +426,35 @@ class Note extends Component {
     constructor(props) {
         super(props);
 
-        this.state = {
-            x: 0,
-            y: 0,
-            isDragging: false
-        }
-
         this.handleClick = this.handleClick.bind(this);
-        this.handleMouseDown = this.handleMouseDown.bind(this);
-        this.handleMouseUp = this.handleMouseUp.bind(this);
-        this.handleMouseMove = this.handleMouseMove.bind(this);
-        this.handleDrag = this.handleDrag.bind(this);
+        this.handleDragStart = this.handleDragStart.bind(this);
+        this.handleDragEnd = this.handleDragEnd.bind(this);
     }
 
     handleClick(e) {
         this.props.onClick(this.props.string, this.props.index, e);
     }
 
-    handleDrag(evt) {
+    handleDragStart(evt) {
         console.log('dragstart')
         evt.dataTransfer.setData("text/measure", this.props.measure);
 
         evt.dataTransfer.setData("text/string", this.props.string);
 
         evt.dataTransfer.setData("text/note", this.props.index);
+
+        this.props.onDragStart({
+            measure: this.props.measure,
+            string: this.props.string,
+            note: this.props.index
+        }, evt)
     }
 
-    handleMouseDown(evt) {
-        console.log('mouse down', evt.pageY)
-
-        this.coords = {
-            x: evt.pageX,
-            y: evt.pageY
-        }
-        document.addEventListener('mousemove', this.handleMouseMove);
-        this.props.onDragStart()
-
-        this.setState({
-            isDragging: true
-        });
+    handleDragEnd(evt) {
+        console.log('dragend')
+        this.props.onDragEnd(evt)
     }
 
-    handleMouseUp(evt) {
-        console.log('mouse up - note', evt)
-        document.removeEventListener('mousemove', this.handleMouseMove);
-        this.coords = {}
-
-        this.props.onDrag(evt)
-
-        this.setState({
-            isDragging: false
-        });
-    }
-
-    handleMouseMove(evt) {
-        console.log('mouse move', evt.pageX, evt.pageY)
-
-        const xDiff = this.coords.x - evt.pageX;
-        const yDiff = this.coords.y - evt.pageY;
-
-        this.coords.x = evt.pageX;
-        this.coords.y = evt.pageY;
-
-        this.setState({
-            x: this.state.x - xDiff,
-            y: this.state.y - yDiff
-        });
-    }
 
     render() {
         const rectHeight = 0.2,
@@ -504,7 +467,9 @@ class Note extends Component {
 	    const y = this.props.y + 'em';
 	  
         return (
-            <div draggable="true" onDragStart={this.handleDrag} style={{ position: 'absolute', width: this.props.d + imgLeft + 'em',
+            <div draggable={this.props.canDrag} onDragStart={this.handleDragStart} onDragEnd={this.handleDragEnd}
+                style={{
+                    position: 'absolute', width: this.props.d + imgLeft + 'em',
 				left: this.props.x - imgLeft + 'em', top: this.props.y - imgHeight / 2 + 'em', height: imgHeight + 'em', zIndex: 20 }}>
 				<svg 
 					 style={{ width: this.props.d + imgLeft + 'em', height: imgHeight + 'em' }}>
@@ -516,7 +481,7 @@ class Note extends Component {
 							height="0.2em" />
 
 					{this.props.selected &&
-						<circle className="selected-note" cx={0}
+						<circle className="selected-note" cx={imgLeft + 'em'}
 							cy={imgMiddle + 'em'}
 						r={this.props.layout.noteRadius() + 'em'} />}
 	  

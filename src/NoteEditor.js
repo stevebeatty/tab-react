@@ -72,7 +72,7 @@ class NoteEditor extends Component {
         console.log('d ', nextNoteDist, durations, nextInts)
 
         return (
-            <div ref={this.editorRef} className="card" >
+            <div ref={this.editorRef} className="card" style={{ zIndex: 50 }} >
                 <div className="card-header">
                     Note Edit
                     <button type="button" onClick={this.props.controller.clearSelectedNote} className="close" aria-label="Close">
