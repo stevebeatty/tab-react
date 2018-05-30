@@ -1,5 +1,5 @@
 
-import { Measure } from './Model';
+import { Measure, Song } from './Model';
 
 
 describe('Measure test', () => {
@@ -58,4 +58,97 @@ describe('Measure test', () => {
         console.log('strs ', m.validStringsForPosition(3));
         console.log('strs ', m.validStringsForPosition(2));
     });
+
+    test('interval', () => {
+        const m = new Measure(measure)
+
+        expect(m.interval()).toEqual(4)
+        expect(new Measure({}).interval()).toBeUndefined()
+    })
+
+    test('duration', () => {
+        const m = new Measure(measure)
+
+        expect(m.duration()).toEqual(4)
+        expect(new Measure({}).duration()).toBeUndefined()
+    })
 });
+
+
+describe('Song Class test', () => {
+    var song;
+
+    beforeEach(() => {
+        song = {
+            name: 'Name',
+            author: 'Author',
+            d: 4,
+            i: 4,
+            measures: [
+                {
+                    strings: [
+                        [{ f: 1, d: 1, i: 4, p: 2 }],
+                        [],
+                        [{ f: 7, d: 1, i: 4, p: 3 }],
+                        [],
+                        [],
+                        []
+                    ]
+                },
+                {
+                    strings: [
+                        [],
+                        [{ f: 13, d: 1, i: 8, p: 1 }],
+                        [],
+                        [{ f: 4, d: 1, i: 4, p: 0 }],
+                        [],
+                        []
+                    ]
+                },
+                {
+                    strings: [
+                        [],
+                        [{ f: 13, d: 1, i: 16, p: 1 }],
+                        [],
+                        [{ f: 5, d: 1, i: 4, p: 0 }],
+                        [{ f: 14, d: 1, i: 8, p: 0.5 }],
+                        [{ f: 8, d: 1, i: 16, p: 1.25 }]
+                    ]
+                }
+            ]
+        }
+    });
+
+    test('constructor', () => {
+        const s = new Song(song)
+
+        expect(s.measures.length).toEqual(song.measures.length)
+        expect(s.i).toEqual(song.i)
+        expect(s.interval()).toEqual(song.i)
+
+        expect(s.d).toEqual(song.d)
+        expect(s.duration()).toEqual(song.d)
+
+        expect(s.measures[0].strings.length).toEqual(6)
+        expect(s.key).toBeDefined()
+
+        s.measures.forEach((m) => {
+            console.log('sdf', m.key)
+            expect(m.key).toBeDefined()
+            expect(s.measureWithKey(m.key)).toEqual(m)
+        })
+
+        expect(s.measureIndexWithKey(s.measures[0].key)).toEqual(0)
+        expect(s.measureIndexWithKey(s.measures[1].key)).toEqual(1)
+    });
+
+    test('insertMeasureAtIndex', () => {
+        const s = new Song(song)
+        s.insertMeasureAtIndex(1, s.newMeasure())
+        expect(s.measures.length).toEqual(song.measures.length + 1)
+
+        s.measures[1].strings.forEach((s) => {
+            expect(s.length).toEqual(0)
+        })
+    });
+})

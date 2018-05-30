@@ -113,9 +113,7 @@ class MeasureDisplay extends Component {
         this.props.onStringDrop(this, index, e);
     }
 
-
 	handleStringDragOver(index, e) {
-		
         this.props.onStringDragOver(this, index, e);
     }
 
@@ -145,21 +143,6 @@ class MeasureDisplay extends Component {
             this.props.selectedNote.string === stringIndex;
     }
 
-    doNotesOverlap(a, b) {
-        const mi = this.props.measure.i;
-        //     b~~~~~~
-        //            a~~~~
-        // -----------------------------
-        //     ^      ^
-        //console.log(' | ', b.p + (b.d * mi / b.i), a.p, a.p + (a.d * mi / a.i), b.p);
-
-        if (b.p <= a.p) {
-            return b.p + (b.d * mi / b.i) > a.p
-        } else {
-            return a.p + (a.d * mi / a.i) > b.p;
-        }               
-    }
-
     /**
      * Finds the closest position to a valid subdivision 
      * 
@@ -182,53 +165,8 @@ class MeasureDisplay extends Component {
         return closestInMeasure;
     }
 
-    nextNoteDistance(string, pos, skipIndex) {
-        const notes = this.props.measure.strings[string];
-
-        //console.log('notes ', notes);
-        for (let i = 0; i < notes.length; i++) {
-            if (skipIndex === i) {
-                continue
-            }
-            let n = notes[i];
-            //console.log('n ', n, n.p + (n.d / n.i * this.props.interval), pos, this.props.interval );
-            if (n.p < pos) {
-                if (n.p + (n.d / n.i * this.props.interval) > pos) {
-                    return 0;
-                }
-            } else {
-                return n.p - pos;
-            }
-        }
-
-        return -1;
-    }
-
     nextNoteDistanceOrRemaining(string, pos, skipIndex) {
-        const nextNoteDist = this.nextNoteDistance(string, pos, skipIndex)
-        return nextNoteDist === -1 ? this.props.duration - pos : nextNoteDist
-    }
-
-    prevNoteDistance(string, pos) {
-        const notes = this.props.measure.strings[string];
-        const measureI = this.props.interval / this.state.subdivisions;
-
-        //console.log('notes ', notes);
-        for (let i = notes.length - 1; i >= 0; i--) {
-            let n = notes[i];
-            //console.log('p ', n, n.p + (n.d / n.i * this.props.interval), pos);
-            let extent = n.p + (n.d / n.i * this.props.interval);
-            //console.log('p ', pos, ' ? ', extent, n)
-            if (n.p <= pos) {
-                if (extent >= pos) {
-                    return 0;
-                } else {
-                    return pos - extent
-                }
-            }
-        }
-
-        return -1;
+        return this.props.measure.nextNoteDistanceOrRemaining(string, pos, skipIndex)
     }
 
     validStringsForPosition(pos) {
@@ -243,26 +181,12 @@ class MeasureDisplay extends Component {
     }
 
     addNote(string, note) {
-        const notes = this.props.measure.strings[string];
-
-        if (!note.i) {
-            note.i = this.props.interval;
-        }
-
-        notes.push(note);
-        this.sortNotes(notes);
-
-        return notes.indexOf(note);
+        return this.props.measure.addNote(string, note)
     }
 
     removeNote(string, noteIndex) {
-        const notes = this.props.measure.strings[string];
-        return notes.splice(noteIndex, 1)
+        return this.props.measure.removeNote(string, noteIndex)
     }
-
-    sortNotes(arr) {
-        arr.sort( (a, b) => a.p - b.p );
-    };
 
     handleMouseUp(evt) {
         console.log('mouse up - measure', evt.pageX, evt.pageY)
@@ -285,7 +209,7 @@ class MeasureDisplay extends Component {
       
       return (
           <div key={this.props.measure.key} className="measure" alt={this.props.selected.toString()} {...refAtt}
-              onMouseUp={this.handleMouseUp} style={{ width: this.measureWidth() + 'em', height: this.measureHeight() + 'em' }}>
+               style={{ width: this.measureWidth() + 'em', height: this.measureHeight() + 'em' }}>
 
 		      <div className="strings">
                       {this.props.measure.strings.map((str, idx) =>
@@ -305,7 +229,8 @@ class MeasureDisplay extends Component {
                           position: 'absolute',
                           width: this.props.layout.measureClickBoxWidth() + 'em', 
                           height: (this.props.measure.strings.length - 1) * this.props.layout.stringSpacing() + 'em',
-                         top:  this.stringYOffset(1) + 'em'
+                          top: this.stringYOffset(1) + 'em',
+                          zIndex: 30
                       }} />
               </div>
 
@@ -437,11 +362,6 @@ class Note extends Component {
 
     handleDragStart(evt) {
         console.log('dragstart')
-        evt.dataTransfer.setData("text/measure", this.props.measure);
-
-        evt.dataTransfer.setData("text/string", this.props.string);
-
-        evt.dataTransfer.setData("text/note", this.props.index);
 
         this.props.onDragStart({
             measure: this.props.measure,

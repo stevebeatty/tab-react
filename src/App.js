@@ -4,6 +4,7 @@ import tab1 from './tab.js';
 import Layout from './Layout.js';
 import MeasureDisplay from './MeasureDisplay';
 import NoteEditor from './NoteEditor'
+import { Song, Measure } from './Model'
 
 console.log(tab1);
 
@@ -16,7 +17,7 @@ console.log(tab1);
  }
  
  */
-var song = {
+var song = new Song({
 	name: 'Name',
 	author: 'Author',
 	d: 4,
@@ -53,7 +54,7 @@ var song = {
 			]
 		}
 	]
-};
+});
 
 var layout = new Layout();
 
@@ -64,8 +65,6 @@ var layout = new Layout();
 class App extends Component {
 	constructor(props) {
 		super(props);
-		
-        this.measureIndex = this.processSong(song);
 		
 		this.state = {
 			song: song,
@@ -96,16 +95,9 @@ class App extends Component {
         this.handleDragOver = this.handleDragOver.bind(this);
 		this.handleStringDrop = this.handleStringDrop.bind(this);
 	}
-	
-	processSong(song) {
-		var i = 1;
-		for (var m = 0; m < song.measures.length; m++) {
-			song.measures[m].key = i++;
-		}
-		
-		return i;
-	}
-	
+
+    // Selection
+
     handleMeasureSelect(measure) {
         console.log('click ' + Object.keys(measure.state));
 		
@@ -137,37 +129,17 @@ class App extends Component {
         this.setSelectedNote(measure, string, idx)
     }
 
-    findMeasureIndex(measure) {
-        return this.state.song.measures.findIndex(x => x.key === measure.key);
-    }
-
-    newMeasure() {
-        const strings = [];
-
-        for (var m = 0; m < 6; m++) {
-            strings.push([]);
-        }
-
-        return {
-            key: this.measureIndex++,
-            strings: strings
-        };
-    }
-
     insertNewBeforeSelectedMeasure() {
-        const idx = this.findMeasureIndex(this.state.selectedMeasure);
-        const strings = [];
+        const song = this.state.song,
+            index = song.measureIndexWithKey(this.state.selectedMeasure.key),
+            newM = song.newMeasure()
 
-        for (let m = 0; m < 6; m++) {
-            strings.push([]);
-        }
-
-        const m = this.newMeasure();
-
-        this.state.song.measures.splice(idx, 0, m);
-        this.setState(prevState => ({
+        console.log('insert', index, newM)
+        song.insertMeasureAtIndex(index, newM)
+  
+        this.setState({
             song: this.state.song
-        }));
+        });
     }
 
     handleNoteClick(measure, stringIndex, noteIndex, e) {
@@ -221,7 +193,7 @@ class App extends Component {
     }
 
 	getMeasure(measureKey) {
-		return this.state.song.measures.find( x => x.key === measureKey )
+        return this.state.song.measureWithKey(measureKey)
 	}
 
 	getNote(measureKey, stringIndex, noteIndex) {
@@ -249,7 +221,7 @@ class App extends Component {
                 return
             } else {
                 const m = this.getMeasure(this.state.dragging.measure)
-                m.strings[this.state.dragging.string].splice(this.state.dragging.note, 1)
+                m.removeNote(this.state.dragging.string, this.state.dragging.note)
 
                 note.p = stringDist.p
                 measure.addNote(stringIndex, note)
@@ -257,6 +229,42 @@ class App extends Component {
 		}
 	}
 
+    handleDragOver(measure, stringIndex, evt) {
+        //console.log('dragover', measure, evt)
+        //console.log('handleDragOver ', evt.dataTransfer.getData("text/measure"), evt.dataTransfer.getData("text/string"), evt.dataTransfer.getData("text/note"))
+
+
+        evt.preventDefault()
+
+        const stringDist = this.stringEventDistance(measure, stringIndex, evt)
+
+
+        if (stringDist.d !== 0) {
+
+            const m = this.getMeasure(this.state.dragging.measure)
+
+            const note = this.getNote(
+                this.state.dragging.measure,
+                this.state.dragging.string,
+                this.state.dragging.note
+            )
+
+            //console.log('pos ', stringDist.p, ' end ', note.d + stringDist.p, 'dist & d ', stringDist.d, note.d)
+
+            if (stringDist.d < note.d) {
+                // console.log('cant fit')
+                evt.dataTransfer.dropEffect = 'none'
+                return
+            }
+        }
+
+        evt.dataTransfer.dropEffect = 'move'
+    }
+
+    handleDrop(evt) {
+        evt.preventDefault()
+        console.log('drop', evt.dataTransfer.getData("text/measure"), evt.dataTransfer.getData("text/string"), evt.dataTransfer.getData("text/note"))
+    }
 
 
     simplifyNoteTiming(note) {
@@ -332,42 +340,7 @@ class App extends Component {
         })
     }
 
-    handleDragOver(measure, stringIndex, evt) {
-        //console.log('dragover', measure, evt)
-		//console.log('handleDragOver ', evt.dataTransfer.getData("text/measure"), evt.dataTransfer.getData("text/string"), evt.dataTransfer.getData("text/note"))
- 
-        
-		evt.preventDefault()
-		
-		const stringDist = this.stringEventDistance(measure, stringIndex, evt)
-
-
-		if (stringDist.d !== 0) {
-
-            const m = this.getMeasure(this.state.dragging.measure)
-
-			const note = this.getNote(
-                this.state.dragging.measure,
-                this.state.dragging.string,
-                this.state.dragging.note
-			)
-
-            //console.log('pos ', stringDist.p, ' end ', note.d + stringDist.p, 'dist & d ', stringDist.d, note.d)
-
-            if (stringDist.d < note.d) {
-                console.log('cant fit')
-                evt.dataTransfer.dropEffect = 'none'
-                return
-			}
-		}
-
-        evt.dataTransfer.dropEffect = 'move'
-    }
-
-    handleDrop(evt) {
-        evt.preventDefault()
-        console.log('drop', evt.dataTransfer.getData("text/measure"), evt.dataTransfer.getData("text/string"), evt.dataTransfer.getData("text/note"))
-    }
+    
 
     render() {
         const hasSelectedNote = this.state.selectedNote.note !== undefined;
@@ -466,12 +439,15 @@ class MeasureEditor extends Component {
     render() {
 
         return (
-            <div ref={this.editorRef} className="measure-edit-panel panel panel-primary" >
-                <div className="panel-body form-inline">
+            <div ref={this.editorRef} className="card" style={{ zIndex: 50 }} >
+                <div className="card-header">
+                    Measure Edit
+                    <button type="button" onClick={this.props.controller.clearSelectedMeasure} className="close" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div className="card-body">
                     <form>
-                        <button type="button" className="close pull-right" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
                         <div className="form-group">
                             <label>Insert Empty</label>
                             <button type="button" onClick={this.insertBefore} className="btn btn-default" aria-label="">

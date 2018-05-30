@@ -21,16 +21,6 @@ describe('Measure test', () => {
         ] 
     };
 
-    test('doNotesOverlap', () => {
-        const m = shallow(<MeasureDisplay measure={measure} layout={layout} duration={measure.d} interval={measure.i} selected={false} />);
-
-
-        expect(m.instance().doNotesOverlap({ f: 1, d: 1, i: 4, p: 2 }, { f: 1, d: 1, i: 4, p: 2 })).toEqual(true);
-        expect(m.instance().doNotesOverlap({ f: 1, d: 1, i: 4, p: 2 }, { f: 7, d: 1, i: 4, p: 3 })).toEqual(false);
-        expect(m.instance().doNotesOverlap({ f: 1, d: 2, i: 4, p: 2 }, { f: 7, d: 1, i: 4, p: 3 })).toEqual(true);
-        expect(m.instance().doNotesOverlap({ f: 1, d: 2, i: 8, p: 2 }, { f: 7, d: 1, i: 4, p: 3 })).toEqual(false);
-    });
-
     test('closestPosition', () => {
         const m = shallow(<MeasureDisplay measure={measure} layout={layout} duration={measure.d} interval={measure.i} selected={false} />);
         const subEms = 4 * layout.subdivisionOffset() * 4,
@@ -46,35 +36,4 @@ describe('Measure test', () => {
         expect(m.instance().closestPosition(s + 1.75 * subSize)).toEqual(2);
     });
 
-    test('nextNoteDistance', () => {
-        const m = shallow(<MeasureDisplay measure={measure} layout={layout} duration={measure.d} interval={measure.i} selected={false} />);
-
-        expect(m.instance().nextNoteDistance(0, 1)).toEqual(1);
-        expect(m.instance().nextNoteDistance(0, 2)).toEqual(0);
-        expect(m.instance().nextNoteDistance(0, 2.125)).toEqual(0);
-        expect(m.instance().nextNoteDistance(0, 2.5)).toEqual(0);
-        expect(m.instance().nextNoteDistance(0, 3)).toEqual(-1);
-
-        expect(m.instance().nextNoteDistance(1, 1)).toEqual(-1);
-        expect(m.instance().nextNoteDistance(1, 2)).toEqual(-1);
-        expect(m.instance().nextNoteDistance(1, 2.5)).toEqual(-1);
-        expect(m.instance().nextNoteDistance(1, 3)).toEqual(-1);
-
-    });
-
-    test('prevNoteDistance', () => {
-        const m = shallow(<MeasureDisplay measure={measure} layout={layout} duration={measure.d} interval={measure.i} selected={false} />);
-        expect(m.instance().prevNoteDistance(0, 1)).toEqual(-1);
-        expect(m.instance().prevNoteDistance(0, 2)).toEqual(0);
-        expect(m.instance().prevNoteDistance(0, 2.5)).toEqual(0);
-        expect(m.instance().prevNoteDistance(0, 3)).toEqual(0);
-        expect(m.instance().prevNoteDistance(0, 4)).toEqual(1);
-
-        expect(m.instance().prevNoteDistance(1, 1)).toEqual(-1);
-        expect(m.instance().prevNoteDistance(1, 2)).toEqual(-1);
-        expect(m.instance().prevNoteDistance(1, 3)).toEqual(-1);
-
-        console.log('strs ', m.instance().validStringsForPosition(3));
-        console.log('strs ', m.instance().validStringsForPosition(2));
-    });
 });

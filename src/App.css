@@ -80,13 +80,14 @@ nav {
   fill: #7300FF;
 }
 
-.selected-note,
-.selected-measure {
+.selected-note
+{
   fill: #70FFB5;
 }
 
 .selected-measure {
-    fill-opacity: 0.5;
+    background-color: #70FFB5;
+    opacity: 0.5;
 }
 
 .form-inline .form-group {
