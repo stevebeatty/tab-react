@@ -7,4 +7,30 @@ function rangeArray(start, end, step) {
     return a
 }
 
-export { rangeArray }
+class IdGenerator {
+    constructor(start = 1) {
+        this.index = start
+    }
+
+    next() {
+        return this.index++
+    }
+
+    accommodateIndex(idx) {
+        if (idx >= this.index) {
+            this.index = idx + 1
+        }
+    }
+
+    nextOrValue(value) {
+        if (value === undefined || value === null) {
+            return this.next()
+        } else {
+            this.accommodateIndex(value)
+            return value
+        }
+    }
+}
+
+
+export { rangeArray, IdGenerator }
