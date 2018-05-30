@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import './App.css';
 import tab1 from './tab.js';
 import Layout from './Layout.js';
-import Measure from './Measure';
+import MeasureDisplay from './MeasureDisplay';
 import NoteEditor from './NoteEditor'
 
 console.log(tab1);
@@ -398,13 +398,13 @@ class App extends Component {
 		
                 {this.state.song.measures.map((measure, idx) => !this.measureNeedsRef(measure) ?
 
-                    <Measure key={measure.key} measure={measure} layout={this.state.layout} duration={measure.d || this.state.song.d} interval={measure.i || this.state.song.i}
+                    <MeasureDisplay key={measure.key} measure={measure} layout={this.state.layout} duration={measure.d || this.state.song.d} interval={measure.i || this.state.song.i}
                         onMeasureSelect={this.handleMeasureSelect} selected={false} onStringClick={this.handleStringClick} onNoteClick={this.handleNoteClick} 
                         onNoteDragStart={this.handleDragStart} onNoteDragEnd={this.handleDragEnd} canDragNote={!this.state.locked}
                         onStringDrop={this.handleStringDrop} onStringDragOver={this.handleDragOver} />
                     :
 
-                    <Measure key={measure.key} forwardedRef={this.measureRef} measure={measure} layout={this.state.layout} duration={measure.d || this.state.song.d} interval={measure.i || this.state.song.i}
+                    <MeasureDisplay key={measure.key} forwardedRef={this.measureRef} measure={measure} layout={this.state.layout} duration={measure.d || this.state.song.d} interval={measure.i || this.state.song.i}
                         onMeasureSelect={this.handleMeasureSelect} selected={measure.key === this.state.selectedMeasure.key} onStringClick={this.handleStringClick} onNoteClick={this.handleNoteClick} selectedNote={this.state.selectedNote}
                         onNoteDragStart={this.handleDragStart} onNoteDragEnd={this.handleDragEnd} canDragNote={!this.state.locked}
                         onStringDrop={this.handleStringDrop} onStringDragOver={this.handleDragOver} />
@@ -487,4 +487,4 @@ class MeasureEditor extends Component {
 
 
 
-export { App, Measure };
+export { App, MeasureDisplay };

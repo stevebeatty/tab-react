@@ -36,7 +36,7 @@ function getRuler(intervals, subdivisions) {
 
 
 
-class Measure extends Component {
+class MeasureDisplay extends Component {
 	constructor(props) {
 		super(props);
         
@@ -506,4 +506,4 @@ class Note extends Component {
     }
 }
 
-export { Measure as default };
+export { MeasureDisplay as default };

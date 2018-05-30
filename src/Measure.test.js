@@ -1,5 +1,5 @@
 import React from 'react';
-import { App, Measure } from './App';
+import { App, MeasureDisplay } from './App';
 import Layout from './Layout';
 import Enzyme, { mount, shallow } from "enzyme";
 import Adapter from 'enzyme-adapter-react-16';
@@ -22,7 +22,7 @@ describe('Measure test', () => {
     };
 
     test('doNotesOverlap', () => {
-        const m = shallow(<Measure measure={measure} layout={layout} duration={measure.d} interval={measure.i} selected={false} />);
+        const m = shallow(<MeasureDisplay measure={measure} layout={layout} duration={measure.d} interval={measure.i} selected={false} />);
 
 
         expect(m.instance().doNotesOverlap({ f: 1, d: 1, i: 4, p: 2 }, { f: 1, d: 1, i: 4, p: 2 })).toEqual(true);
@@ -32,7 +32,7 @@ describe('Measure test', () => {
     });
 
     test('closestPosition', () => {
-        const m = shallow(<Measure measure={measure} layout={layout} duration={measure.d} interval={measure.i} selected={false} />);
+        const m = shallow(<MeasureDisplay measure={measure} layout={layout} duration={measure.d} interval={measure.i} selected={false} />);
         const subEms = 4 * layout.subdivisionOffset() * 4,
             wid = layout.measureSideOffset() + subEms,
             s = 1 / 7,
@@ -47,7 +47,7 @@ describe('Measure test', () => {
     });
 
     test('nextNoteDistance', () => {
-        const m = shallow(<Measure measure={measure} layout={layout} duration={measure.d} interval={measure.i} selected={false} />);
+        const m = shallow(<MeasureDisplay measure={measure} layout={layout} duration={measure.d} interval={measure.i} selected={false} />);
 
         expect(m.instance().nextNoteDistance(0, 1)).toEqual(1);
         expect(m.instance().nextNoteDistance(0, 2)).toEqual(0);
@@ -63,7 +63,7 @@ describe('Measure test', () => {
     });
 
     test('prevNoteDistance', () => {
-        const m = shallow(<Measure measure={measure} layout={layout} duration={measure.d} interval={measure.i} selected={false} />);
+        const m = shallow(<MeasureDisplay measure={measure} layout={layout} duration={measure.d} interval={measure.i} selected={false} />);
         expect(m.instance().prevNoteDistance(0, 1)).toEqual(-1);
         expect(m.instance().prevNoteDistance(0, 2)).toEqual(0);
         expect(m.instance().prevNoteDistance(0, 2.5)).toEqual(0);
