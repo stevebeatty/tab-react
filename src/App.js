@@ -5,6 +5,7 @@ import Layout from './Layout.js';
 import MeasureDisplay from './MeasureDisplay';
 import NoteEditor from './NoteEditor'
 import { Song, Measure } from './Model'
+import $ from 'jquery'
 
 console.log(tab1);
 
@@ -18,7 +19,7 @@ console.log(tab1);
  
  */
 var song = new Song({
-	name: 'Name',
+	title: 'Name',
 	author: 'Author',
 	d: 4,
 	i: 4,
@@ -72,7 +73,9 @@ class App extends Component {
             selectedMeasure: {},
             selectedNote: {},
             locked: false,
-            dragging: {}
+            dragging: {},
+            showSettings: false,
+            showLoadFile: false
 		};
 
         this.measureRef = React.createRef();
@@ -93,8 +96,17 @@ class App extends Component {
         this.handleDragStart = this.handleDragStart.bind(this);
         this.handleDragEnd = this.handleDragEnd.bind(this);
         this.handleDragOver = this.handleDragOver.bind(this);
-		this.handleStringDrop = this.handleStringDrop.bind(this);
+        this.handleStringDrop = this.handleStringDrop.bind(this);
+        this.toggleShowSettings = this.toggleShowSettings.bind(this);
+        this.toggleShowLoadFile = this.toggleShowLoadFile.bind(this);
+        this.loadSong = this.loadSong.bind(this);
 	}
+
+    handleSongUpdated() {
+        this.setState({
+            song: this.state.song
+        })
+    }
 
     // Selection
 
@@ -299,6 +311,18 @@ class App extends Component {
         }
     }
 
+    toggleShowSettings() {
+        this.setState(prevState => ({
+            showSettings: !prevState.showSettings
+        }));
+    }
+
+    toggleShowLoadFile() {
+        this.setState(prevState => ({
+            showLoadFile: !prevState.showLoadFile
+        }));
+    }
+
     handleLock() {
         console.log('lock')
         this.setState(prevState => ({
@@ -320,7 +344,12 @@ class App extends Component {
         })
     }
 
-    
+    loadSong(json) {
+        this.setState({
+            song: new Song(json),
+            showLoadFile: false
+        })
+    }
 
     render() {
         const hasSelectedNote = this.state.selectedNote.note !== undefined;
@@ -348,11 +377,26 @@ class App extends Component {
 						<li className="nav-item">
                             <a className="nav-link" ><span className={"fa fa-play"} ></span></a>
                         </li>
+
+                        <li className="nav-item">
+                            <a className="nav-link" onClick={this.toggleShowSettings}><span className={"fa fa-cog" + (this.state.showSettings ? ' text-info' : '')} ></span></a>
+                        </li>
+
+                        <li className="nav-item">
+                            <div class="dropdown">
+                              <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span className="fa fa-save"></span>
+                              </button>
+                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                    <a class="dropdown-item" href="#" onClick={this.toggleShowLoadFile}>Load Song</a>
+                              </div>
+                            </div>
+                        </li>
                     </ul>
                 </div>
           </nav>
             <div className="container" style={{ "marginTop": "1em" }}>
-				<h4>{this.state.song.name}</h4>
+				<h4>{this.state.song.title}</h4>
 				<h6>{this.state.song.author}</h6>
 		
                 {this.state.song.measures.map((measure, idx) => !this.measureNeedsRef(measure) ?
@@ -373,6 +417,9 @@ class App extends Component {
                 {hasSelectedNote ? <NoteEditor measureRef={this.measureRef} note={this.state.selectedNote} controller={this} frets={this.frets} /> : ''}
 
             </div>
+
+            {this.state.showSettings && < SettingsEditor controller={this} />}
+            {this.state.showLoadFile && < FileLoader controller={this} />}
 
             </React.Fragment>
     );
@@ -447,6 +494,216 @@ class MeasureEditor extends Component {
     }
 }
 
+
+class SettingsEditor extends Component {
+
+    constructor(props) {
+        super(props);
+        this.editorRef = React.createRef();
+
+        this.updatePosition = this.updatePosition.bind(this);
+        this.handleClose = this.handleClose.bind(this);
+    }
+
+    componentDidMount() {
+        console.log('mounted:', this.props);
+        //this.updatePosition();
+       // window.addEventListener("resize", this.updatePosition);
+
+        $(this.editorRef.current).modal('show')
+    }
+
+    componentWillUnmount() {
+        //window.removeEventListener("resize", this.updatePosition);
+    }
+
+    componentDidUpdate(prevProps) {
+        console.log('did update, old props:', prevProps);
+        console.log('new props:', this.props);
+        //this.updatePosition();
+    }
+
+    updatePosition() {
+        if (this.props.measureRef.current) {
+            const rect = this.props.measureRef.current.getBoundingClientRect();
+            console.log(rect.top, rect.right, rect.bottom, rect.left);
+
+            const style = this.editorRef.current.style;
+            style.position = 'absolute';
+            style.top = rect.bottom + 'px';
+            style.left = rect.left + 'px';
+        }
+    }
+
+    handleClose() {
+        this.props.controller.toggleShowSettings()
+    }
+
+    render() {
+
+        return (
+            <div ref={this.editorRef} class="modal" tabindex="-1" role="dialog">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Tabulater Settings</h5>
+                            <button onClick={this.handleClose} type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Modal body text goes here.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+}
+
+class FileLoader extends Component {
+
+    constructor(props) {
+        super(props);
+        this.editorRef = React.createRef();
+
+        this.handleFileChanged = this.handleFileChanged.bind(this);
+        this.handleClose = this.handleClose.bind(this);
+        this.handleSubmit = this.handleSubmit.bind(this);
+    }
+
+    componentDidMount() {
+        console.log('mounted:', this.props);
+       // $(this.editorRef.current).modal('show')
+        //document.body.classList.add('modal-open')
+    }
+
+    componentWillUnmount() {
+        console.log('unmounting')
+        //document.body.classList.remove('modal-open')
+    }
+
+    componentDidUpdate(prevProps) {
+        console.log('did update')
+    }
+
+    handleFileChanged() {
+
+    }
+
+    handleClose() {
+        this.props.controller.toggleShowLoadFile();
+    }
+
+    handleSubmit(evt) {
+        console.log('handling submit', this.fileInput.files)
+
+        evt.preventDefault()
+
+        if (this.fileInput.files[0]) {
+            const rdr = new FileReader()
+            rdr.onload = loadEvt => {
+                console.log('loaded', this.props)
+                const result = loadEvt.target.result
+
+                try {
+                    const obj = JSON.parse(result)
+                    
+                    this.props.controller.loadSong(obj)
+                } catch (e) {
+                    console.log('error parsing', e)
+                }
+            }
+            rdr.onerror = errEvt => {
+                console.log('error')
+            }
+
+            rdr.readAsText(this.fileInput.files[0])
+        }
+    }
+
+    render() {
+
+        return (
+            <ModalDialog title="Load Song" onClose={this.handleClose} >
+                <form onSubmit={this.handleSubmit}>
+                    <div class="form-group">
+                        <input type="file" ref={input => this.fileInput = input} />
+                    </div>
+                    <button type="submit" className="btn btn-primary">Upload</button>
+                </form>
+            </ModalDialog>
+        )
+    }
+}
+
+class ModalDialog extends Component {
+
+    constructor(props) {
+        super(props);
+        this.dialogRef = React.createRef();
+    }
+
+    componentDidMount() {
+        console.log('mounted:', this.props);
+        //$(this.dialogRef.current).modal('show')
+        document.body.classList.add('modal-open')
+    }
+
+    componentWillUnmount() {
+        console.log('unmounting')
+        document.body.classList.remove('modal-open')
+    }
+
+    render() {
+
+        return (
+            <React.Fragment>
+                <div ref={this.dialogRef} className="modal show" tabIndex="-1" role="dialog" style={{ display: 'block'}}>
+                    <div className="modal-dialog" role="document">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">{this.props.title}</h5>
+                                <button onClick={this.props.onClose} type="button" className="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div className="modal-body">
+                                {this.props.children}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="modal-backdrop show"></div>
+           </React.Fragment>
+        )
+    }
+}
+
+
+class SaveDialog extends Component {
+
+    constructor(props) {
+        super(props);
+        this.handleClose = this.handleClose.bind(this);
+    }
+
+    handleClose() {
+
+    }
+
+    render() {
+
+        return (
+            <ModalDialog title="Test" onClose={this.handleClose} >
+                <form >
+
+                    <button type="submit" className="btn btn-primary">Upload</button>
+                </form>
+            </ModalDialog>
+        )
+    }
+}
 
 
 export { App, MeasureDisplay };

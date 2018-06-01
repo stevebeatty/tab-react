@@ -155,6 +155,10 @@ class Song {
         this.key = this.context.idGen.nextOrValue(cfg.key)
 		this.i = cfg.i
         this.d = cfg.d
+        this.title = cfg.title
+        this.author = cfg.author
+
+
 		this.measures = []
 
 		for (let i = 0; i < cfg.measures.length; i++) {

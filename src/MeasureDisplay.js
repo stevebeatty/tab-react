@@ -76,11 +76,11 @@ class MeasureDisplay extends Component {
 	}
 	
 	rulerBottom() {
-		return this.stringYOffset(this.props.measure.strings.length) + 0.2*this.props.layout.stringSpacing();
+		return this.stringYOffset(this.props.measure.strings.length + 1) + 0.4*this.props.layout.stringSpacing();
 	}
 	
 	measureHeight() {
-		return this.rulerBottom() + this.props.layout.topStringOffset();
+		return this.rulerBottom();
 	};
 		
 	measureWidth() {
@@ -237,7 +237,8 @@ class MeasureDisplay extends Component {
 			
               </div>
 
-              <Ruler y={this.rulerBottom()} d={this.props.duration} dx={beginningOffset} subdivisions={this.state.subdivisions} subdivisionSpacing={subDivSize} width={this.measureWidth()} />
+              <Ruler y={this.rulerBottom()} d={this.props.duration} dx={beginningOffset} subdivisions={this.state.subdivisions} subdivisionSpacing={subDivSize}
+                  width={this.measureWidth()} height={subDivSize} />
 	      </div>
 	  )
   }
@@ -313,7 +314,7 @@ class Ruler extends Component {
         const bottom = this.props.subdivisionSpacing - 0.1
 	  
         return (
-            <svg width={this.props.width + 'em'} height={this.props.subdivisionSpacing + 'em'} style={{ position: 'absolute', top: this.props.y + 'em' }}>
+            <svg width={this.props.width + 'em'} height={this.props.height + 'em'} style={{ position: 'absolute', top: this.props.y - this.props.height + 'em' }}>
 		    <g className="ruler">
                 <line className="string"
                         x1="0" y1={bottom + 'em'}

@@ -1,6 +1,6 @@
 class Layout {
     topStringOffset() {
-        return 1;
+        return 0.75;
     }
     noteRadius() {
         return 0.6;
