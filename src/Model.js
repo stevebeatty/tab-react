@@ -117,6 +117,10 @@ class Measure {
         return valid
     }
 
+	noteWithIndex(stringIndex, noteIndex) {
+		return this.strings[stringIndex][noteIndex]
+	}
+
     addNote(string, note) {
         const notes = this.strings[string]
 

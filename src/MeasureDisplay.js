@@ -169,17 +169,6 @@ class MeasureDisplay extends Component {
         return this.props.measure.nextNoteDistanceOrRemaining(string, pos, skipIndex)
     }
 
-    validStringsForPosition(pos) {
-        const valid = []
-        for (let i = 0; i < this.props.measure.strings.length; i++) {
-            if (this.nextNoteDistance(i, pos) !== 0) {
-                valid.push(i)
-            }
-        }
-
-        return valid
-    }
-
     addNote(string, note) {
         return this.props.measure.addNote(string, note)
     }
@@ -230,7 +219,7 @@ class MeasureDisplay extends Component {
                           width: this.props.layout.measureClickBoxWidth() + 'em', 
                           height: (this.props.measure.strings.length - 1) * this.props.layout.stringSpacing() + 'em',
                           top: this.stringYOffset(1) + 'em',
-                          zIndex: 30
+                          zIndex: 40
                       }} />
               </div>
 

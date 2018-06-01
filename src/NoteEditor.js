@@ -12,6 +12,7 @@ class NoteEditor extends Component {
         this.handleFretChange = this.handleFretChange.bind(this);
         this.handleStringChange = this.handleStringChange.bind(this);
         this.handleDurationChange = this.handleDurationChange.bind(this);
+		this.handleIntervalChange = this.handleIntervalChange.bind(this)
     }
 
     componentDidMount() {
@@ -60,14 +61,25 @@ class NoteEditor extends Component {
         });
     }
 
+	handleIntervalChange(evt) {
+		const i = this.parseValue(evt)
+        this.props.controller.selectedNoteModified({
+            i: i
+        });
+    }
+
     parseValue(evt) {
         return parseInt(evt.target.value, 10)
     }
 
     render() {
-        const nextNoteDist = this.props.note.measureObj.nextNoteDistanceOrRemaining(this.props.note.string, this.props.note.noteObj.p, this.props.note.note),
-            nextInts = nextNoteDist * (this.props.note.noteObj.i / this.props.note.measureObj.props.interval),
-            durations = rangeArray(1, nextInts, 1)
+        const note = this.props.note,
+			measure = note.measureObj.props.measure,
+			nextNoteDist = measure.nextNoteDistanceOrRemaining(note.string, note.noteObj.p, note.note),
+            nextInts = nextNoteDist * note.noteObj.i / measure.interval(),
+            durations = rangeArray(1, nextInts + 1, 1),
+			intervals = [1, 2, 4, 8, 16].filter( i => nextNoteDist >= note.noteObj.d * measure.interval()/i ),
+			availableStrings = measure.validStringsForPosition(note.noteObj.p)
 
         console.log('d ', nextNoteDist, durations, nextInts)
 
@@ -84,24 +96,24 @@ class NoteEditor extends Component {
                         <div className="form-row">
                             <div className="form-group col-md-2">
                                 <label>String</label>
-                                <select id="string" className="form-control" value={this.props.note.string} onChange={this.handleStringChange}>
-                                    {this.props.note.availableStrings.map((str) => (
+                                <select id="string" className="form-control" value={note.string} onChange={this.handleStringChange}>
+                                    {availableStrings.map((str) => (
 				                        <option key={str}>{str}</option>
                                     ))}
                                 </select>
                             </div>
                             <div className="form-group col-md-2">
                                 <label>Interval</label>
-                                <input type="text" readOnly className="form-control-plaintext" value={this.props.note.noteObj.i} />
-                                <select id="interval" className="form-control" value={this.props.note.noteObj.i} onChange={this.handleStringChange}>
-                                    {this.props.note.availableStrings.map((str) => (
-                                        <option key={str}>{str}</option>
+                                <input type="text" readOnly className="form-control-plaintext" value={note.noteObj.i} />
+                                <select id="interval" className="form-control" value={note.noteObj.i} onChange={this.handleIntervalChange}>
+                                    {intervals.map((i) => (
+                                        <option key={i}>{i}</option>
                                     ))}
                                 </select>
                             </div>
                             <div className="form-group col-md-2">
                                 <label>Fret</label>
-                                <select id="fret" className="form-control" value={this.props.note.noteObj.f} onChange={this.handleFretChange}>
+                                <select id="fret" className="form-control" value={note.noteObj.f} onChange={this.handleFretChange}>
                                     {this.props.frets.map((fret) => (
                                         <option key={fret}>{fret}</option>
                                     ))}
@@ -109,7 +121,8 @@ class NoteEditor extends Component {
                             </div>
                             <div className="form-group col-md-2">
                                 <label>Duration</label>
-                                <select id="duration" className="form-control" value={this.props.note.noteObj.d} onChange={this.handleDurationChange}>
+								<input type="text" readOnly className="form-control-plaintext" value={note.noteObj.d} />
+                                <select id="duration" className="form-control" value={note.noteObj.d} onChange={this.handleDurationChange}>
                                     {durations.map((d) => (
                                         <option key={d}>{d}</option>
                                     ))}

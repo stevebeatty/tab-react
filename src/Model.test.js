@@ -72,6 +72,11 @@ describe('Measure test', () => {
         expect(m.duration()).toEqual(4)
         expect(new Measure({}).duration()).toBeUndefined()
     })
+
+	test('noteWithIndex', () => {
+		const m = new Measure(measure)
+		expect(m.noteWithIndex(0, 0)).toBeDefined()
+	})
 });
 
 

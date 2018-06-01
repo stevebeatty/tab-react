@@ -170,12 +170,12 @@ class App extends Component {
         if (stringDist.d !== 0) {
             // doing calcs in larger values and then simplifying to avoid fractions
             const dur = Math.min(stringDist.d, 1) * measure.state.subdivisions,
-                int = measure.props.interval * measure.state.subdivisions
+                int = measure.props.measure.interval() * measure.state.subdivisions
 
             console.log('dur ', dur, ' dist ', stringDist.d, measure.state.subdivisions * Math.min(stringDist.d, 1)  );
 
             const note = {
-                p: stringDist.p, d: stringDist.d, f: 0, i: int
+                p: stringDist.p, d: dur, f: 0, i: int
             }
             this.simplifyNoteTiming(note);
 
@@ -192,27 +192,15 @@ class App extends Component {
         
     }
 
-	getMeasure(measureKey) {
-        return this.state.song.measureWithKey(measureKey)
-	}
-
-	getNote(measureKey, stringIndex, noteIndex) {
-		const m = this.getMeasure(measureKey)
-		return m.strings[stringIndex][noteIndex]
-	}
-
 	handleStringDrop(measure, stringIndex, e) {
 		const stringDist = this.stringEventDistance(measure, stringIndex, e)
 			
 		console.log('handleStringDrop string ', stringIndex, ' dist ', stringDist.d)
-		console.log('drop', e.dataTransfer.getData("text/measure"), e.dataTransfer.getData("text/string"), e.dataTransfer.getData("text/note"))
- 
+	
 		if (stringDist.d !== 0) {
-            const note = this.getNote(
-                this.state.dragging.measure,
-                this.state.dragging.string,
-                this.state.dragging.note
-            )
+            const drag = this.state.dragging,
+				m = this.state.song.measureWithKey(drag.measure),
+				note = m.noteWithIndex(drag.string, drag.note)
 
             console.log('pos ', stringDist.p, ' end ', note.d + stringDist.p, 'dist & d ', stringDist.d, note.d )
 
@@ -220,8 +208,7 @@ class App extends Component {
                 console.log('cant fit')
                 return
             } else {
-                const m = this.getMeasure(this.state.dragging.measure)
-                m.removeNote(this.state.dragging.string, this.state.dragging.note)
+                m.removeNote(drag.string, drag.note)
 
                 note.p = stringDist.p
                 measure.addNote(stringIndex, note)
@@ -231,23 +218,15 @@ class App extends Component {
 
     handleDragOver(measure, stringIndex, evt) {
         //console.log('dragover', measure, evt)
-        //console.log('handleDragOver ', evt.dataTransfer.getData("text/measure"), evt.dataTransfer.getData("text/string"), evt.dataTransfer.getData("text/note"))
-
-
         evt.preventDefault()
 
         const stringDist = this.stringEventDistance(measure, stringIndex, evt)
 
-
         if (stringDist.d !== 0) {
 
-            const m = this.getMeasure(this.state.dragging.measure)
-
-            const note = this.getNote(
-                this.state.dragging.measure,
-                this.state.dragging.string,
-                this.state.dragging.note
-            )
+            const drag = this.state.dragging,
+				m = this.state.song.measureWithKey(drag.measure),
+				note = m.noteWithIndex(drag.string, drag.note)
 
             //console.log('pos ', stringDist.p, ' end ', note.d + stringDist.p, 'dist & d ', stringDist.d, note.d)
 
@@ -277,8 +256,9 @@ class App extends Component {
     
 
     setSelectedNote(measure, stringIndex, noteIndex) {
-        const noteObj = measure.props.measure.strings[stringIndex][noteIndex],
-            availableStrings = measure.validStringsForPosition(noteObj.p)
+        const m = measure.props.measure,
+			noteObj = m.noteWithIndex(stringIndex, noteIndex),
+            availableStrings = m.validStringsForPosition(noteObj.p)
 
         availableStrings.push(stringIndex)
         availableStrings.sort()
@@ -354,20 +334,26 @@ class App extends Component {
           <nav className="navbar navbar-expand-sm navbar-dark bg-dark">
                 <a className="navbar-brand" href="#">Tabulater</a>
 
+				<button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+					<span className="navbar-toggler-icon"></span>
+				  </button>
+
                 <div className="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul className="navbar-nav mr-auto">
-                        <li className="nav-item active">
-                            <a className="nav-link" href="#">Home <span className="sr-only">(current)</span></a>
-                        </li>
+   
                         <li className="nav-item">
                             <a className="nav-link" onClick={this.handleLock} ><span className={"fa fa-lock" + (this.state.locked ? ' text-info' : '')} ></span></a>
+                        </li>
+
+						<li className="nav-item">
+                            <a className="nav-link" ><span className={"fa fa-play"} ></span></a>
                         </li>
                     </ul>
                 </div>
           </nav>
             <div className="container" style={{ "marginTop": "1em" }}>
-		<h4>{this.state.song.name}</h4>
-		<h6>{this.state.song.author}</h6>
+				<h4>{this.state.song.name}</h4>
+				<h6>{this.state.song.author}</h6>
 		
                 {this.state.song.measures.map((measure, idx) => !this.measureNeedsRef(measure) ?
 
