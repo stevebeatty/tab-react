@@ -56,9 +56,9 @@ class MeasureDisplay extends Component {
 	}
 	
 	static getDerivedStateFromProps(props, state) {
-		console.log('getDerivedStateFromProps')
+		//console.log('getDerivedStateFromProps')
 
-		const intervals = [props.interval];
+		const intervals = [props.measure.interval()];
 		const strings = props.measure.strings;
 		for (var i=0; i < strings.length; i++) {
 			var str = strings[i];
@@ -70,7 +70,7 @@ class MeasureDisplay extends Component {
 			}
 		}
 		const maxI = Math.max(...intervals);
-		const subdivisions = maxI/props.interval;
+        const subdivisions = maxI / props.measure.interval();
 
 		const diff = {}
 
@@ -98,7 +98,7 @@ class MeasureDisplay extends Component {
 		
 	measureWidth() {
 		const layout = this.props.layout;
-        return layout.measureSideOffset() + this.state.subdivisions * layout.subdivisionOffset() * this.props.duration;
+        return layout.measureSideOffset() + this.state.subdivisions * layout.subdivisionOffset() * this.props.measure.duration();
     };
 	
 	noteXPosition(note) {
@@ -111,7 +111,7 @@ class MeasureDisplay extends Component {
 	noteDurationSize(note) {
 	    const subDivSize = this.props.layout.subdivisionOffset();
 		
-		return note.d * subDivSize * this.state.subdivisions * this.props.interval / note.i;
+        return note.d * subDivSize * this.state.subdivisions * this.props.measure.interval() / note.i;
 	}
 	
 	handleClick() {
@@ -153,7 +153,8 @@ class MeasureDisplay extends Component {
 
         return this.props.selectedNote &&
             this.props.selectedNote.note === noteIndex &&
-            this.props.selectedNote.string === stringIndex;
+            this.props.selectedNote.string === stringIndex &&
+            this.props.selectedNote.measure === this.props.measure.key;
     }
 
     /**
@@ -171,7 +172,7 @@ class MeasureDisplay extends Component {
             remainSubs = Math.floor(remain / subSize),
             fr = Math.round((remain % subSize) / subSize),
             rnd = Math.floor(pos) + remainSubs * subSize + fr * subSize,
-            closestInMeasure = Math.min(this.props.duration + 1 - subSize, rnd);
+            closestInMeasure = Math.min(this.props.measure.duration() + 1 - subSize, rnd);
 
         //console.log('closestPosition: ', xNormalized, widEm, xPos, pos, closestInMeasure);
 
@@ -204,10 +205,12 @@ class MeasureDisplay extends Component {
         //console.log('sel note ', this.props.measure.key, ' ', this.props.selectedNote);
 
       const refAtt = {};
-      if (this.props.forwardedRef) {
-          refAtt.ref = this.props.forwardedRef;
-          //console.log('measure ref: ', this.props.measure.key, ' :',  refAtt);
-      }
+        if (this.props.forwardedRef) {
+            refAtt.ref = this.props.forwardedRef;
+            console.log('measure ref: ', this.props.measure.key, ' :', refAtt);
+        } else {
+            console.log('no ref')
+        }
       
       return (
           <div key={this.props.measure.key} className="measure" alt={this.props.selected.toString()} {...refAtt}
@@ -250,7 +253,7 @@ class MeasureDisplay extends Component {
 			
               </div>
 
-              <Ruler y={this.rulerBottom()} d={this.props.duration} dx={beginningOffset} subdivisions={this.state.subdivisions} subdivisionSpacing={subDivSize}
+              <Ruler y={this.rulerBottom()} d={this.props.measure.duration()} dx={beginningOffset} subdivisions={this.state.subdivisions} subdivisionSpacing={subDivSize}
                   width={this.measureWidth()} height={subDivSize} />
 	      </div>
 	  )
@@ -299,7 +302,7 @@ class String extends Component {
 	    const offset = this.props.offset + 'em';
 	  
         return (
-            <div onMouseUp={this.handleMouseUp} style={{ position: 'relative', backgroundColor: 'blue' }}  >
+            <div onMouseUp={this.handleMouseUp} style={{ position: 'relative' }}  >
                 <div className="string clickable" style={{ height: '1px', width: '100%', backgroundColor: 'black', position: 'absolute', top: offset }} onClick={this.handleClick} />
                 <div className="clickable" onClick={this.handleClick} onMouseUp={this.handleMouseUp} onDragOver={this.handleDragOver}
 					onDrop={this.handleDrop}

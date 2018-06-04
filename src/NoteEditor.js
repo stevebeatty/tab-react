@@ -34,12 +34,14 @@ class NoteEditor extends Component {
     updatePosition() {
         if (this.props.measureRef.current) {
             const rect = this.props.measureRef.current.getBoundingClientRect();
-            //console.log(rect.top, rect.right, rect.bottom, rect.left);
+            console.log(rect.top, rect.right, rect.bottom, rect.left);
 
             const style = this.editorRef.current.style;
             style.position = 'absolute';
             style.top = rect.bottom + 'px';
             style.left = rect.left + 'px';
+        } else {
+            console.log('no measure ref')
         }
     }
 
@@ -81,7 +83,7 @@ class NoteEditor extends Component {
 			intervals = [1, 2, 4, 8, 16].filter( i => nextNoteDist >= note.noteObj.d * measure.interval()/i ),
 			availableStrings = measure.validStringsForPosition(note.noteObj.p)
 
-        console.log('d ', nextNoteDist, durations, nextInts)
+        //console.log('d ', nextNoteDist, durations, nextInts)
 
         return (
             <div ref={this.editorRef} className="card" style={{ zIndex: 50 }} >

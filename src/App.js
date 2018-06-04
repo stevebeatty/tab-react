@@ -88,20 +88,16 @@ class App extends Component {
         }
 
         this.handleMeasureSelect = this.handleMeasureSelect.bind(this);
-        this.handleStringClick = this.handleStringClick.bind(this);
-        this.handleNoteClick = this.handleNoteClick.bind(this);
         this.clearSelectedMeasure = this.clearSelectedMeasure.bind(this);
         this.clearSelectedNote = this.clearSelectedNote.bind(this);
         this.handleChangeSelectedNoteString = this.handleChangeSelectedNoteString.bind(this);
         this.handleLock = this.handleLock.bind(this);
-        this.handleDragStart = this.handleDragStart.bind(this);
-        this.handleDragEnd = this.handleDragEnd.bind(this);
-        this.handleDragOver = this.handleDragOver.bind(this);
-        this.handleStringDrop = this.handleStringDrop.bind(this);
         this.toggleShowSettings = this.toggleShowSettings.bind(this);
         this.toggleShowLoadFile = this.toggleShowLoadFile.bind(this);
         this.loadSong = this.loadSong.bind(this);
-		this.toggleShowSaveFile = this.toggleShowSaveFile.bind(this);
+        this.toggleShowSaveFile = this.toggleShowSaveFile.bind(this);
+        this.setSelectedNote = this.setSelectedNote.bind(this);
+        this.setDragging = this.setDragging.bind(this);
 	}
 
     handleSongUpdated() {
@@ -125,10 +121,37 @@ class App extends Component {
         this.setState({ selectedMeasure: {} });
     }
 
+
+
     clearSelectedNote() {
         console.log('selectedNote ')
         this.setState({ selectedNote: {} });
     }
+
+    setSelectedNote(measure, stringIndex, noteIndex) {
+        console.log('setSelectedNote', measure, stringIndex, noteIndex)
+        const m = measure.props.measure,
+            noteObj = m.noteWithIndex(stringIndex, noteIndex)
+
+        this.setState({
+            selectedNote: {
+                measure: measure.props.measure.key,
+                string: stringIndex,
+                note: noteIndex,
+                noteObj: noteObj,
+                measureObj: measure
+            },
+        });
+    }
+
+    selectedNoteModified(change) {
+        const selNote = this.state.selectedNote;
+        Object.keys(change).forEach(k => selNote.noteObj[k] = change[k])
+
+        console.log('selectedNoteModified ', this.state.selectedNote.noteObj)
+        this.handleSongUpdated()
+    }
+
 
     handleChangeSelectedNoteString(string) {
         const measure = this.state.selectedNote.measureObj,
@@ -156,157 +179,7 @@ class App extends Component {
         });
     }
 
-    handleNoteClick(measure, stringIndex, noteIndex, e) {
-        console.log('handleNoteClick ', noteIndex, stringIndex, measure.props.measure.key);
-        this.setSelectedNote(measure, stringIndex, noteIndex);
-    }
-
-	stringEventDistance(measure, stringIndex, e) {
-		const bound = e.target.getBoundingClientRect(),
-            x = e.pageX - bound.left,
-            w = x / bound.width,
-            pos = measure.closestPosition(w),
-            dist = measure.nextNoteDistanceOrRemaining(stringIndex, pos);
-
-		// console.log('stringEventDistance ', stringIndex, x, w, pos, dist);
-
-		return {
-			p: pos,
-			d: dist
-		}
-	}
-
-    handleStringClick(measure, stringIndex, e) {
-        if (this.state.locked) return
-
-        const stringDist = this.stringEventDistance(measure, stringIndex, e)
-
-        if (stringDist.d !== 0) {
-            // doing calcs in larger values and then simplifying to avoid fractions
-            const dur = Math.min(stringDist.d, 1) * measure.state.subdivisions,
-                int = measure.props.measure.interval() * measure.state.subdivisions
-
-            console.log('dur ', dur, ' dist ', stringDist.d, measure.state.subdivisions * Math.min(stringDist.d, 1)  );
-
-            const note = {
-                p: stringDist.p, d: dur, f: 0, i: int
-            }
-            this.simplifyNoteTiming(note);
-
-            console.log(' str ', int, note)
-
-            const idx = measure.addNote(stringIndex, note)
-
-            this.setState({
-                song: this.state.song
-            })
-
-            this.setSelectedNote(measure, stringIndex, idx)
-        }
-        
-    }
-
-	handleStringDrop(measure, stringIndex, e) {
-		const stringDist = this.stringEventDistance(measure, stringIndex, e)
-			
-		console.log('handleStringDrop string ', stringIndex, ' dist ', stringDist.d)
-	
-		if (stringDist.d !== 0) {
-            const drag = this.state.dragging,
-				m = this.state.song.measureWithKey(drag.measure),
-				note = m.noteWithIndex(drag.string, drag.note)
-
-            console.log('pos ', stringDist.p, ' end ', note.d + stringDist.p, 'dist & d ', stringDist.d, note.d )
-
-            if (stringDist.d < note.d) {
-                console.log('cant fit')
-                return
-            } else {
-                m.removeNote(drag.string, drag.note)
-
-                note.p = stringDist.p
-                measure.addNote(stringIndex, note)
-            }
-		}
-	}
-
-    handleDragOver(measure, stringIndex, evt) {
-        //console.log('dragover', measure, evt)
-        evt.preventDefault()
-
-        const stringDist = this.stringEventDistance(measure, stringIndex, evt)
-
-        if (stringDist.d !== 0) {
-
-            const drag = this.state.dragging,
-				m = this.state.song.measureWithKey(drag.measure),
-				note = m.noteWithIndex(drag.string, drag.note)
-
-            //console.log('pos ', stringDist.p, ' end ', note.d + stringDist.p, 'dist & d ', stringDist.d, note.d)
-
-            if (stringDist.d < note.d) {
-                // console.log('cant fit')
-                evt.dataTransfer.dropEffect = 'none'
-                return
-            }
-        }
-
-        evt.dataTransfer.dropEffect = 'move'
-    }
-
-    handleDrop(evt) {
-        evt.preventDefault()
-        console.log('drop', evt.dataTransfer.getData("text/measure"), evt.dataTransfer.getData("text/string"), evt.dataTransfer.getData("text/note"))
-    }
-
-
-    simplifyNoteTiming(note) {
-        while (note.d % 2 === 0 && note.i % 2 === 0) {
-            note.d /= 2
-            note.i /= 2
-        }
-    }
-
     
-
-    setSelectedNote(measure, stringIndex, noteIndex) {
-        const m = measure.props.measure,
-			noteObj = m.noteWithIndex(stringIndex, noteIndex)
-        //console.log(' av ', availableStrings, noteObj)
-
-        this.setState({
-            selectedNote: {
-                measure: measure.props.measure.key,
-                string: stringIndex,
-                note: noteIndex,
-                noteObj: noteObj,
-                measureObj: measure
-            },
-        });
-    }
-
-    selectedNoteModified(change) {
-        const selNote = this.state.selectedNote;
-        Object.keys(change).forEach(k => selNote.noteObj[k] = change[k])
-
-        console.log('selectedNoteModified ', this.state.selectedNote.noteObj)
-        this.setState({
-            song: this.state.song
-        })
-    }
-
-    measureNeedsRef(measure) {
-        const hasSelectedNote = this.state.selectedNote.note !== undefined;
-        const hasSelectedMeasure = this.state.selectedMeasure.key !== undefined;
-
-        if (hasSelectedNote) {
-            return measure.key === this.state.selectedNote.measure;
-        } else if (hasSelectedMeasure) {
-            return measure.key === this.state.selectedMeasure.key;
-        } else {
-            return false;
-        }
-    }
 
     toggleShowSettings() {
         this.setState(prevState => ({
@@ -333,17 +206,12 @@ class App extends Component {
         }));
     }
 
-    handleDragStart(info, evt) {
-        console.log('dragstart')
-        this.setState({
-            dragging: info
-        })
-    }
 
-    handleDragEnd(evt) {
-        console.log('dragend')
+   
+
+    setDragging(obj) {
         this.setState({
-            dragging: {}
+            dragging: obj
         })
     }
 
@@ -354,6 +222,7 @@ class App extends Component {
         })
     }
 
+
     render() {
         const hasSelectedNote = this.state.selectedNote.note !== undefined;
         const hasSelectedMeasure = this.state.selectedMeasure.key !== undefined;
@@ -363,59 +232,33 @@ class App extends Component {
     return (
         <React.Fragment>
 
-          <nav className="navbar navbar-expand-sm navbar-dark bg-dark">
-                <a className="navbar-brand" href="#">Tabulater</a>
+            <NavBar brand="Tabulater">
+                <a className="nav-link" onClick={this.handleLock} ><span className={"fa fa-lock" + (this.state.locked ? ' text-info' : '')} ></span></a>
 
-				<button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-					<span className="navbar-toggler-icon"></span>
-				  </button>
+                <a className="nav-link" ><span className={"fa fa-play"} ></span></a>
 
-                <div className="collapse navbar-collapse" id="navbarSupportedContent">
-                    <ul className="navbar-nav mr-auto">
-   
-                        <li className="nav-item">
-                            <a className="nav-link" onClick={this.handleLock} ><span className={"fa fa-lock" + (this.state.locked ? ' text-info' : '')} ></span></a>
-                        </li>
+                <a className="nav-link" onClick={this.toggleShowSettings}><span className={"fa fa-cog" + (this.state.showSettings ? ' text-info' : '')} ></span></a>
 
-						<li className="nav-item">
-                            <a className="nav-link" ><span className={"fa fa-play"} ></span></a>
-                        </li>
-
-                        <li className="nav-item">
-                            <a className="nav-link" onClick={this.toggleShowSettings}><span className={"fa fa-cog" + (this.state.showSettings ? ' text-info' : '')} ></span></a>
-                        </li>
-
-                        <li className="nav-item">
-                            <div className="dropdown">
-                              <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span className="fa fa-save"></span>
-                              </button>
-                                <div className="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                    <a className="dropdown-item" href="#" onClick={this.toggleShowLoadFile}>Load Song</a>
-									<a className="dropdown-item" href="#" onClick={this.toggleShowSaveFile}>Save Song</a>
-                              </div>
-                            </div>
-                        </li>
-                    </ul>
+                <div className="dropdown">
+                    <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <span className="fa fa-save"></span>
+                    </button>
+                    <div className="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        <a className="dropdown-item" href="#" onClick={this.toggleShowLoadFile}>Load Song</a>
+						<a className="dropdown-item" href="#" onClick={this.toggleShowSaveFile}>Save Song</a>
+                    </div>
                 </div>
-          </nav>
+ 
+             </NavBar>
             <div className="container" style={{ "marginTop": "1em" }}>
 				<h4>{this.state.song.title}</h4>
 				<h6>{this.state.song.author}</h6>
-		
-                {this.state.song.measures.map((measure, idx) => !this.measureNeedsRef(measure) ?
 
-                    <MeasureDisplay key={measure.key} measure={measure} layout={this.state.layout} duration={measure.d || this.state.song.d} interval={measure.i || this.state.song.i}
-                        onMeasureSelect={this.handleMeasureSelect} selected={false} onStringClick={this.handleStringClick} onNoteClick={this.handleNoteClick} 
-                        onNoteDragStart={this.handleDragStart} onNoteDragEnd={this.handleDragEnd} canDragNote={!this.state.locked}
-                        onStringDrop={this.handleStringDrop} onStringDragOver={this.handleDragOver} />
-                    :
 
-                    <MeasureDisplay key={measure.key} forwardedRef={this.measureRef} measure={measure} layout={this.state.layout} duration={measure.d || this.state.song.d} interval={measure.i || this.state.song.i}
-                        onMeasureSelect={this.handleMeasureSelect} selected={measure.key === this.state.selectedMeasure.key} onStringClick={this.handleStringClick} onNoteClick={this.handleNoteClick} selectedNote={this.state.selectedNote}
-                        onNoteDragStart={this.handleDragStart} onNoteDragEnd={this.handleDragEnd} canDragNote={!this.state.locked}
-                        onStringDrop={this.handleStringDrop} onStringDragOver={this.handleDragOver} />
-                )}
+                <MeasureController song={this.state.song} onSongUpdate={this.handleSongUpdated}
+                    selectedMeasure={this.state.selectedMeasure} onMeasureSelect={this.handleMeasureSelect}
+                    selectedNote={this.state.selectedNote} onNoteSelect={this.setSelectedNote} layout={this.state.layout}
+                    dragging={this.state.dragging} canDragNote={!this.state.locked} onDragging={this.setDragging} measureRef={this.measureRef} />
 
                 {hasSelectedMeasure ? <MeasureEditor measureRef={this.measureRef} measure={this.state.selectedMeasure} controller={this} /> : ''}
                 {hasSelectedNote ? <NoteEditor measureRef={this.measureRef} note={this.state.selectedNote} controller={this} frets={this.frets} /> : ''}
@@ -431,6 +274,183 @@ class App extends Component {
   }
 }
 
+//
+// <MeasureController song={} selectedMeasure={} selecteNote={} onNoteSelect={} onMeasureSelect={} onSongUpdate={} 
+//  dragging={} canDragNote={} measureRef={} />
+//
+
+class MeasureController extends Component {
+
+    constructor(props) {
+        super(props);
+
+        this.handleStringClick = this.handleStringClick.bind(this);
+        this.handleChangeSelectedNoteString = this.handleChangeSelectedNoteString.bind(this);
+        this.handleDragStart = this.handleDragStart.bind(this);
+        this.handleDragEnd = this.handleDragEnd.bind(this);
+        this.handleDragOver = this.handleDragOver.bind(this);
+        this.handleStringDrop = this.handleStringDrop.bind(this);
+    }
+
+    stringEventDistance(measure, stringIndex, e) {
+        const bound = e.target.getBoundingClientRect(),
+            x = e.pageX - bound.left,
+            w = x / bound.width,
+            pos = measure.closestPosition(w),
+            dist = measure.nextNoteDistanceOrRemaining(stringIndex, pos);
+
+        // console.log('stringEventDistance ', stringIndex, x, w, pos, dist);
+
+        return {
+            p: pos,
+            d: dist
+        }
+    }
+
+    handleStringClick(measure, stringIndex, e) {
+        if (this.state.locked) return
+
+        const stringDist = this.stringEventDistance(measure, stringIndex, e)
+
+        if (stringDist.d !== 0) {
+            // doing calcs in larger values and then simplifying to avoid fractions
+            const dur = Math.min(stringDist.d, 1) * measure.state.subdivisions,
+                int = measure.props.measure.interval() * measure.state.subdivisions
+
+            console.log('dur ', dur, ' dist ', stringDist.d, measure.state.subdivisions * Math.min(stringDist.d, 1));
+
+            const note = {
+                p: stringDist.p, d: dur, f: 0, i: int
+            }
+            this.simplifyNoteTiming(note);
+
+            console.log(' str ', int, note)
+
+            const idx = measure.addNote(stringIndex, note)
+
+            this.props.onSongUpdate()
+            this.props.onNoteSelect(measure, stringIndex, idx)
+        }
+
+    }
+
+    handleStringDrop(measure, stringIndex, e) {
+        const stringDist = this.stringEventDistance(measure, stringIndex, e)
+
+        console.log('handleStringDrop string ', stringIndex, ' dist ', stringDist.d)
+
+        if (stringDist.d !== 0) {
+            const drag = this.props.dragging,
+                m = this.props.song.measureWithKey(drag.measure),
+                note = m.noteWithIndex(drag.string, drag.note)
+
+            console.log('pos ', stringDist.p, ' end ', note.d + stringDist.p, 'dist & d ', stringDist.d, note.d)
+
+            if (stringDist.d < note.d) {
+                console.log('cant fit')
+                return
+            } else {
+                m.removeNote(drag.string, drag.note)
+
+                note.p = stringDist.p
+                measure.addNote(stringIndex, note)
+            }
+        }
+    }
+
+    handleDragOver(measure, stringIndex, evt) {
+        //console.log('dragover', measure, evt)
+        evt.preventDefault()
+
+        const stringDist = this.stringEventDistance(measure, stringIndex, evt)
+
+        if (stringDist.d !== 0) {
+
+            const drag = this.props.dragging,
+                m = this.props.song.measureWithKey(drag.measure),
+                note = m.noteWithIndex(drag.string, drag.note)
+
+            //console.log('pos ', stringDist.p, ' end ', note.d + stringDist.p, 'dist & d ', stringDist.d, note.d)
+
+            if (stringDist.d < note.d) {
+                // console.log('cant fit')
+                evt.dataTransfer.dropEffect = 'none'
+                return
+            }
+        }
+
+        evt.dataTransfer.dropEffect = 'move'
+    }
+
+    handleDragStart(info, evt) {
+        console.log('dragstart')
+        this.props.onDragging(info)
+    }
+
+    handleDragEnd(evt) {
+        console.log('dragend')
+        this.props.onDragging({})
+    }
+
+
+    handleChangeSelectedNoteString(string) {
+        const measure = this.props.selectedNote.measureObj,
+            removed = measure.removeNote(this.props.selectedNote.string, this.props.selectedNote.note),
+            note = removed[0],
+            idx = measure.addNote(string, note)
+
+        this.props.onSongUpdate()
+        this.props.onNoteSelect(measure, string, idx)
+    }
+
+    simplifyNoteTiming(note) {
+        while (note.d % 2 === 0 && note.i % 2 === 0) {
+            note.d /= 2
+            note.i /= 2
+        }
+    }
+
+    createMeasureTag(measure) {
+        const optionalAtts = {}
+
+        if (this.measureNeedsRef(measure)) {
+            optionalAtts.forwardedRef = this.props.measureRef
+        }
+
+
+        return (
+
+        <MeasureDisplay
+            key={measure.key} measure={measure} layout={this.props.layout}
+            selected={measure.key === this.props.selectedMeasure.key} onMeasureSelect={this.props.onMeasureSelect}
+            onStringClick={this.handleStringClick} onStringDragOver={this.handleDragOver} onStringDrop={this.handleStringDrop}
+            onNoteClick={this.props.onNoteSelect} selectedNote={this.props.selectedNote}
+            onNoteDragStart={this.handleDragStart} onNoteDragEnd={this.handleDragEnd} canDragNote={this.props.canDragNote}
+            {...optionalAtts}
+        />)
+    }
+
+    measureNeedsRef(measure) {
+        const hasSelectedNote = this.props.selectedNote.note !== undefined;
+        const hasSelectedMeasure = this.props.selectedMeasure.key !== undefined;
+
+        if (hasSelectedNote) {
+            return measure.key === this.props.selectedNote.measure;
+        } else if (hasSelectedMeasure) {
+            return measure.key === this.props.selectedMeasure.key;
+        } else {
+            return false;
+        }
+    }
+
+    render() {
+        return (
+            <React.Fragment>
+                {this.props.song.measures.map((measure, idx) => this.createMeasureTag(measure))}
+            </React.Fragment>
+         )
+    }
+}
 
 class MeasureEditor extends Component {
 
@@ -713,6 +733,42 @@ class SaveDialog extends Component {
 					</textarea>
                 </form>
             </ModalDialog>
+        )
+    }
+}
+
+class NavBar extends Component {
+
+    constructor(props) {
+        super(props);
+        this.handleClose = this.handleClose.bind(this);
+    }
+
+    handleClose() {
+        this.props.controller.toggleShowSaveFile();
+    }
+
+    render() {
+
+        return (
+            <nav className="navbar navbar-expand-sm navbar-dark bg-dark">
+                <a className="navbar-brand" href="#">{this.props.brand}</a>
+
+                <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span className="navbar-toggler-icon"></span>
+                </button>
+
+                <div className="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul className="navbar-nav mr-auto">
+
+                        {this.props.children.map((child, idx) =>
+                            <li key={idx} className="nav-item">{child}</li>
+                        )}
+
+    
+                    </ul>
+                </div>
+            </nav>
         )
     }
 }
