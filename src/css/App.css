@@ -1,11 +1,6 @@
 /* app css stylesheet */
 
 
-@font-face {
-  font-family: FreeSerif;
-  src: url(fonts/FreeSerif.otf);
-}
-
 nav {
   margin-bottom: 20px;
 }
