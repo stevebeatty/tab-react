@@ -142,6 +142,33 @@ class Measure {
     sortNotes(arr) {
         arr.sort( (a, b) => a.p - b.p )
     }
+
+	export() {
+		const obj = {
+			i: this.i,
+			d: this.d,
+			strings: []
+		}
+
+		for (let i = 0; i < this.strings.length; i++) {
+			let string = []
+			for (let j = 0; j < this.strings[i].length; j++) {
+				let note = {},
+					orig = this.strings[i][j]
+
+				note.i = orig.i
+				note.d = orig.d
+				note.p = orig.p
+				note.f = orig.f
+
+				string.push(note)
+			}
+
+			obj.strings.push(string)
+		}
+
+		return obj
+	}
 }
 
 class Song {
@@ -190,6 +217,24 @@ class Song {
     insertMeasureAtIndex(index, measure) {
         this.measures.splice(index, 0, measure);
     }
+
+	export() {
+		const obj = {
+			title: this.title,
+			author: this.author,
+			i: this.i,
+			d: this.d,
+			measures: []
+		}
+
+		for (let i = 0; i < this.measures.length; i++) {
+			let measure = this.measures[i].export()
+			
+			obj.measures.push(measure)
+		}
+
+		return obj
+	}
 }
 
 

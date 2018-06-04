@@ -75,7 +75,8 @@ class App extends Component {
             locked: false,
             dragging: {},
             showSettings: false,
-            showLoadFile: false
+            showLoadFile: false,
+			showSaveFile: false
 		};
 
         this.measureRef = React.createRef();
@@ -100,6 +101,7 @@ class App extends Component {
         this.toggleShowSettings = this.toggleShowSettings.bind(this);
         this.toggleShowLoadFile = this.toggleShowLoadFile.bind(this);
         this.loadSong = this.loadSong.bind(this);
+		this.toggleShowSaveFile = this.toggleShowSaveFile.bind(this);
 	}
 
     handleSongUpdated() {
@@ -269,11 +271,7 @@ class App extends Component {
 
     setSelectedNote(measure, stringIndex, noteIndex) {
         const m = measure.props.measure,
-			noteObj = m.noteWithIndex(stringIndex, noteIndex),
-            availableStrings = m.validStringsForPosition(noteObj.p)
-
-        availableStrings.push(stringIndex)
-        availableStrings.sort()
+			noteObj = m.noteWithIndex(stringIndex, noteIndex)
         //console.log(' av ', availableStrings, noteObj)
 
         this.setState({
@@ -282,8 +280,7 @@ class App extends Component {
                 string: stringIndex,
                 note: noteIndex,
                 noteObj: noteObj,
-                measureObj: measure,
-                availableStrings: availableStrings
+                measureObj: measure
             },
         });
     }
@@ -320,6 +317,12 @@ class App extends Component {
     toggleShowLoadFile() {
         this.setState(prevState => ({
             showLoadFile: !prevState.showLoadFile
+        }));
+    }
+
+	toggleShowSaveFile() {
+        this.setState(prevState => ({
+            showSaveFile: !prevState.showSaveFile
         }));
     }
 
@@ -383,12 +386,13 @@ class App extends Component {
                         </li>
 
                         <li className="nav-item">
-                            <div class="dropdown">
-                              <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <div className="dropdown">
+                              <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span className="fa fa-save"></span>
                               </button>
-                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                    <a class="dropdown-item" href="#" onClick={this.toggleShowLoadFile}>Load Song</a>
+                                <div className="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                    <a className="dropdown-item" href="#" onClick={this.toggleShowLoadFile}>Load Song</a>
+									<a className="dropdown-item" href="#" onClick={this.toggleShowSaveFile}>Save Song</a>
                               </div>
                             </div>
                         </li>
@@ -418,8 +422,9 @@ class App extends Component {
 
             </div>
 
-            {this.state.showSettings && < SettingsEditor controller={this} />}
-            {this.state.showLoadFile && < FileLoader controller={this} />}
+            {this.state.showSettings && <SettingsEditor controller={this} />}
+            {this.state.showLoadFile && <FileLoader controller={this} />}
+			{this.state.showSaveFile && <SaveDialog controller={this} />}
 
             </React.Fragment>
     );
@@ -542,21 +547,14 @@ class SettingsEditor extends Component {
     render() {
 
         return (
-            <div ref={this.editorRef} class="modal" tabindex="-1" role="dialog">
-                <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Tabulater Settings</h5>
-                            <button onClick={this.handleClose} type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <p>Modal body text goes here.</p>
-                        </div>
+            <ModalDialog title="Tabulater Settings" onClose={this.handleClose} >
+				<form>
+                    <div className="form-group">
+                        <label>Setting</label>
+                        
                     </div>
-                </div>
-            </div>
+                </form>
+            </ModalDialog>
         )
     }
 }
@@ -627,7 +625,7 @@ class FileLoader extends Component {
         return (
             <ModalDialog title="Load Song" onClose={this.handleClose} >
                 <form onSubmit={this.handleSubmit}>
-                    <div class="form-group">
+                    <div className="form-group">
                         <input type="file" ref={input => this.fileInput = input} />
                     </div>
                     <button type="submit" className="btn btn-primary">Upload</button>
@@ -642,6 +640,9 @@ class ModalDialog extends Component {
     constructor(props) {
         super(props);
         this.dialogRef = React.createRef();
+
+		this.handleClick = this.handleClick.bind(this)
+		this.handleClickDialog = this.handleClickDialog.bind(this)
     }
 
     componentDidMount() {
@@ -655,12 +656,22 @@ class ModalDialog extends Component {
         document.body.classList.remove('modal-open')
     }
 
+	handleClick(evt) {
+		console.log('handleClick')
+		this.props.onClose()
+	}
+
+	handleClickDialog(evt) {
+		console.log('handleClickDialog')
+		evt.stopPropagation()
+	}
+
     render() {
 
         return (
             <React.Fragment>
-                <div ref={this.dialogRef} className="modal show" tabIndex="-1" role="dialog" style={{ display: 'block'}}>
-                    <div className="modal-dialog" role="document">
+                <div ref={this.dialogRef} className="modal show" tabIndex="-1" role="dialog" style={{ display: 'block'}} onClick={this.handleClick}>
+                    <div className="modal-dialog" role="document" onClick={this.handleClickDialog}>
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h5 className="modal-title">{this.props.title}</h5>
@@ -689,16 +700,17 @@ class SaveDialog extends Component {
     }
 
     handleClose() {
-
+		this.props.controller.toggleShowSaveFile();
     }
 
     render() {
 
         return (
-            <ModalDialog title="Test" onClose={this.handleClose} >
-                <form >
-
-                    <button type="submit" className="btn btn-primary">Upload</button>
+            <ModalDialog title="Save Song" onClose={this.handleClose} >
+                <form>
+					<textarea cols="50" rows="10" readOnly value={JSON.stringify(this.props.controller.state.song.export())}>
+					
+					</textarea>
                 </form>
             </ModalDialog>
         )

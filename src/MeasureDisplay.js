@@ -40,24 +40,9 @@ class MeasureDisplay extends Component {
 	constructor(props) {
 		super(props);
         
-		const intervals = [this.props.interval];
-		const strings = this.props.measure.strings;
-		for (var i=0; i < strings.length; i++) {
-			var str = strings[i];
-			for (var j=0; j < str.length; j++) {
-				var o = str[j];
-				if (o.i) {
-					intervals.push(o.i);
-				}
-			}
-		}
-		const maxI = Math.max(...intervals);
-		const subdivisions = maxI/this.props.interval;
-
         //console.log(' & ', maxI, subdivisions)
 
 		this.state = {
-			subdivisions: subdivisions,
 			isClicked: false
 		};
 		
@@ -70,6 +55,34 @@ class MeasureDisplay extends Component {
 		this.handleStringDragOver = this.handleStringDragOver.bind(this);
 	}
 	
+	static getDerivedStateFromProps(props, state) {
+		console.log('getDerivedStateFromProps')
+
+		const intervals = [props.interval];
+		const strings = props.measure.strings;
+		for (var i=0; i < strings.length; i++) {
+			var str = strings[i];
+			for (var j=0; j < str.length; j++) {
+				var o = str[j];
+				if (o.i) {
+					intervals.push(o.i);
+				}
+			}
+		}
+		const maxI = Math.max(...intervals);
+		const subdivisions = maxI/props.interval;
+
+		const diff = {}
+
+		if (subdivisions !== state.subdivisions) {
+			return {
+				subdivisions: subdivisions
+			}
+		}
+
+		return null
+	}
+
 	stringYOffset(stringNum) {
 		const layout = this.props.layout;
 		return layout.topStringOffset() + (stringNum - 1) * layout.stringSpacing();
@@ -212,7 +225,7 @@ class MeasureDisplay extends Component {
                       width: '1px', height: this.stringYOffset(this.props.measure.strings.length) - this.stringYOffset(1) + 'em', backgroundColor: 'black',
                       top: this.stringYOffset(1) + 'em', position: 'absolute'
                   }} />
-			    <div className={"transparent clickable" + (this.props.selected ? ' selected-measure' : '')}
+				<div className={"transparent clickable" + (this.props.selected ? ' selected-measure' : '')}
                         onClick={this.handleClick}
                       style={{
                           position: 'absolute',
@@ -228,7 +241,7 @@ class MeasureDisplay extends Component {
 			
 			    {this.props.measure.strings.map((str, idx) => (
                       str.map((note, nidx) =>
-                          <Note key={idx + '-' + nidx} x={this.noteXPosition(note)} y={this.stringYOffset(idx + 1)} fret={note.f} string={idx} dy={noteTextOffset} measure={this.props.measure.key}
+                          <Note key={note.key} x={this.noteXPosition(note)} y={this.stringYOffset(idx + 1)} fret={note.f} string={idx} dy={noteTextOffset} measure={this.props.measure.key}
                               d={this.noteDurationSize(note)} index={nidx} onClick={this.handleNoteClick} selected={this.isNoteSelected(nidx, idx)}
                               onDrag={this.handleNoteDrag} onDragStart={this.props.onNoteDragStart} onDragEnd={this.props.onNoteDragEnd} canDrag={this.props.canDragNote}
                               layout={this.props.layout}  />
@@ -315,22 +328,22 @@ class Ruler extends Component {
 	  
         return (
             <svg width={this.props.width + 'em'} height={this.props.height + 'em'} style={{ position: 'absolute', top: this.props.y - this.props.height + 'em' }}>
-		    <g className="ruler">
-                <line className="string"
-                        x1="0" y1={bottom + 'em'}
-                        x2="100%" y2={bottom + 'em'}  />
-			    <g>
-			    {ticks.map((i, idx) => (
-				    <line key={idx} className={"ruler-tick ruler-tick-" + i}
-					        x1={this.tickXPostition(idx) + 'em'} 
-					        x2={this.tickXPostition(idx) + 'em'} 
-					        y1={this.tickHeight(idx, i) + 'em'}
-                                y2={bottom + 'em'}
-				    />
-			    ))}
-                    </g>
+				<g className="ruler">
+					<line className="string"
+							x1="0" y1={bottom + 'em'}
+							x2="100%" y2={bottom + 'em'}  />
+					<g>
+					{ticks.map((i, idx) => (
+						<line key={idx} className={"ruler-tick ruler-tick-" + i}
+								x1={this.tickXPostition(idx) + 'em'} 
+								x2={this.tickXPostition(idx) + 'em'} 
+								y1={this.tickHeight(idx, i) + 'em'}
+									y2={bottom + 'em'}
+						/>
+					))}
+						</g>
 
-            </g>
+				</g>
             </svg>
 	    )
     }
