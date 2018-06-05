@@ -144,12 +144,17 @@ class MeasureController extends Component {
         }
     }
 
-    createMeasureTag(measure) {
+    createMeasureTag(measure, currentlyPlaying) {
         const optionalAtts = {},
-            isSelected = this.props.selection.type === 'measure' && measure.key === this.props.selection.value.measure.key
+            isSelected = this.props.selection.type === 'measure' && measure.key === this.props.selection.value.measure.key,
+            isPlaying = measure.key === currentlyPlaying.measure
 
         if (this.measureNeedsRef(measure)) {
             optionalAtts.forwardedRef = this.props.measureRef
+        }
+
+        if (isPlaying) {
+            optionalAtts.currentTime = currentlyPlaying.time
         }
 
 
@@ -161,6 +166,7 @@ class MeasureController extends Component {
                 onStringClick={this.handleStringClick} onStringDragOver={this.handleDragOver} onStringDrop={this.handleStringDrop}
                 onNoteClick={this.props.onNoteSelect} 
                 onNoteDragStart={this.handleDragStart} onNoteDragEnd={this.handleDragEnd} canDragNote={this.props.canDragNote}
+                isPlaying={isPlaying}
                 {...optionalAtts}
             />)
     }
@@ -178,10 +184,34 @@ class MeasureController extends Component {
         }
     }
 
+    findCurrentlyPlayingMeasure() {
+        let currTime = this.props.currentTime,
+            index = 0
+
+        while (index < this.props.song.measures.length) {
+            let measure = this.props.song.measures[index],
+                mTot = measure.totalTime()
+
+            if (mTot >= currTime) {
+                return {
+                    measure: measure.key,
+                    time: currTime
+                }
+            }
+
+            currTime -= mTot
+            index++
+        }
+
+        return {}
+    }
+
     render() {
+        const currentlyPlaying = this.props.isPlayingSong ? this.findCurrentlyPlayingMeasure() : {}
+
         return (
             <React.Fragment>
-                {this.props.song.measures.map((measure, idx) => this.createMeasureTag(measure))}
+                {this.props.song.measures.map((measure, idx) => this.createMeasureTag(measure, currentlyPlaying))}
             </React.Fragment>
         )
     }

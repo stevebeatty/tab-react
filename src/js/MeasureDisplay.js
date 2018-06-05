@@ -145,7 +145,8 @@ class MeasureDisplay extends Component {
     }
 
     isNoteSelected(noteIndex, stringIndex) {
-        return this.props.selection.type === 'note' &&
+        return this.props.selection &&
+            this.props.selection.type === 'note' &&
             this.props.selection.value.note === noteIndex &&
             this.props.selection.value.string === stringIndex &&
             this.props.selection.value.measure === this.props.measure.key;
@@ -243,7 +244,7 @@ class MeasureDisplay extends Component {
               </div>
 
               <Ruler y={this.rulerBottom()} d={this.props.measure.duration()} dx={beginningOffset} subdivisions={this.state.subdivisions} subdivisionSpacing={subDivSize}
-                  width={this.measureWidth()} height={subDivSize} />
+                  width={this.measureWidth()} height={subDivSize} showIndicator={this.props.isPlaying} indicatorPosition={this.props.currentTime/this.props.measure.totalTime()}/>
 	      </div>
 	  )
   }
@@ -325,7 +326,14 @@ class Ruler extends Component {
 									y2={bottom + 'em'}
 						/>
 					))}
-						</g>
+                    </g>
+
+                    { <line className={"ruler-tick"} style={{ stroke: 'red' }}
+                        x1={this.props.width * this.props.indicatorPosition + 'em'}
+                        x2={this.props.width * this.props.indicatorPosition + 'em'}
+                        y1={1 + 'em'}
+                        y2={bottom + 'em'}
+                    />}
 
 				</g>
             </svg>

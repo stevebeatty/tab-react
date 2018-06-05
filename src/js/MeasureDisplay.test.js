@@ -1,5 +1,6 @@
 import React from 'react';
-import { App, MeasureDisplay } from './App';
+import MeasureDisplay from './MeasureDisplay';
+import { Measure } from './Model'
 import Layout from './Layout';
 import Enzyme, { mount, shallow } from "enzyme";
 import Adapter from 'enzyme-adapter-react-16';
@@ -8,7 +9,7 @@ Enzyme.configure({ adapter: new Adapter() });
 
 describe('Measure test', () => {
     const layout = new Layout();
-    const measure = {
+    const measure = new Measure({
         i: 4,
         d: 4,
         strings: [
@@ -19,7 +20,7 @@ describe('Measure test', () => {
             [],
             []
         ] 
-    };
+    });
 
     test('closestPosition', () => {
         const m = shallow(<MeasureDisplay measure={measure} layout={layout} duration={measure.d} interval={measure.i} selected={false} />);

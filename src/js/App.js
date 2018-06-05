@@ -26,7 +26,8 @@ var song = new Song({
 	title: 'Name',
 	author: 'Author',
 	d: 4,
-	i: 4,
+    i: 4,
+    tempo: 60,
 	measures: [
 		{
 			strings: [
@@ -81,7 +82,11 @@ class App extends Component {
             dragging: {},
             showSettings: false,
             showLoadFile: false,
-			showSaveFile: false
+            showSaveFile: false,
+            timerId: null,
+            lastTime: null,
+            currentTime: 0,
+            isPlayingSong: true
 		};
 
         this.measureRef = React.createRef();
@@ -104,7 +109,41 @@ class App extends Component {
         this.toggleShowSaveFile = this.toggleShowSaveFile.bind(this);
         this.setSelectedNote = this.setSelectedNote.bind(this);
         this.setDragging = this.setDragging.bind(this);
+        this.handleTimerTick = this.handleTimerTick.bind(this);
 	}
+
+    componentDidMount() {
+        this.startTimer()
+    }
+    componentWillUnmount() {
+        this.stopTimer()
+    }
+
+    startTimer() {
+        if (this.state.timerId) {
+            this.stopTimer()
+        }
+
+        this.setState({
+            timerId: setInterval(this.handleTimerTick, 100),
+            lastTime: new Date().getTime(),
+            currentTime: 0
+        });
+    }
+
+    stopTimer() {
+        clearInterval(this.state.timerId);
+    }
+
+    handleTimerTick() {
+        const endTime = new Date().getTime(),
+            elapsed = (endTime - this.state.lastTime)/1000
+
+        this.setState( prevState => ({
+            lastTime: endTime,
+            currentTime: prevState.currentTime + elapsed
+        }));
+    }
 
     handleSongUpdated() {
         this.setState({
@@ -118,8 +157,6 @@ class App extends Component {
         console.log('click ' + Object.keys(measure.state));
 		
 		this.setState(prevState => ({
-            selectedMeasure: measure.props.measure,
-            selectedNote: {},
             selection: {
                 type: 'measure',
                 value: {
@@ -145,14 +182,6 @@ class App extends Component {
             noteObj = m.noteWithIndex(stringIndex, noteIndex)
 
         this.setState({
-            selectedNote: {
-                measure: measure.props.measure.key,
-                string: stringIndex,
-                note: noteIndex,
-                noteObj: noteObj,
-                measureObj: measure
-            },
-            selectedMeasure: {},
             selection: {
                 type: 'note',
                 value: {
@@ -278,8 +307,8 @@ class App extends Component {
                 <MeasureController song={this.state.song} onSongUpdate={this.handleSongUpdated}
                     selection={this.state.selection} onMeasureSelect={this.handleMeasureSelect}
                     onNoteSelect={this.setSelectedNote} layout={this.state.layout}
-                    dragging={this.state.dragging} canDragNote={!this.state.locked} onDragging={this.setDragging} measureRef={this.measureRef} 
-					canClickString={!this.state.locked}/>
+                    dragging={this.state.dragging} canDragNote={!this.state.locked} onDragging={this.setDragging} measureRef={this.measureRef}
+                    canClickString={!this.state.locked} isPlayingSong={this.state.isPlayingSong} currentTime={this.state.currentTime} />
 
                 {hasSelectedMeasure ? <MeasureEditor measureRef={this.measureRef} selection={this.state.selection} controller={this} /> : ''}
                 {hasSelectedNote ? <NoteEditor measureRef={this.measureRef} selection={this.state.selection} controller={this} frets={this.frets} /> : ''}
