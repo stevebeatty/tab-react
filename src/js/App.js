@@ -96,6 +96,7 @@ class App extends Component {
         this.clearSelectedNote = this.clearSelectedNote.bind(this);
         this.handleChangeSelectedNoteString = this.handleChangeSelectedNoteString.bind(this);
         this.handleLock = this.handleLock.bind(this);
+		this.handleSongUpdated = this.handleSongUpdated.bind(this);
         this.toggleShowSettings = this.toggleShowSettings.bind(this);
         this.toggleShowLoadFile = this.toggleShowLoadFile.bind(this);
         this.loadSong = this.loadSong.bind(this);
@@ -116,7 +117,8 @@ class App extends Component {
         console.log('click ' + Object.keys(measure.state));
 		
 		this.setState(prevState => ({
-            selectedMeasure: measure.props.measure
+            selectedMeasure: measure.props.measure,
+			selectedNote: {}
 		}));
 	}
 
@@ -145,6 +147,7 @@ class App extends Component {
                 noteObj: noteObj,
                 measureObj: measure
             },
+			selectedMeasure: {}
         });
     }
 
@@ -170,13 +173,13 @@ class App extends Component {
         this.setSelectedNote(measure, string, idx)
     }
 
-    insertNewBeforeSelectedMeasure() {
+    insertNewOffsetFromSelectedMeasure(offset = 0) {
         const song = this.state.song,
             index = song.measureIndexWithKey(this.state.selectedMeasure.key),
             newM = song.newMeasure()
 
         console.log('insert', index, newM)
-        song.insertMeasureAtIndex(index, newM)
+        song.insertMeasureAtIndex(index + offset, newM)
   
         this.setState({
             song: this.state.song
@@ -262,7 +265,8 @@ class App extends Component {
                 <MeasureController song={this.state.song} onSongUpdate={this.handleSongUpdated}
                     selectedMeasure={this.state.selectedMeasure} onMeasureSelect={this.handleMeasureSelect}
                     selectedNote={this.state.selectedNote} onNoteSelect={this.setSelectedNote} layout={this.state.layout}
-                    dragging={this.state.dragging} canDragNote={!this.state.locked} onDragging={this.setDragging} measureRef={this.measureRef} />
+                    dragging={this.state.dragging} canDragNote={!this.state.locked} onDragging={this.setDragging} measureRef={this.measureRef} 
+					canClickString={!this.state.locked}/>
 
                 {hasSelectedMeasure ? <MeasureEditor measureRef={this.measureRef} measure={this.state.selectedMeasure} controller={this} /> : ''}
                 {hasSelectedNote ? <NoteEditor measureRef={this.measureRef} note={this.state.selectedNote} controller={this} frets={this.frets} /> : ''}

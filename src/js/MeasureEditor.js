@@ -8,6 +8,7 @@ class MeasureEditor extends Component {
 
         this.updatePosition = this.updatePosition.bind(this);
         this.insertBefore = this.insertBefore.bind(this);
+		this.insertAfter = this.insertAfter.bind(this)
     }
 
     componentDidMount() {
@@ -39,7 +40,11 @@ class MeasureEditor extends Component {
     }
 
     insertBefore() {
-        this.props.controller.insertNewBeforeSelectedMeasure();
+        this.props.controller.insertNewOffsetFromSelectedMeasure();
+    }
+	
+	insertAfter() {
+        this.props.controller.insertNewOffsetFromSelectedMeasure(1);
     }
 
     render() {
@@ -56,9 +61,14 @@ class MeasureEditor extends Component {
                     <form>
                         <div className="form-group">
                             <label>Insert Empty</label>
-                            <button type="button" onClick={this.insertBefore} className="btn btn-default" aria-label="">
-                                <span aria-hidden="true">Before</span>
-                            </button>
+							<div>
+								<button type="button" onClick={this.insertBefore} className="btn btn-default" aria-label="">
+									<span aria-hidden="true">Before</span>
+								</button>
+								<button type="button" onClick={this.insertAfter} className="btn btn-default" aria-label="">
+									<span aria-hidden="true">After</span>
+								</button>
+							</div>
                         </div>
                     </form>
                 </div>

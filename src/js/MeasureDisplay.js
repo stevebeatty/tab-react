@@ -207,9 +207,9 @@ class MeasureDisplay extends Component {
       const refAtt = {};
         if (this.props.forwardedRef) {
             refAtt.ref = this.props.forwardedRef;
-            console.log('measure ref: ', this.props.measure.key, ' :', refAtt);
+           // console.log('measure ref: ', this.props.measure.key, ' :', refAtt);
         } else {
-            console.log('no ref')
+           // console.log('no ref')
         }
       
       return (

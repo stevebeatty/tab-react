@@ -35,7 +35,7 @@ class MeasureController extends Component {
     }
 
     handleStringClick(measure, stringIndex, e) {
-        if (this.state.locked) return
+        if (!this.props.canClickString) return
 
         const stringDist = this.stringEventDistance(measure, stringIndex, e)
 

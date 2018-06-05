@@ -34,14 +34,11 @@ class NoteEditor extends Component {
     updatePosition() {
         if (this.props.measureRef.current) {
             const rect = this.props.measureRef.current.getBoundingClientRect();
-            console.log(rect.top, rect.right, rect.bottom, rect.left);
 
             const style = this.editorRef.current.style;
             style.position = 'absolute';
             style.top = rect.bottom + 'px';
             style.left = rect.left + 'px';
-        } else {
-            console.log('no measure ref')
         }
     }
 
@@ -79,12 +76,19 @@ class NoteEditor extends Component {
 			measure = note.measureObj.props.measure,
 			nextNoteDist = measure.nextNoteDistanceOrRemaining(note.string, note.noteObj.p, note.note),
             nextInts = nextNoteDist * note.noteObj.i / measure.interval(),
-            durations = rangeArray(1, nextInts + 1, 1),
+            durations = rangeArray(1, Math.floor(nextInts) + 1, 1),
 			intervals = [1, 2, 4, 8, 16].filter( i => nextNoteDist >= note.noteObj.d * measure.interval()/i ),
 			availableStrings = measure.validStringsForPosition(note.noteObj.p)
 
-        //console.log('d ', nextNoteDist, durations, nextInts)
+		if (durations.length === 0) {
+			durations.push(1)
+		} 
 
+		availableStrings.push(note.string)
+		availableStrings.sort()
+
+        //console.log('d ', nextNoteDist, durations, nextInts)
+		//console.log('f', note, availableStrings)
         return (
             <div ref={this.editorRef} className="card" style={{ zIndex: 50 }} >
                 <div className="card-header">
@@ -96,24 +100,23 @@ class NoteEditor extends Component {
                 <div className="card-body">
                     <form>
                         <div className="form-row">
-                            <div className="form-group col-md-2">
+                            <div className="form-group">
                                 <label>String</label>
-                                <select id="string" className="form-control" value={note.string} onChange={this.handleStringChange}>
+                                <select id="string" className="form-control"  value={note.string} onChange={this.handleStringChange}>
                                     {availableStrings.map((str) => (
 				                        <option key={str}>{str}</option>
                                     ))}
                                 </select>
                             </div>
-                            <div className="form-group col-md-2">
+                            <div className="form-group">
                                 <label>Interval</label>
-                                <input type="text" readOnly className="form-control-plaintext" value={note.noteObj.i} />
                                 <select id="interval" className="form-control" value={note.noteObj.i} onChange={this.handleIntervalChange}>
                                     {intervals.map((i) => (
                                         <option key={i}>{i}</option>
                                     ))}
                                 </select>
                             </div>
-                            <div className="form-group col-md-2">
+                            <div className="form-group">
                                 <label>Fret</label>
                                 <select id="fret" className="form-control" value={note.noteObj.f} onChange={this.handleFretChange}>
                                     {this.props.frets.map((fret) => (
@@ -121,9 +124,8 @@ class NoteEditor extends Component {
                                     ))}
                                 </select>
                             </div>
-                            <div className="form-group col-md-2">
+                            <div className="form-group">
                                 <label>Duration</label>
-								<input type="text" readOnly className="form-control-plaintext" value={note.noteObj.d} />
                                 <select id="duration" className="form-control" value={note.noteObj.d} onChange={this.handleDurationChange}>
                                     {durations.map((d) => (
                                         <option key={d}>{d}</option>

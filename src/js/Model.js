@@ -122,12 +122,13 @@ class Measure {
 	}
 
     addNote(string, note) {
-        const notes = this.strings[string]
-
         if (!note.i) {
             note.i = this.interval()
         }
 
+		note.key = this.context.idGen.nextOrValue(note.key)
+
+        const notes = this.strings[string]
         notes.push(note)
         this.sortNotes(notes)
 
