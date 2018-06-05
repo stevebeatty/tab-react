@@ -10,7 +10,7 @@ class Measure {
         this.key = this.context.idGen.nextOrValue(cfg.key)
 		this.i = cfg.i
         this.d = cfg.d
-        
+        this.t = cfg.tempo
 
         this.strings = []
         if (cfg.strings) {
@@ -40,6 +40,14 @@ class Measure {
 
     duration() {
         return this.d || this.context && this.context.song && this.context.song.duration()
+    }
+
+    tempo() {
+        return this.t || this.context && this.context.song && this.context.song.tempo()
+    }
+
+    totalTime() {
+        return this.duration() / (this.tempo() / 60)
     }
 
 	doNotesOverlap(a, b) {
@@ -181,18 +189,21 @@ class Song {
         }
 
         this.key = this.context.idGen.nextOrValue(cfg.key)
-		this.i = cfg.i
-        this.d = cfg.d
         this.title = cfg.title
         this.author = cfg.author
-
+		this.i = cfg.i
+        this.d = cfg.d
+        this.t = cfg.tempo
 
 		this.measures = []
 
-		for (let i = 0; i < cfg.measures.length; i++) {
-            let m = new Measure(cfg.measures[i], this.context)
-			this.measures.push(m)
+        if (cfg.measures) {
+            for (let i = 0; i < cfg.measures.length; i++) {
+                let m = new Measure(cfg.measures[i], this.context)
+                this.measures.push(m)
+            }
         }
+		
     }
 
     interval() {
@@ -201,6 +212,16 @@ class Song {
 
     duration() {
         return this.d
+    }
+
+    tempo() {
+        return this.t
+    }
+
+    totalTime() {
+        let time = 0
+        this.measures.forEach(m => time += m.totalTime())
+        return time
     }
 
     measureWithKey(measureKey) {

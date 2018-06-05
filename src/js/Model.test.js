@@ -6,6 +6,7 @@ describe('Measure test', () => {
     const measure = {
         i: 4,
         d: 4,
+        tempo: 60,
         strings: [
             [{ f: 1, d: 1, i: 4, p: 2 }],
             [],
@@ -18,7 +19,6 @@ describe('Measure test', () => {
 
     test('doNotesOverlap', () => {
         const m = new Measure(measure)
-
 
         expect(m.doNotesOverlap({ f: 1, d: 1, i: 4, p: 2 }, { f: 1, d: 1, i: 4, p: 2 })).toEqual(true);
         expect(m.doNotesOverlap({ f: 1, d: 1, i: 4, p: 2 }, { f: 7, d: 1, i: 4, p: 3 })).toEqual(false);
@@ -73,6 +73,19 @@ describe('Measure test', () => {
         expect(new Measure({}).duration()).toBeUndefined()
     })
 
+    test('tempo', () => {
+        const m = new Measure(measure)
+
+        expect(m.tempo()).toEqual(60)
+        expect(new Measure({}).tempo()).toBeUndefined()
+    })
+
+    test('totalTime', () => {
+        const m = new Measure(measure)
+
+        expect(m.totalTime()).toEqual(4)
+    })
+
 	test('noteWithIndex', () => {
 		const m = new Measure(measure)
 		expect(m.noteWithIndex(0, 0)).toBeDefined()
@@ -89,6 +102,7 @@ describe('Song Class test', () => {
             author: 'Author',
             d: 4,
             i: 4,
+            tempo: 60,
             measures: [
                 {
                     strings: [
@@ -146,6 +160,19 @@ describe('Song Class test', () => {
         expect(s.measureIndexWithKey(s.measures[0].key)).toEqual(0)
         expect(s.measureIndexWithKey(s.measures[1].key)).toEqual(1)
     });
+
+    test('tempo', () => {
+        const s = new Song(song)
+
+        expect(s.tempo()).toEqual(60)
+        expect(new Song({}).tempo()).toBeUndefined()
+    })
+
+    test('totalTime', () => {
+        const s = new Song(song)
+
+        expect(s.totalTime()).toEqual(4 * 3)
+    })
 
     test('insertMeasureAtIndex', () => {
         const s = new Song(song)
