@@ -9,6 +9,14 @@ nav {
 
 }
 
+.note-default-state {
+    z-index: 20;
+}
+
+.note-dragging {
+    z-index: 20;
+}
+
 .note-text,
 .note-text-outline {
     font-weight: bold;
@@ -35,25 +43,21 @@ nav {
     position: absolute;
 }
 
+.ruler-bottom {
+    stroke: #BABABA;
+    stroke-width: 0.5px;
+}
+
 .ruler-tick {
     stroke: #BABABA;
+    stroke-width: 1px;
 }
 
-.ruler-tick-1 {
-  stroke-width: 1.5px;
-}
-
-.ruler-tick-2 {
-  stroke-width: 1.25px;
-}
 
 .transparent {
   fill-opacity: 0;
 }
-.string-3 {
-  /* stroke: #008A00; */
-  fill: #008A00; 
-}
+
 
 .string-1 {
   fill: #FF0000; 
@@ -63,21 +67,25 @@ nav {
   fill: #0000FF; 
 }
 
-.string-5 {
-  fill: #F78C00; 
+.string-3 {
+    fill: #008A00;
 }
 
 .string-4 {
-  fill: #D149BD; 
+    fill: #D149BD;
+}
+
+.string-5 {
+  fill: #F78C00; 
 }
 
 .string-6 {
   fill: #7300FF;
 }
 
-.selected-note
-{
-  fill: #70FFB5;
+.selected-note {
+    fill: #70FFB5;
+    stroke: #70FFB5;
 }
 
 .selected-measure {
@@ -164,3 +172,5 @@ nav {
     width: 10em;
     border: 1px solid black;
 }
+
+

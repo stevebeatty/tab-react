@@ -69,18 +69,22 @@ class MeasureController extends Component {
         if (stringDist.d !== 0) {
             const drag = this.props.dragging,
                 m = this.props.song.measureWithKey(drag.measure),
-                note = m.noteWithIndex(drag.string, drag.note)
+                note = m.noteWithIndex(drag.string, drag.note),
+                d = note.d * m.interval() / note.i
 
             console.log('pos ', stringDist.p, ' end ', note.d + stringDist.p, 'dist & d ', stringDist.d, note.d)
 
-            if (stringDist.d < note.d) {
+            if (stringDist.d < d) {
                 console.log('cant fit')
                 return
             } else {
                 m.removeNote(drag.string, drag.note)
 
                 note.p = stringDist.p
-                measure.addNote(stringIndex, note)
+                const newIdx = measure.addNote(stringIndex, note)
+
+                this.props.onSongUpdate()
+                this.props.onNoteSelect(measure, stringIndex, newIdx)
             }
         }
     }
@@ -95,11 +99,12 @@ class MeasureController extends Component {
 
             const drag = this.props.dragging,
                 m = this.props.song.measureWithKey(drag.measure),
-                note = m.noteWithIndex(drag.string, drag.note)
+                note = m.noteWithIndex(drag.string, drag.note),
+                d = note.d * m.interval() / note.i
 
-            //console.log('pos ', stringDist.p, ' end ', note.d + stringDist.p, 'dist & d ', stringDist.d, note.d)
+            console.log('pos ', stringDist.p, ' end ', note.d + stringDist.p, 'dist & d ', stringDist.d, note.d, note.d*m.interval()/note.i )
 
-            if (stringDist.d < note.d) {
+            if (stringDist.d < d) {
                 // console.log('cant fit')
                 evt.dataTransfer.dropEffect = 'none'
                 return
@@ -108,6 +113,8 @@ class MeasureController extends Component {
 
         evt.dataTransfer.dropEffect = 'move'
     }
+
+
 
     handleDragStart(info, evt) {
         console.log('dragstart')
@@ -138,7 +145,8 @@ class MeasureController extends Component {
     }
 
     createMeasureTag(measure) {
-        const optionalAtts = {}
+        const optionalAtts = {},
+            isSelected = this.props.selection.type === 'measure' && measure.key === this.props.selection.value.measure.key
 
         if (this.measureNeedsRef(measure)) {
             optionalAtts.forwardedRef = this.props.measureRef
@@ -149,22 +157,22 @@ class MeasureController extends Component {
 
             <MeasureDisplay
                 key={measure.key} measure={measure} layout={this.props.layout}
-                selected={measure.key === this.props.selectedMeasure.key} onMeasureSelect={this.props.onMeasureSelect}
+                selected={isSelected} selection={this.props.selection} onMeasureSelect={this.props.onMeasureSelect}
                 onStringClick={this.handleStringClick} onStringDragOver={this.handleDragOver} onStringDrop={this.handleStringDrop}
-                onNoteClick={this.props.onNoteSelect} selectedNote={this.props.selectedNote}
+                onNoteClick={this.props.onNoteSelect} 
                 onNoteDragStart={this.handleDragStart} onNoteDragEnd={this.handleDragEnd} canDragNote={this.props.canDragNote}
                 {...optionalAtts}
             />)
     }
 
     measureNeedsRef(measure) {
-        const hasSelectedNote = this.props.selectedNote.note !== undefined;
-        const hasSelectedMeasure = this.props.selectedMeasure.key !== undefined;
+        const hasSelectedNote = this.props.selection.type === 'note';
+        const hasSelectedMeasure = this.props.selection.type === 'measure';
 
         if (hasSelectedNote) {
-            return measure.key === this.props.selectedNote.measure;
+            return measure.key === this.props.selection.value.measure;
         } else if (hasSelectedMeasure) {
-            return measure.key === this.props.selectedMeasure.key;
+            return measure.key === this.props.selection.value.measure.key;
         } else {
             return false;
         }

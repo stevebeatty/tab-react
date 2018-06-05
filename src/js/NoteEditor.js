@@ -43,15 +43,13 @@ class NoteEditor extends Component {
     }
 
     handleFretChange(evt) {
-        const change = {
-            f: parseInt(evt.target.value, 10)
-        }
-        console.log('fret change ', change);
-        this.props.controller.selectedNoteModified(change);
+        this.props.controller.selectedNoteModified({
+            f: this.parseValue(evt)
+        });
     }
 
     handleStringChange(evt) {        
-        this.props.controller.handleChangeSelectedNoteString(parseInt(evt.target.value, 10))
+        this.props.controller.handleChangeSelectedNoteString(this.parseValue(evt))
     }
 
     handleDurationChange(evt) {
@@ -72,7 +70,7 @@ class NoteEditor extends Component {
     }
 
     render() {
-        const note = this.props.note,
+        const note = this.props.selection.value,
 			measure = note.measureObj.props.measure,
 			nextNoteDist = measure.nextNoteDistanceOrRemaining(note.string, note.noteObj.p, note.note),
             nextInts = nextNoteDist * note.noteObj.i / measure.interval(),

@@ -50,7 +50,6 @@ class MeasureDisplay extends Component {
         this.handleStringClick = this.handleStringClick.bind(this);
         this.handleNoteClick = this.handleNoteClick.bind(this);
         this.handleNoteDrag = this.handleNoteDrag.bind(this);
-        this.handleMouseUp = this.handleMouseUp.bind(this);
         this.handleStringDrop = this.handleStringDrop.bind(this);
 		this.handleStringDragOver = this.handleStringDragOver.bind(this);
 	}
@@ -146,15 +145,10 @@ class MeasureDisplay extends Component {
     }
 
     isNoteSelected(noteIndex, stringIndex) {
-        //console.log(this.props.selectedNote);
-        if (!this.props.selectedNote) return false;
-
-        //console.log('? ', noteIndex, stringIndex, this.props.selectedNote);
-
-        return this.props.selectedNote &&
-            this.props.selectedNote.note === noteIndex &&
-            this.props.selectedNote.string === stringIndex &&
-            this.props.selectedNote.measure === this.props.measure.key;
+        return this.props.selection.type === 'note' &&
+            this.props.selection.value.note === noteIndex &&
+            this.props.selection.value.string === stringIndex &&
+            this.props.selection.value.measure === this.props.measure.key;
     }
 
     /**
@@ -191,11 +185,6 @@ class MeasureDisplay extends Component {
         return this.props.measure.removeNote(string, noteIndex)
     }
 
-    handleMouseUp(evt) {
-        console.log('mouse up - measure', evt.pageX, evt.pageY)
-
-    }
-
     render() {
 	  const noteTextOffset = this.props.layout.noteTextOffset();
 	  const beginningOffset = this.props.layout.measureSideOffset();
@@ -213,7 +202,7 @@ class MeasureDisplay extends Component {
         }
       
       return (
-          <div key={this.props.measure.key} className="measure" alt={this.props.selected.toString()} {...refAtt}
+          <div key={this.props.measure.key} className="measure" {...refAtt}
                style={{ width: this.measureWidth() + 'em', height: this.measureHeight() + 'em' }}>
 
 		      <div className="strings">
@@ -270,7 +259,6 @@ class String extends Component {
 
 		// This binding is necessary to make `this` work in the callback
         this.handleClick = this.handleClick.bind(this);
-        this.handleMouseUp = this.handleMouseUp.bind(this);
         this.handleDragOver = this.handleDragOver.bind(this);
 		this.handleDrop = this.handleDrop.bind(this);
 	  }
@@ -279,20 +267,13 @@ class String extends Component {
         this.props.onClick(this.props.index, e);
     }
 
-    handleMouseUp(evt) {
-        console.log('mouse up - string', evt)
-
-    }
-
     handleDragOver(evt) {
-        console.log('dragover', evt.dataTransfer.getData("text/measure"))
         //evt.preventDefault()
         //evt.dataTransfer.dropEffect = 'move'
 		this.props.onDragOver(this.props.index, evt)
     }
 
 	handleDrop(evt) {
-        console.log('drop', evt.dataTransfer.getData("text/measure"))
         evt.preventDefault()
      
 		this.props.onDrop(this.props.index, evt)
@@ -302,7 +283,7 @@ class String extends Component {
 	    const offset = this.props.offset + 'em';
 	  
         return (
-            <div onMouseUp={this.handleMouseUp} style={{ position: 'relative' }}  >
+            <div style={{ position: 'relative' }}  >
                 <div className="string clickable" style={{ height: '1px', width: '100%', backgroundColor: 'black', position: 'absolute', top: offset }} onClick={this.handleClick} />
                 <div className="clickable" onClick={this.handleClick} onMouseUp={this.handleMouseUp} onDragOver={this.handleDragOver}
 					onDrop={this.handleDrop}
@@ -337,7 +318,7 @@ class Ruler extends Component {
 							x2="100%" y2={bottom + 'em'}  />
 					<g>
 					{ticks.map((i, idx) => (
-						<line key={idx} className={"ruler-tick ruler-tick-" + i}
+						<line key={idx} className={"ruler-tick"}
 								x1={this.tickXPostition(idx) + 'em'} 
 								x2={this.tickXPostition(idx) + 'em'} 
 								y1={this.tickHeight(idx, i) + 'em'}
@@ -355,15 +336,19 @@ class Ruler extends Component {
 class Note extends Component {
 
     constructor(props) {
-        super(props);
+        super(props)
 
-        this.handleClick = this.handleClick.bind(this);
-        this.handleDragStart = this.handleDragStart.bind(this);
-        this.handleDragEnd = this.handleDragEnd.bind(this);
+        this.state = {
+            isDragging: false
+        }
+
+        this.handleClick = this.handleClick.bind(this)
+        this.handleDragStart = this.handleDragStart.bind(this)
+        this.handleDragEnd = this.handleDragEnd.bind(this)
     }
 
     handleClick(e) {
-        this.props.onClick(this.props.string, this.props.index, e);
+        this.props.onClick(this.props.string, this.props.index, e)
     }
 
     handleDragStart(evt) {
@@ -374,18 +359,26 @@ class Note extends Component {
             string: this.props.string,
             note: this.props.index
         }, evt)
+
+        this.setState({
+            isDragging: true
+        })
     }
 
     handleDragEnd(evt) {
         console.log('dragend')
         this.props.onDragEnd(evt)
+
+        this.setState({
+            isDragging: false
+        })
     }
 
 
     render() {
         const rectHeight = 0.2,
             imgHeight = 1.5,
-            imgLeft = .5,
+            imgLeft = .75,
             imgMiddle = imgHeight/2
 
         
@@ -394,9 +387,14 @@ class Note extends Component {
 	  
         return (
             <div draggable={this.props.canDrag} onDragStart={this.handleDragStart} onDragEnd={this.handleDragEnd}
+                className={this.state.isDragging ? 'note-dragging' : 'note-default-state'}
                 style={{
-                    position: 'absolute', width: this.props.d + imgLeft + 'em',
-				left: this.props.x - imgLeft + 'em', top: this.props.y - imgHeight / 2 + 'em', height: imgHeight + 'em', zIndex: 20 }}>
+                    position: 'absolute',
+                    width: this.props.d + imgLeft + 'em',
+                    left: this.props.x - imgLeft + 'em',
+                    top: this.props.y - imgHeight / 2 + 'em',
+                    height: imgHeight + 'em'
+                }}>
 				<svg 
 					 style={{ width: this.props.d + imgLeft + 'em', height: imgHeight + 'em' }}>
 
@@ -409,8 +407,8 @@ class Note extends Component {
 					{this.props.selected &&
 						<circle className="selected-note" cx={imgLeft + 'em'}
 							cy={imgMiddle + 'em'}
-						r={this.props.layout.noteRadius() + 'em'} />}
-	  
+						    r={this.props.layout.noteRadius() + 0.05 + 'em'} />}
+
 					<text className="note-text-outline clickable"
 							x={imgLeft + 'em'}
 							y={imgMiddle + 'em'}
@@ -432,4 +430,4 @@ class Note extends Component {
     }
 }
 
-export { MeasureDisplay as default };
+export default MeasureDisplay

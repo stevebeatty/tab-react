@@ -76,6 +76,7 @@ class App extends Component {
 			layout: layout,
             selectedMeasure: {},
             selectedNote: {},
+            selection: {},
             locked: false,
             dragging: {},
             showSettings: false,
@@ -118,20 +119,24 @@ class App extends Component {
 		
 		this.setState(prevState => ({
             selectedMeasure: measure.props.measure,
-			selectedNote: {}
+            selectedNote: {},
+            selection: {
+                type: 'measure',
+                value: {
+                    measure: measure.props.measure
+                }
+            }
 		}));
 	}
 
     clearSelectedMeasure() {
-        console.log('clearSelectedMeasure ' )
-        this.setState({ selectedMeasure: {} });
+        this.setState({ selectedMeasure: {}, selection: {} });
     }
 
 
 
     clearSelectedNote() {
-        console.log('selectedNote ')
-        this.setState({ selectedNote: {} });
+        this.setState({ selectedNote: {}, selection: {} });
     }
 
     setSelectedNote(measure, stringIndex, noteIndex) {
@@ -147,7 +152,17 @@ class App extends Component {
                 noteObj: noteObj,
                 measureObj: measure
             },
-			selectedMeasure: {}
+            selectedMeasure: {},
+            selection: {
+                type: 'note',
+                value: {
+                    measure: measure.props.measure.key,
+                    string: stringIndex,
+                    note: noteIndex,
+                    noteObj: noteObj,
+                    measureObj: measure
+                }
+            }
         });
     }
 
@@ -180,10 +195,8 @@ class App extends Component {
 
         console.log('insert', index, newM)
         song.insertMeasureAtIndex(index + offset, newM)
-  
-        this.setState({
-            song: this.state.song
-        });
+
+        this.handleSongUpdated()
     }
 
     
@@ -231,8 +244,8 @@ class App extends Component {
 
 
     render() {
-        const hasSelectedNote = this.state.selectedNote.note !== undefined;
-        const hasSelectedMeasure = this.state.selectedMeasure.key !== undefined;
+        const hasSelectedNote = this.state.selection.type === 'note';
+        const hasSelectedMeasure = this.state.selection.type === 'measure';
 
     //    console.log('selnote: ', this.state.selectedNote);
      //   console.log('layout2 ', this.state.layout);
@@ -256,20 +269,20 @@ class App extends Component {
                     </div>
                 </div>
  
-             </NavBar>
+            </NavBar>
             <div className="container" style={{ "marginTop": "1em" }}>
 				<h4>{this.state.song.title}</h4>
 				<h6>{this.state.song.author}</h6>
 
 
                 <MeasureController song={this.state.song} onSongUpdate={this.handleSongUpdated}
-                    selectedMeasure={this.state.selectedMeasure} onMeasureSelect={this.handleMeasureSelect}
-                    selectedNote={this.state.selectedNote} onNoteSelect={this.setSelectedNote} layout={this.state.layout}
+                    selection={this.state.selection} onMeasureSelect={this.handleMeasureSelect}
+                    onNoteSelect={this.setSelectedNote} layout={this.state.layout}
                     dragging={this.state.dragging} canDragNote={!this.state.locked} onDragging={this.setDragging} measureRef={this.measureRef} 
 					canClickString={!this.state.locked}/>
 
-                {hasSelectedMeasure ? <MeasureEditor measureRef={this.measureRef} measure={this.state.selectedMeasure} controller={this} /> : ''}
-                {hasSelectedNote ? <NoteEditor measureRef={this.measureRef} note={this.state.selectedNote} controller={this} frets={this.frets} /> : ''}
+                {hasSelectedMeasure ? <MeasureEditor measureRef={this.measureRef} selection={this.state.selection} controller={this} /> : ''}
+                {hasSelectedNote ? <NoteEditor measureRef={this.measureRef} selection={this.state.selection} controller={this} frets={this.frets} /> : ''}
 
             </div>
 
