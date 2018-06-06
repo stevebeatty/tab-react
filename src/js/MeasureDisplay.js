@@ -43,7 +43,6 @@ class MeasureDisplay extends Component {
         //console.log(' & ', maxI, subdivisions)
 
 		this.state = {
-			isClicked: false
 		};
 		
         this.handleClick = this.handleClick.bind(this);
@@ -244,7 +243,8 @@ class MeasureDisplay extends Component {
               </div>
 
               <Ruler y={this.rulerBottom()} d={this.props.measure.duration()} dx={beginningOffset} subdivisions={this.state.subdivisions} subdivisionSpacing={subDivSize}
-                  width={this.measureWidth()} height={subDivSize} showIndicator={this.props.isPlaying} indicatorPosition={this.props.currentTime/this.props.measure.totalTime()}/>
+                  width={this.measureWidth()} height={subDivSize} showIndicator={this.props.isPlaying} indicatorPosition={this.props.currentTime/this.props.measure.totalTime()}
+				  totalTime={this.props.measure.totalTime()} />
 	      </div>
 	  )
   }
@@ -298,6 +298,38 @@ class String extends Component {
 
 class Ruler extends Component {
 	
+	constructor(props) {
+		super(props)
+
+		this.state = {}
+
+		this.indicatorRef = React.createRef()
+	}
+
+
+	componentDidUpdate(prevProps, prevState, snapshot) {
+	//console.log('componentDidUpdate', prevState)
+
+		if (prevProps.showIndicator && !prevState.isShowingIndicator) {
+			console.log('animate', this.props.totalTime)
+			this.indicatorRef.current.animate([
+			  // keyframes
+			  { transform: 'translateX(0px)' }, 
+			  { transform: 'translateX(' + this.props.width + 'em)' }
+			], { 
+			  // timing options
+			  duration: this.props.totalTime * 1000,
+			  iterations: 1
+			});
+
+			this.setState( {
+				isShowingIndicator: true
+			})
+
+		}
+		
+	}
+
 	tickXPostition(index) {
 		return this.props.dx + (index * this.props.subdivisionSpacing);
 	}
@@ -331,6 +363,13 @@ class Ruler extends Component {
                     { <line className={"ruler-tick"} style={{ stroke: 'red' }}
                         x1={this.props.width * this.props.indicatorPosition + 'em'}
                         x2={this.props.width * this.props.indicatorPosition + 'em'}
+                        y1={1 + 'em'}
+                        y2={bottom + 'em'}
+                    />}
+
+					{ <line ref={this.indicatorRef} className={"ruler-tick"} style={{ stroke: 'blue' }}
+                        x1={1+ 'em'}
+                        x2={1 + 'em'}
                         y1={1 + 'em'}
                         y2={bottom + 'em'}
                     />}
