@@ -86,7 +86,7 @@ class App extends Component {
             timerId: null,
             lastTime: null,
             currentTime: 0,
-            isPlayingSong: true
+            isPlayingSong: false
 		};
 
         this.measureRef = React.createRef();
@@ -110,13 +110,14 @@ class App extends Component {
         this.setSelectedNote = this.setSelectedNote.bind(this);
         this.setDragging = this.setDragging.bind(this);
         this.handleTimerTick = this.handleTimerTick.bind(this);
+        this.playSong = this.playSong.bind(this);
 	}
 
     componentDidMount() {
-        this.startTimer()
+        this.playSong()
     }
     componentWillUnmount() {
-        this.stopTimer()
+        this.stopSong()
     }
 
     startTimer() {
@@ -126,9 +127,8 @@ class App extends Component {
 
         this.setState({
             timerId: setInterval(this.handleTimerTick, 100),
-            lastTime: new Date().getTime(),
-            currentTime: 0
-        });
+            lastTime: new Date().getTime()
+        })
     }
 
     stopTimer() {
@@ -137,12 +137,41 @@ class App extends Component {
 
     handleTimerTick() {
         const endTime = new Date().getTime(),
-            elapsed = (endTime - this.state.lastTime)/1000
+            elapsed = (endTime - this.state.lastTime) / 1000,
+            currentTime = this.state.currentTime + elapsed
 
         this.setState( prevState => ({
             lastTime: endTime,
-            currentTime: prevState.currentTime + elapsed
-        }));
+            currentTime: currentTime
+        }))
+
+        if (currentTime > this.state.song.totalTime()) {
+            this.stopSong()
+        }
+    }
+
+    loadSong(json) {
+        this.setState({
+            song: new Song(json),
+            showLoadFile: false
+        })
+    }
+
+    playSong() {
+        this.setState({
+            isPlayingSong: true
+        })
+
+        this.startTimer()
+    }
+
+    stopSong() {
+        this.setState({
+            isPlayingSong: false,
+            currentTime: 0
+        })
+
+        this.stopTimer()
     }
 
     handleSongUpdated() {
@@ -256,6 +285,27 @@ class App extends Component {
     }
 
 
+    findCurrentlyPlayingMeasure() {
+        let currTime = this.state.currentTime,
+            index = 0
+
+        while (index < this.state.song.measures.length) {
+            let measure = this.state.song.measures[index],
+                mTot = measure.totalTime()
+
+            if (mTot >= currTime) {
+                return {
+                    measure: measure.key,
+                    time: currTime
+                }
+            }
+
+            currTime -= mTot
+            index++
+        }
+
+        return {}
+    }
    
 
     setDragging(obj) {
@@ -264,17 +314,13 @@ class App extends Component {
         })
     }
 
-    loadSong(json) {
-        this.setState({
-            song: new Song(json),
-            showLoadFile: false
-        })
-    }
+    
 
 
     render() {
-        const hasSelectedNote = this.state.selection.type === 'note';
-        const hasSelectedMeasure = this.state.selection.type === 'measure';
+        const hasSelectedNote = this.state.selection.type === 'note',
+            hasSelectedMeasure = this.state.selection.type === 'measure',
+            currentlyPlaying = this.state.isPlayingSong ? this.findCurrentlyPlayingMeasure() : {}
 
     //    console.log('selnote: ', this.state.selectedNote);
      //   console.log('layout2 ', this.state.layout);
@@ -284,7 +330,7 @@ class App extends Component {
             <NavBar brand="Tabulater">
                 <a className="nav-link" onClick={this.handleLock} ><span className={"fa fa-lock" + (this.state.locked ? ' text-info' : '')} ></span></a>
 
-                <a className="nav-link" ><span className={"fa fa-play"} ></span></a>
+                {!this.state.isPlayingSong && <a className="nav-link" onClick={this.playSong}><span className={"fa fa-play"} ></span></a>}
 
                 <a className="nav-link" onClick={this.toggleShowSettings}><span className={"fa fa-cog" + (this.state.showSettings ? ' text-info' : '')} ></span></a>
 
@@ -308,7 +354,8 @@ class App extends Component {
                     selection={this.state.selection} onMeasureSelect={this.handleMeasureSelect}
                     onNoteSelect={this.setSelectedNote} layout={this.state.layout}
                     dragging={this.state.dragging} canDragNote={!this.state.locked} onDragging={this.setDragging} measureRef={this.measureRef}
-                    canClickString={!this.state.locked} isPlayingSong={this.state.isPlayingSong} currentTime={this.state.currentTime} />
+                    canClickString={!this.state.locked}
+                    isPlayingSong={this.state.isPlayingSong} currentTime={this.state.currentTime} playingMeasure={currentlyPlaying.measure} playingMeasureTime={currentlyPlaying.time} />
 
                 {hasSelectedMeasure ? <MeasureEditor measureRef={this.measureRef} selection={this.state.selection} controller={this} /> : ''}
                 {hasSelectedNote ? <NoteEditor measureRef={this.measureRef} selection={this.state.selection} controller={this} frets={this.frets} /> : ''}

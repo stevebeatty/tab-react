@@ -186,20 +186,21 @@ class MeasureDisplay extends Component {
     }
 
     render() {
-	  const noteTextOffset = this.props.layout.noteTextOffset();
-	  const beginningOffset = this.props.layout.measureSideOffset();
-	  const subDivSize = this.props.layout.subdivisionOffset();
-      const clickBoxHeight = this.props.layout.stringClickBoxHeight();
+        const noteTextOffset = this.props.layout.noteTextOffset();
+        const beginningOffset = this.props.layout.measureSideOffset();
+        const subDivSize = this.props.layout.subdivisionOffset();
+        const clickBoxHeight = this.props.layout.stringClickBoxHeight();
 
         //console.log('sel note ', this.props.measure.key, ' ', this.props.selectedNote);
 
-      const refAtt = {};
+        const refAtt = {};
         if (this.props.forwardedRef) {
             refAtt.ref = this.props.forwardedRef;
-           // console.log('measure ref: ', this.props.measure.key, ' :', refAtt);
+            // console.log('measure ref: ', this.props.measure.key, ' :', refAtt);
         } else {
-           // console.log('no ref')
+            // console.log('no ref')
         }
+
       
       return (
           <div key={this.props.measure.key} className="measure" {...refAtt}
@@ -243,8 +244,8 @@ class MeasureDisplay extends Component {
               </div>
 
               <Ruler y={this.rulerBottom()} d={this.props.measure.duration()} dx={beginningOffset} subdivisions={this.state.subdivisions} subdivisionSpacing={subDivSize}
-                  width={this.measureWidth()} height={subDivSize} showIndicator={this.props.isPlaying} indicatorPosition={this.props.currentTime/this.props.measure.totalTime()}
-				  totalTime={this.props.measure.totalTime()} />
+                  width={this.measureWidth()} height={subDivSize} showIndicator={this.props.isPlaying} 
+                  totalTime={this.props.measure.totalTime()} measure={this.props.measure} currentTime={this.props.currentTime} />
 	      </div>
 	  )
   }
@@ -303,32 +304,68 @@ class Ruler extends Component {
 
 		this.state = {}
 
-		this.indicatorRef = React.createRef()
+        this.indicatorRef = React.createRef()
+        this.endAnimation = this.endAnimation.bind(this)
 	}
 
+    static getDerivedStateFromProps(props, state) {
+        if (props.showIndicator && !state.isShowingIndicator) {
+            return {
+                startAnimation: true
+            }
+        }
+
+        return null
+    }
+
+    componentWillUnmount() {
+        if (this.state.indicatorAnimation) {
+            this.state.indicatorAnimation.cancel()
+        }
+    }
 
 	componentDidUpdate(prevProps, prevState, snapshot) {
 	//console.log('componentDidUpdate', prevState)
 
-		if (prevProps.showIndicator && !prevState.isShowingIndicator) {
-			console.log('animate', this.props.totalTime)
-			this.indicatorRef.current.animate([
-			  // keyframes
-			  { transform: 'translateX(0px)' }, 
-			  { transform: 'translateX(' + this.props.width + 'em)' }
-			], { 
-			  // timing options
-			  duration: this.props.totalTime * 1000,
-			  iterations: 1
-			});
+        if (this.state.startAnimation) {
+            const dist = this.props.subdivisionSpacing * this.props.subdivisions * this.props.d
+            console.log('animate', this.props.measure.key, this.props.currentTime, this.props.totalTime, prevState)
+            const animation = this.indicatorRef.current.animate([
+                    // keyframes
+                { transform: 'translateX(-' + dist + 'em)' },
+                { transform: 'translateX(0em)'},
+            
+                ], {
+                    // timing options
+                    duration: this.props.totalTime * 1000,
+                    iterations: 1
+                })
 
-			this.setState( {
-				isShowingIndicator: true
-			})
+            animation.onfinish = this.endAnimation
 
-		}
+            this.setState({
+                isShowingIndicator: true,
+                indicatorAnimation: animation,
+                startAnimation: false
+            })
+
+        } else if (!this.props.showIndicator && this.state.isShowingIndicator) {
+            this.setState({
+                isShowingIndicator: false
+            })
+        }
 		
-	}
+    }
+
+    endAnimation() {
+        if (this.state.indicatorAnimation) {
+            this.state.indicatorAnimation.cancel()
+            this.setState({
+                isShowingIndicator: false,
+                indicatorAnimation: null
+            })
+        }
+    }
 
 	tickXPostition(index) {
 		return this.props.dx + (index * this.props.subdivisionSpacing);
@@ -339,7 +376,7 @@ class Ruler extends Component {
 	}
 	
     render() {
-  
+        console.log('render')
         const ticks = getRuler(this.props.d, this.props.subdivisions);
         const bottom = this.props.subdivisionSpacing - 0.1
 	  
@@ -360,16 +397,12 @@ class Ruler extends Component {
 					))}
                     </g>
 
-                    { <line className={"ruler-tick"} style={{ stroke: 'red' }}
-                        x1={this.props.width * this.props.indicatorPosition + 'em'}
-                        x2={this.props.width * this.props.indicatorPosition + 'em'}
-                        y1={1 + 'em'}
-                        y2={bottom + 'em'}
-                    />}
-
-					{ <line ref={this.indicatorRef} className={"ruler-tick"} style={{ stroke: 'blue' }}
-                        x1={1+ 'em'}
-                        x2={1 + 'em'}
+                    {<line ref={this.indicatorRef} className={"ruler-tick"} style={{
+                        stroke: 'blue',
+                        visibility: this.state.isShowingIndicator ? 'visible' : 'hidden'
+                    }}
+                        x1={this.props.width + 'em'}
+                        x2={this.props.width + 'em'}
                         y1={1 + 'em'}
                         y2={bottom + 'em'}
                     />}

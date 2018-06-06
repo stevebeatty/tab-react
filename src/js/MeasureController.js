@@ -147,14 +147,14 @@ class MeasureController extends Component {
     createMeasureTag(measure, currentlyPlaying) {
         const optionalAtts = {},
             isSelected = this.props.selection.type === 'measure' && measure.key === this.props.selection.value.measure.key,
-            isPlaying = measure.key === currentlyPlaying.measure
+            isPlaying = measure.key === this.props.playingMeasure
 
         if (this.measureNeedsRef(measure)) {
             optionalAtts.forwardedRef = this.props.measureRef
         }
 
         if (isPlaying) {
-            optionalAtts.currentTime = currentlyPlaying.time
+            optionalAtts.currentTime = this.props.playingMeasureTime
         }
 
 
