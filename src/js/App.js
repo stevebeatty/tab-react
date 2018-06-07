@@ -86,7 +86,8 @@ class App extends Component {
             timerId: null,
             lastTime: null,
             currentTime: 0,
-            isPlayingSong: false
+            isPlayingSong: false,
+            isPaused: false
 		};
 
         this.measureRef = React.createRef();
@@ -110,7 +111,9 @@ class App extends Component {
         this.setSelectedNote = this.setSelectedNote.bind(this);
         this.setDragging = this.setDragging.bind(this);
         this.handleTimerTick = this.handleTimerTick.bind(this);
-        this.playSong = this.playSong.bind(this);
+        this.playSong = this.playSong.bind(this)
+        this.pauseSong = this.pauseSong.bind(this)
+        this.stopSong = this.stopSong.bind(this)
 	}
 
     componentDidMount() {
@@ -159,15 +162,26 @@ class App extends Component {
 
     playSong() {
         this.setState({
-            isPlayingSong: true
+            isPlayingSong: true,
+            isPaused: false
         })
 
         this.startTimer()
     }
 
+    pauseSong() {
+        this.setState({
+            isPlayingSong: true,
+            isPaused: true
+        })
+
+        this.stopTimer()
+    }
+
     stopSong() {
         this.setState({
             isPlayingSong: false,
+            isPaused: false,
             currentTime: 0
         })
 
@@ -320,7 +334,8 @@ class App extends Component {
     render() {
         const hasSelectedNote = this.state.selection.type === 'note',
             hasSelectedMeasure = this.state.selection.type === 'measure',
-            currentlyPlaying = this.state.isPlayingSong ? this.findCurrentlyPlayingMeasure() : {}
+            currentlyPlaying = this.state.isPlayingSong ? this.findCurrentlyPlayingMeasure() : {},
+            showPlay = this.state.isPlayingSong && this.state.isPaused || !this.state.isPlayingSong
 
     //    console.log('selnote: ', this.state.selectedNote);
      //   console.log('layout2 ', this.state.layout);
@@ -330,8 +345,9 @@ class App extends Component {
             <NavBar brand="Tabulater">
                 <a className="nav-link" onClick={this.handleLock} ><span className={"fa fa-lock" + (this.state.locked ? ' text-info' : '')} ></span></a>
 
-                {!this.state.isPlayingSong && <a className="nav-link" onClick={this.playSong}><span className={"fa fa-play"} ></span></a>}
-
+                {showPlay && <a className="nav-link" onClick={this.playSong}><span className={"fa fa-play"} ></span></a>}
+                {this.state.isPlayingSong && !this.state.isPaused && <a className="nav-link" onClick={this.pauseSong}><span className={"fa fa-pause"} ></span></a>}
+                {this.state.isPlayingSong && <a className="nav-link" onClick={this.stopSong}><span className={"fa fa-stop"} ></span></a>}
                 <a className="nav-link" onClick={this.toggleShowSettings}><span className={"fa fa-cog" + (this.state.showSettings ? ' text-info' : '')} ></span></a>
 
                 <div className="dropdown">
@@ -355,7 +371,8 @@ class App extends Component {
                     onNoteSelect={this.setSelectedNote} layout={this.state.layout}
                     dragging={this.state.dragging} canDragNote={!this.state.locked} onDragging={this.setDragging} measureRef={this.measureRef}
                     canClickString={!this.state.locked}
-                    isPlayingSong={this.state.isPlayingSong} currentTime={this.state.currentTime} playingMeasure={currentlyPlaying.measure} playingMeasureTime={currentlyPlaying.time} />
+                    isPlayingSong={this.state.isPlayingSong} currentTime={this.state.currentTime} playingMeasure={currentlyPlaying.measure} playingMeasureTime={currentlyPlaying.time}
+                    isPaused={this.state.isPaused} />
 
                 {hasSelectedMeasure ? <MeasureEditor measureRef={this.measureRef} selection={this.state.selection} controller={this} /> : ''}
                 {hasSelectedNote ? <NoteEditor measureRef={this.measureRef} selection={this.state.selection} controller={this} frets={this.frets} /> : ''}

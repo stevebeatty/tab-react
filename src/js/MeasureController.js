@@ -166,7 +166,7 @@ class MeasureController extends Component {
                 onStringClick={this.handleStringClick} onStringDragOver={this.handleDragOver} onStringDrop={this.handleStringDrop}
                 onNoteClick={this.props.onNoteSelect} 
                 onNoteDragStart={this.handleDragStart} onNoteDragEnd={this.handleDragEnd} canDragNote={this.props.canDragNote}
-                isPlaying={isPlaying}
+                isPlaying={isPlaying} isPaused={this.props.isPaused}
                 {...optionalAtts}
             />)
     }

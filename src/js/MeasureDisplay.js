@@ -244,7 +244,7 @@ class MeasureDisplay extends Component {
               </div>
 
               <Ruler y={this.rulerBottom()} d={this.props.measure.duration()} dx={beginningOffset} subdivisions={this.state.subdivisions} subdivisionSpacing={subDivSize}
-                  width={this.measureWidth()} height={subDivSize} showIndicator={this.props.isPlaying} 
+                  width={this.measureWidth()} height={subDivSize} showIndicator={this.props.isPlaying} isPaused={this.props.isPaused}
                   totalTime={this.props.measure.totalTime()} measure={this.props.measure} currentTime={this.props.currentTime} />
 	      </div>
 	  )
@@ -324,16 +324,16 @@ class Ruler extends Component {
         }
     }
 
-	componentDidUpdate(prevProps, prevState, snapshot) {
-	//console.log('componentDidUpdate', prevState)
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        console.log('componentDidUpdate', this.props.isPaused, prevProps !== undefined && !prevProps.isPaused)
 
         if (this.state.startAnimation) {
             const dist = this.props.subdivisionSpacing * this.props.subdivisions * this.props.d
             console.log('animate', this.props.measure.key, this.props.currentTime, this.props.totalTime, prevState)
             const animation = this.indicatorRef.current.animate([
                     // keyframes
-                { transform: 'translateX(-' + dist + 'em)' },
                 { transform: 'translateX(0em)'},
+                { transform: 'translateX(' + dist + 'em)' },
             
                 ], {
                     // timing options
@@ -354,12 +354,36 @@ class Ruler extends Component {
                 isShowingIndicator: false
             })
         }
-		
+
+        if (this.props.isPaused && !prevProps.isPaused) {
+            console.log('pause')
+            this.pauseAnimation()
+        } else if (!this.props.isPaused && prevProps.isPaused) {
+            console.log('play')
+            this.playAnimation()
+        }
+    }
+
+    pauseAnimation() {
+        if (this.state.indicatorAnimation) {
+            this.state.indicatorAnimation.pause()
+        }
+    }
+
+    playAnimation() {
+        if (this.state.indicatorAnimation) {
+            this.state.indicatorAnimation.play()
+        }
     }
 
     endAnimation() {
+        if (this.indicatorRef.current) {
+            this.indicatorRef.current.style.visibility = 'hidden'
+        }
+
         if (this.state.indicatorAnimation) {
             this.state.indicatorAnimation.cancel()
+            
             this.setState({
                 isShowingIndicator: false,
                 indicatorAnimation: null
@@ -401,9 +425,9 @@ class Ruler extends Component {
                         stroke: 'blue',
                         visibility: this.state.isShowingIndicator ? 'visible' : 'hidden'
                     }}
-                        x1={this.props.width + 'em'}
-                        x2={this.props.width + 'em'}
-                        y1={1 + 'em'}
+                        x1={this.props.dx + 'em'}
+                        x2={this.props.dx + 'em'}
+                        y1={0.3 + 'em'}
                         y2={bottom + 'em'}
                     />}
 
