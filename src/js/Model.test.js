@@ -89,7 +89,37 @@ describe('Measure test', () => {
 	test('noteWithIndex', () => {
 		const m = new Measure(measure)
 		expect(m.noteWithIndex(0, 0)).toBeDefined()
-	})
+    })
+
+    test('timeToPosition', () => {
+        const m = new Measure(measure)
+
+        expect(m.timeToPosition(1)).toEqual(1)
+        expect(m.timeToPosition(2)).toEqual(2)
+        expect(m.timeToPosition(3)).toEqual(3)
+        expect(m.timeToPosition(4)).toEqual(4)
+        expect(m.timeToPosition(5)).toEqual(-1)
+        expect(m.timeToPosition(0)).toEqual(0)
+        expect(m.timeToPosition(-100)).toEqual(-1)
+
+        const m2 = new Measure({ i: 4, d: 4, tempo: 120 })
+        expect(m2.timeToPosition(1)).toEqual(2)
+        expect(m2.timeToPosition(2)).toEqual(4)
+        expect(m2.timeToPosition(3)).toEqual(-1)
+        expect(m2.timeToPosition(4)).toEqual(-1)
+        expect(m2.timeToPosition(5)).toEqual(-1)
+        expect(m2.timeToPosition(0)).toEqual(0)
+        expect(m2.timeToPosition(-100)).toEqual(-1)
+    })
+
+    test('stringNotesInTimeRange', () => {
+        const m = new Measure(measure)
+
+        expect(m.stringNotesInTimeRange(0, 0, 1).length).toEqual(0)
+        expect(m.stringNotesInTimeRange(0, 1, 2).length).toEqual(1)
+        expect(m.stringNotesInTimeRange(0, 2, 3).length).toEqual(1)
+        expect(m.stringNotesInTimeRange(0, 3, 4).length).toEqual(0)
+    })
 });
 
 

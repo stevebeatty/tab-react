@@ -325,7 +325,7 @@ class Ruler extends Component {
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        console.log('componentDidUpdate', this.props.isPaused, prevProps !== undefined && !prevProps.isPaused)
+        //console.log('componentDidUpdate', this.props.isPaused, prevProps !== undefined && !prevProps.isPaused)
 
         if (this.state.startAnimation) {
             const dist = this.props.subdivisionSpacing * this.props.subdivisions * this.props.d
@@ -400,7 +400,7 @@ class Ruler extends Component {
 	}
 	
     render() {
-        console.log('render')
+        //console.log('render')
         const ticks = getRuler(this.props.d, this.props.subdivisions);
         const bottom = this.props.subdivisionSpacing - 0.1
 	  

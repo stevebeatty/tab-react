@@ -50,6 +50,31 @@ class Measure {
         return this.duration() / (this.tempo() / 60)
     }
 
+    timeToPosition(time) {
+        const total = this.totalTime()
+        if (time > total || time < 0) {
+            return -1
+        }
+
+        return this.duration() * (time / total);
+    }
+
+    stringNotesInTimeRange(string, startTime, endTime) {
+        const notes = this.strings[string],
+            startPos = this.timeToPosition(startTime),
+            endPos = this.timeToPosition(endTime),
+            result = []
+        console.log('timerange', startPos, endPos)
+        notes.forEach(note => {
+            console.log('note', note)
+            if (note.pos >= startPos && note.pos <= endPos) {
+                result.push(note)
+            }
+        })
+
+        return result
+    }
+
 	doNotesOverlap(a, b) {
         const mi = this.i;
         //     b~~~~~~

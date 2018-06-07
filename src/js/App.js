@@ -10,6 +10,7 @@ import { Song, Measure } from './Model'
 import { NavBar, ModalDialog } from './BaseBoot'
 import { FileLoader, SaveDialog, SettingsEditor } from './Dialogs'
 import $ from 'jquery'
+import SoundPlayer from './SoundPlayer';
 
 console.log(tab1);
 
@@ -98,6 +99,18 @@ class App extends Component {
             this.frets.push(i);
         }
 
+        this.soundPlayer = new SoundPlayer({
+            soundPath: 'sounds/',
+            soundMap: {
+                1: [{ begin: 0, end: 12, file: '1st_String_E_64kb.mp3' }],
+                2: [{ begin: 0, end: 12, file: '2nd_String_B__64kb.mp3'}],
+                3: [{ begin: 0, end: 12, file: '3rd_String_G_64kb.mp3' }],
+                4: [{ begin: 0, end: 12, file: '4th_String_D_64kb.mp3' }],
+                5: [{ begin: 0, end: 12, file: '5th_String_A_64kb.mp3' }],
+                6: [{ begin: 0, end: 12, file: '6th_String_E_64kb.mp3' }]
+            }
+        })
+
         this.handleMeasureSelect = this.handleMeasureSelect.bind(this);
         this.clearSelectedMeasure = this.clearSelectedMeasure.bind(this);
         this.clearSelectedNote = this.clearSelectedNote.bind(this);
@@ -117,6 +130,12 @@ class App extends Component {
 	}
 
     componentDidMount() {
+        this.soundPlayer.initialize()
+        this.soundPlayer.loadSounds().then(resp => {
+            console.log('sounds loaded')
+            //const sound = this.soundPlayer.findSound(3, 3)
+            //this.soundPlayer.createSoundNodes(sound, 1, 2, 0)
+        })
         this.playSong()
     }
     componentWillUnmount() {
@@ -235,7 +254,7 @@ class App extends Component {
                     measureObj: measure
                 }
             }
-        });
+        })
     }
 
     selectedNoteModified(change) {
