@@ -3,104 +3,95 @@ import { Measure, Song } from './Model';
 
 
 describe('Measure test', () => {
-    const measure = {
-        i: 4,
-        d: 4,
-        tempo: 60,
-        strings: [
-            [{ f: 1, d: 1, i: 4, p: 2 }],
-            [],
-            [{ f: 7, d: 1, i: 4, p: 3 }],
-            [],
-            [],
-            []
-        ] 
-    };
+    var measure, measureCfg
+
+    beforeEach(() => {
+        measureCfg = {
+            i: 4,
+            d: 4,
+            tempo: 60,
+            strings: [
+                [{ f: 1, d: 1, i: 4, p: 2 }],
+                [],
+                [{ f: 7, d: 1, i: 4, p: 3 }],
+                [],
+                [],
+                []
+            ]
+        }
+
+        measure = new Measure(measureCfg)
+    })
 
     test('doNotesOverlap', () => {
-        const m = new Measure(measure)
-
-        expect(m.doNotesOverlap({ f: 1, d: 1, i: 4, p: 2 }, { f: 1, d: 1, i: 4, p: 2 })).toEqual(true);
-        expect(m.doNotesOverlap({ f: 1, d: 1, i: 4, p: 2 }, { f: 7, d: 1, i: 4, p: 3 })).toEqual(false);
-        expect(m.doNotesOverlap({ f: 1, d: 2, i: 4, p: 2 }, { f: 7, d: 1, i: 4, p: 3 })).toEqual(true);
-        expect(m.doNotesOverlap({ f: 1, d: 2, i: 8, p: 2 }, { f: 7, d: 1, i: 4, p: 3 })).toEqual(false);
+        expect(measure.doNotesOverlap({ f: 1, d: 1, i: 4, p: 2 }, { f: 1, d: 1, i: 4, p: 2 })).toEqual(true);
+        expect(measure.doNotesOverlap({ f: 1, d: 1, i: 4, p: 2 }, { f: 7, d: 1, i: 4, p: 3 })).toEqual(false);
+        expect(measure.doNotesOverlap({ f: 1, d: 2, i: 4, p: 2 }, { f: 7, d: 1, i: 4, p: 3 })).toEqual(true);
+        expect(measure.doNotesOverlap({ f: 1, d: 2, i: 8, p: 2 }, { f: 7, d: 1, i: 4, p: 3 })).toEqual(false);
     });
 
     test('nextNoteDistance', () => {
-        const m = new Measure(measure)
+        expect(measure.nextNoteDistance(0, 1)).toEqual(1);
+        expect(measure.nextNoteDistance(0, 2)).toEqual(0);
+        expect(measure.nextNoteDistance(0, 2.125)).toEqual(0);
+        expect(measure.nextNoteDistance(0, 2.5)).toEqual(0);
+        expect(measure.nextNoteDistance(0, 3)).toEqual(-1);
 
-        expect(m.nextNoteDistance(0, 1)).toEqual(1);
-        expect(m.nextNoteDistance(0, 2)).toEqual(0);
-        expect(m.nextNoteDistance(0, 2.125)).toEqual(0);
-        expect(m.nextNoteDistance(0, 2.5)).toEqual(0);
-        expect(m.nextNoteDistance(0, 3)).toEqual(-1);
-
-        expect(m.nextNoteDistance(1, 1)).toEqual(-1);
-        expect(m.nextNoteDistance(1, 2)).toEqual(-1);
-        expect(m.nextNoteDistance(1, 2.5)).toEqual(-1);
-		expect(m.nextNoteDistance(1, 3)).toEqual(-1);
+        expect(measure.nextNoteDistance(1, 1)).toEqual(-1);
+        expect(measure.nextNoteDistance(1, 2)).toEqual(-1);
+        expect(measure.nextNoteDistance(1, 2.5)).toEqual(-1);
+		expect(measure.nextNoteDistance(1, 3)).toEqual(-1);
 
     });
 
     test('prevNoteDistance', () => {
-        const m = new Measure(measure)
+        expect(measure.prevNoteDistance(0, 1)).toEqual(-1);
+        expect(measure.prevNoteDistance(0, 2)).toEqual(0);
+        expect(measure.prevNoteDistance(0, 2.5)).toEqual(0);
+        expect(measure.prevNoteDistance(0, 3)).toEqual(0);
+        expect(measure.prevNoteDistance(0, 4)).toEqual(1);
 
-        expect(m.prevNoteDistance(0, 1)).toEqual(-1);
-        expect(m.prevNoteDistance(0, 2)).toEqual(0);
-        expect(m.prevNoteDistance(0, 2.5)).toEqual(0);
-        expect(m.prevNoteDistance(0, 3)).toEqual(0);
-        expect(m.prevNoteDistance(0, 4)).toEqual(1);
+        expect(measure.prevNoteDistance(1, 1)).toEqual(-1);
+        expect(measure.prevNoteDistance(1, 2)).toEqual(-1);
+        expect(measure.prevNoteDistance(1, 3)).toEqual(-1);
+    })
 
-        expect(m.prevNoteDistance(1, 1)).toEqual(-1);
-        expect(m.prevNoteDistance(1, 2)).toEqual(-1);
-        expect(m.prevNoteDistance(1, 3)).toEqual(-1);
-
-        console.log('strs ', m.validStringsForPosition(3));
-        console.log('strs ', m.validStringsForPosition(2));
-    });
+    test('validStringsForPosition', () => {
+        expect(measure.validStringsForPosition(3)).toEqual(expect.arrayContaining([0, 1, 3, 4, 5]))
+        expect(measure.validStringsForPosition(2)).toEqual(expect.arrayContaining([1, 2, 3, 4, 5]))
+    })
 
     test('interval', () => {
-        const m = new Measure(measure)
-
-        expect(m.interval()).toEqual(4)
+        expect(measure.interval()).toEqual(4)
         expect(new Measure({}).interval()).toBeUndefined()
     })
 
     test('duration', () => {
-        const m = new Measure(measure)
-
-        expect(m.duration()).toEqual(4)
+        expect(measure.duration()).toEqual(4)
         expect(new Measure({}).duration()).toBeUndefined()
     })
 
     test('tempo', () => {
-        const m = new Measure(measure)
-
-        expect(m.tempo()).toEqual(60)
+        expect(measure.tempo()).toEqual(60)
         expect(new Measure({}).tempo()).toBeUndefined()
     })
 
     test('totalTime', () => {
-        const m = new Measure(measure)
-
-        expect(m.totalTime()).toEqual(4)
+        expect(measure.totalTime()).toEqual(4)
     })
 
 	test('noteWithIndex', () => {
-		const m = new Measure(measure)
-		expect(m.noteWithIndex(0, 0)).toBeDefined()
+		expect(measure.noteWithIndex(0, 0)).toBeDefined()
     })
 
     test('timeToPosition', () => {
-        const m = new Measure(measure)
-
-        expect(m.timeToPosition(1)).toEqual(1)
-        expect(m.timeToPosition(2)).toEqual(2)
-        expect(m.timeToPosition(3)).toEqual(3)
-        expect(m.timeToPosition(4)).toEqual(4)
-        expect(m.timeToPosition(5)).toEqual(-1)
-        expect(m.timeToPosition(0)).toEqual(0)
-        expect(m.timeToPosition(-100)).toEqual(-1)
+        expect(measure.timeToPosition(1)).toEqual(1)
+        expect(measure.timeToPosition(2)).toEqual(2)
+        expect(measure.timeToPosition(3)).toEqual(3)
+        expect(measure.timeToPosition(4)).toEqual(4)
+        expect(measure.timeToPosition(5)).toEqual(-1)
+        expect(measure.timeToPosition(0)).toEqual(0)
+        expect(measure.timeToPosition(-100)).toEqual(-1)
 
         const m2 = new Measure({ i: 4, d: 4, tempo: 120 })
         expect(m2.timeToPosition(1)).toEqual(2)
@@ -113,12 +104,10 @@ describe('Measure test', () => {
     })
 
     test('stringNotesInTimeRange', () => {
-        const m = new Measure(measure)
-
-        expect(m.stringNotesInTimeRange(0, 0, 1).length).toEqual(0)
-        expect(m.stringNotesInTimeRange(0, 1, 2).length).toEqual(1)
-        expect(m.stringNotesInTimeRange(0, 2, 3).length).toEqual(1)
-        expect(m.stringNotesInTimeRange(0, 3, 4).length).toEqual(0)
+        expect(measure.stringNotesInTimeRange(0, 0, 1).length).toEqual(0)
+        expect(measure.stringNotesInTimeRange(0, 1, 2).length).toEqual(1)
+        expect(measure.stringNotesInTimeRange(0, 2, 3).length).toEqual(1)
+        expect(measure.stringNotesInTimeRange(0, 3, 4).length).toEqual(0)
 
 		const m2 = new Measure({ i: 4, d: 4, tempo: 120, strings: [
             [{ f: 1, d: 1, i: 4, p: 2 }]] })
@@ -130,27 +119,25 @@ describe('Measure test', () => {
         expect(m2.stringNotesInTimeRange(0, 3, 4).length).toEqual(0)
     })
 
-
 	test('notesInTimeRange', () => {
-        const m = new Measure(measure)
+        expect(Object.keys(measure.notesInTimeRange(0, 1)).length).toEqual(0)
+		expect(Object.keys(measure.notesInTimeRange(0, 2)).length).toEqual(1)
+		expect(Object.keys(measure.notesInTimeRange(1, 2)).length).toEqual(1)
+		expect(Object.keys(measure.notesInTimeRange(0, 3)).length).toEqual(2)
 
-        expect(Object.keys(m.notesInTimeRange(0, 1)).length).toEqual(0)
-		expect(Object.keys(m.notesInTimeRange(0, 2)).length).toEqual(1)
-		expect(Object.keys(m.notesInTimeRange(1, 2)).length).toEqual(1)
-		expect(Object.keys(m.notesInTimeRange(0, 3)).length).toEqual(2)
-
-		const notes = m.notesInTimeRange(0, 4)
+		const notes = measure.notesInTimeRange(0, 4)
 		expect(notes[0].length).toEqual(1)
 		expect(notes[2].length).toEqual(1)
-	})
+    })
+
 });
 
 
 describe('Song Class test', () => {
-    var song;
+    var song, songCfg;
 
     beforeEach(() => {
-        song = {
+        songCfg = {
             name: 'Name',
             author: 'Author',
             d: 4,
@@ -189,50 +176,70 @@ describe('Song Class test', () => {
                 }
             ]
         }
+
+        song = new Song(songCfg)
     });
 
     test('constructor', () => {
-        const s = new Song(song)
+        expect(song.measures.length).toEqual(songCfg.measures.length)
+        expect(song.i).toEqual(songCfg.i)
+        expect(song.interval()).toEqual(songCfg.i)
 
-        expect(s.measures.length).toEqual(song.measures.length)
-        expect(s.i).toEqual(song.i)
-        expect(s.interval()).toEqual(song.i)
+        expect(song.d).toEqual(songCfg.d)
+        expect(song.duration()).toEqual(songCfg.d)
 
-        expect(s.d).toEqual(song.d)
-        expect(s.duration()).toEqual(song.d)
+        expect(song.measures[0].strings.length).toEqual(6)
+        expect(song.key).toBeDefined()
 
-        expect(s.measures[0].strings.length).toEqual(6)
-        expect(s.key).toBeDefined()
-
-        s.measures.forEach((m) => {
+        song.measures.forEach((m) => {
             expect(m.key).toBeDefined()
-            expect(s.measureWithKey(m.key)).toEqual(m)
+            expect(song.measureWithKey(m.key)).toEqual(m)
         })
 
-        expect(s.measureIndexWithKey(s.measures[0].key)).toEqual(0)
-        expect(s.measureIndexWithKey(s.measures[1].key)).toEqual(1)
+        expect(song.measureIndexWithKey(song.measures[0].key)).toEqual(0)
+        expect(song.measureIndexWithKey(song.measures[1].key)).toEqual(1)
     });
 
     test('tempo', () => {
-        const s = new Song(song)
-
-        expect(s.tempo()).toEqual(60)
+        expect(song.tempo()).toEqual(60)
         expect(new Song({}).tempo()).toBeUndefined()
     })
 
     test('totalTime', () => {
-        const s = new Song(song)
-
-        expect(s.totalTime()).toEqual(4 * 3)
+        expect(song.totalTime()).toEqual(4 * 3)
     })
 
     test('insertMeasureAtIndex', () => {
-        const s = new Song(song)
-        s.insertMeasureAtIndex(1, s.newMeasure())
-        expect(s.measures.length).toEqual(song.measures.length + 1)
+        song.insertMeasureAtIndex(1, song.newMeasure())
+        expect(song.measures.length).toEqual(songCfg.measures.length + 1)
 
-        s.measures[1].strings.forEach((s) => {
+        song.measures[1].strings.forEach((s) => {
             expect(s.length).toEqual(0)
         })
-    });
+    })
+
+    test('measureAtTime', () => {
+        expect(song.measureAtTime(0).measure.key).toEqual(song.measures[0].key)
+        expect(song.measureAtTime(0.5).measure.key).toEqual(song.measures[0].key)
+        expect(song.measureAtTime(4).measure.key).toEqual(song.measures[1].key)
+        expect(song.measureAtTime(6).measure.key).toEqual(song.measures[1].key)
+        expect(song.measureAtTime(7.9999999).measure.key).toEqual(song.measures[1].key)
+        expect(song.measureAtTime(8).measure.key).toEqual(song.measures[2].key)
+        expect(song.measureAtTime(10).measure.key).toEqual(song.measures[2].key)
+        expect(song.measureAtTime(11.99999).measure.key).toEqual(song.measures[2].key)
+        expect(song.measureAtTime(12).measure).toBeUndefined()
+    })
+
+    test('measuresInTimeRange', () => {
+        expect(song.measuresInTimeRange(0, 1).length).toEqual(1)
+        expect(song.measuresInTimeRange(0, 2).length).toEqual(1)
+        expect(song.measuresInTimeRange(0, 3).length).toEqual(1)
+        expect(song.measuresInTimeRange(0, 4).length).toEqual(2)
+        expect(song.measuresInTimeRange(2, 4).length).toEqual(2)
+        expect(song.measuresInTimeRange(3, 4).length).toEqual(2)
+        expect(song.measuresInTimeRange(4, 4).length).toEqual(1)
+        expect(song.measuresInTimeRange(4, 7.999).length).toEqual(1)
+        expect(song.measuresInTimeRange(0, 12).length).toEqual(3)
+        expect(song.measuresInTimeRange(0, 120000).length).toEqual(3)
+    })
 })
