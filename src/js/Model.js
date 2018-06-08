@@ -267,6 +267,58 @@ class Song {
         return time
     }
 
+    measureAtTime(time) {
+        let currTime = time,
+            index = 0
+
+        while (index < this.measures.length) {
+            let measure = this.measures[index],
+                mTot = measure.totalTime()
+
+            if (mTot > currTime) {
+                return {
+                    measure: measure,
+                    time: currTime
+                }
+            }
+
+            currTime -= mTot
+            index++
+        }
+
+        return {}
+    }
+
+    measuresInTimeRange(startTime, endTime) {
+        let elapsedTime = 0,
+            measureEnd = endTime,
+            measures = [],
+            index = 0
+
+        while (index < this.measures.length) {
+            let measure = this.measures[index],
+                mTot = measure.totalTime(),
+                measureStart = elapsedTime,
+                measureEnd = elapsedTime + mTot
+
+            if (measureStart <= endTime && measureEnd > startTime) {
+                measures.push({
+                    measure: measure,
+                    time: measureStart
+                })
+            }
+
+            if (elapsedTime > endTime) {
+                return measures
+            }
+
+            elapsedTime += mTot
+            index++
+        }
+
+        return measures
+    }
+
     measureWithKey(measureKey) {
         return this.measures.find( x => x.key === measureKey )
     }

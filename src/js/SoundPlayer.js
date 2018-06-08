@@ -76,6 +76,12 @@ class SoundPlayer {
         bufferSource.stop(stopTime)
     }
 
+    playNote(string, fret, startTime, endTime) {
+        const sound = this.findSound(string, fret)
+        console.log('playNote', string, fret, sound)
+        this.createSoundNodes(sound, startTime, endTime, fret * 100)
+    }
+
     pause() {
         this.audioContext.suspend()
     }

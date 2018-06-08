@@ -11,6 +11,7 @@ import { NavBar, ModalDialog } from './BaseBoot'
 import { FileLoader, SaveDialog, SettingsEditor } from './Dialogs'
 import $ from 'jquery'
 import SoundPlayer from './SoundPlayer';
+import SongPlayer from './SongPlayer'
 
 console.log(tab1);
 
@@ -32,7 +33,7 @@ var song = new Song({
 	measures: [
 		{
 			strings: [
-				[{f: 1, d:1, i:4, p: 2}],
+				[{f: 1, d:2, i:4, p: 2}],
 				[],
 				[{f: 7, d:1, i:4, p: 3}],
 				[],
@@ -43,7 +44,7 @@ var song = new Song({
 		{
 			strings: [
 				[],
-				[{f: 13, d:1, i:8, p: 1}],
+				[{f: 12, d:1, i:8, p: 1}],
 				[],
 				[{f: 4, d:1, i:4, p: 0}],
 				[],
@@ -53,10 +54,10 @@ var song = new Song({
 		{
 			strings: [
 				[],
-				[{f: 13, d:1, i:16, p: 1}],
+				[{f: 12, d:1, i:16, p: 1}],
 				[],
 				[{f: 5, d:1, i:4, p: 0}],
-				[{f: 14, d:1, i:8, p: 0.5}],
+				[{f: 4, d:1, i:8, p: 0.5}],
 				[{f: 8, d:1, i:16, p: 1.25}]
 			]
 		}
@@ -88,7 +89,8 @@ class App extends Component {
             lastTime: null,
             currentTime: 0,
             isPlayingSong: false,
-            isPaused: false
+            isPaused: false,
+            timerInterval: 100
 		};
 
         this.measureRef = React.createRef();
@@ -99,15 +101,15 @@ class App extends Component {
             this.frets.push(i);
         }
 
-        this.soundPlayer = new SoundPlayer({
+        this.songPlayer = new SongPlayer({
             soundPath: 'sounds/',
             soundMap: {
-                1: [{ begin: 0, end: 12, file: '1st_String_E_64kb.mp3' }],
-                2: [{ begin: 0, end: 12, file: '2nd_String_B__64kb.mp3'}],
-                3: [{ begin: 0, end: 12, file: '3rd_String_G_64kb.mp3' }],
-                4: [{ begin: 0, end: 12, file: '4th_String_D_64kb.mp3' }],
-                5: [{ begin: 0, end: 12, file: '5th_String_A_64kb.mp3' }],
-                6: [{ begin: 0, end: 12, file: '6th_String_E_64kb.mp3' }]
+                0: [{ begin: 0, end: 12, file: '1st_String_E_64kb.mp3' }],
+                1: [{ begin: 0, end: 12, file: '2nd_String_B__64kb.mp3'}],
+                2: [{ begin: 0, end: 12, file: '3rd_String_G_64kb.mp3' }],
+                3: [{ begin: 0, end: 12, file: '4th_String_D_64kb.mp3' }],
+                4: [{ begin: 0, end: 12, file: '5th_String_A_64kb.mp3' }],
+                5: [{ begin: 0, end: 12, file: '6th_String_E_64kb.mp3' }]
             }
         })
 
@@ -130,13 +132,17 @@ class App extends Component {
 	}
 
     componentDidMount() {
-        this.soundPlayer.initialize()
-        this.soundPlayer.loadSounds().then(resp => {
+        this.songPlayer.initialize()
+        this.songPlayer.loadSounds().then(resp => {
             console.log('sounds loaded')
+            this.songPlayer.loadSong(this.state.song)
             //const sound = this.soundPlayer.findSound(3, 3)
             //this.soundPlayer.createSoundNodes(sound, 1, 2, 0)
+            //this.songPlayer.scheduleNotesInTimeRange(0, 10)
+
+            this.playSong()
         })
-        this.playSong()
+ 
     }
     componentWillUnmount() {
         this.stopSong()
@@ -148,7 +154,7 @@ class App extends Component {
         }
 
         this.setState({
-            timerId: setInterval(this.handleTimerTick, 100),
+            timerId: setInterval(this.handleTimerTick, this.state.timerInterval),
             lastTime: new Date().getTime()
         })
     }
@@ -160,12 +166,17 @@ class App extends Component {
     handleTimerTick() {
         const endTime = new Date().getTime(),
             elapsed = (endTime - this.state.lastTime) / 1000,
+            interval = this.state.timerInterval / 1000,
+            diff = interval - elapsed,
+            adjustedNext = diff < 0 ? interval : interval - diff,
             currentTime = this.state.currentTime + elapsed
 
-        this.setState( prevState => ({
+        console.log('diff', currentTime, adjustedNext)
+
+        this.setState({
             lastTime: endTime,
             currentTime: currentTime
-        }))
+        })
 
         if (currentTime > this.state.song.totalTime()) {
             this.stopSong()
@@ -177,6 +188,10 @@ class App extends Component {
             song: new Song(json),
             showLoadFile: false
         })
+    }
+
+    scheduleNext() {
+        this.songPlayer.scheduleNotesInTimeRange(this.state.currentTime, this.state.timerInterval/1000)
     }
 
     playSong() {
@@ -319,25 +334,7 @@ class App extends Component {
 
 
     findCurrentlyPlayingMeasure() {
-        let currTime = this.state.currentTime,
-            index = 0
-
-        while (index < this.state.song.measures.length) {
-            let measure = this.state.song.measures[index],
-                mTot = measure.totalTime()
-
-            if (mTot >= currTime) {
-                return {
-                    measure: measure.key,
-                    time: currTime
-                }
-            }
-
-            currTime -= mTot
-            index++
-        }
-
-        return {}
+        return this.state.song.measureAtTime(this.state.currentTime)
     }
    
 

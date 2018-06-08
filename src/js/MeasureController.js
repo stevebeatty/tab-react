@@ -144,10 +144,10 @@ class MeasureController extends Component {
         }
     }
 
-    createMeasureTag(measure, currentlyPlaying) {
+    createMeasureTag(measure) {
         const optionalAtts = {},
             isSelected = this.props.selection.type === 'measure' && measure.key === this.props.selection.value.measure.key,
-            isPlaying = measure.key === this.props.playingMeasure
+            isPlaying = this.props.playingMeasure && measure.key === this.props.playingMeasure.key
 
         if (this.measureNeedsRef(measure)) {
             optionalAtts.forwardedRef = this.props.measureRef
@@ -184,34 +184,11 @@ class MeasureController extends Component {
         }
     }
 
-    findCurrentlyPlayingMeasure() {
-        let currTime = this.props.currentTime,
-            index = 0
-
-        while (index < this.props.song.measures.length) {
-            let measure = this.props.song.measures[index],
-                mTot = measure.totalTime()
-
-            if (mTot >= currTime) {
-                return {
-                    measure: measure.key,
-                    time: currTime
-                }
-            }
-
-            currTime -= mTot
-            index++
-        }
-
-        return {}
-    }
-
     render() {
-        const currentlyPlaying = this.props.isPlayingSong ? this.findCurrentlyPlayingMeasure() : {}
 
         return (
             <React.Fragment>
-                {this.props.song.measures.map((measure, idx) => this.createMeasureTag(measure, currentlyPlaying))}
+                {this.props.song.measures.map((measure, idx) => this.createMeasureTag(measure))}
             </React.Fragment>
         )
     }
