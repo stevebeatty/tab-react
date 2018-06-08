@@ -119,7 +119,30 @@ describe('Measure test', () => {
         expect(m.stringNotesInTimeRange(0, 1, 2).length).toEqual(1)
         expect(m.stringNotesInTimeRange(0, 2, 3).length).toEqual(1)
         expect(m.stringNotesInTimeRange(0, 3, 4).length).toEqual(0)
+
+		const m2 = new Measure({ i: 4, d: 4, tempo: 120, strings: [
+            [{ f: 1, d: 1, i: 4, p: 2 }]] })
+
+		expect(m2.stringNotesInTimeRange(0, 0, 0.5).length).toEqual(0)
+		expect(m2.stringNotesInTimeRange(0, 0, 1).length).toEqual(1)
+        expect(m2.stringNotesInTimeRange(0, 0.5, 1).length).toEqual(1)
+        expect(m2.stringNotesInTimeRange(0, 2, 3).length).toEqual(0)
+        expect(m2.stringNotesInTimeRange(0, 3, 4).length).toEqual(0)
     })
+
+
+	test('notesInTimeRange', () => {
+        const m = new Measure(measure)
+
+        expect(Object.keys(m.notesInTimeRange(0, 1)).length).toEqual(0)
+		expect(Object.keys(m.notesInTimeRange(0, 2)).length).toEqual(1)
+		expect(Object.keys(m.notesInTimeRange(1, 2)).length).toEqual(1)
+		expect(Object.keys(m.notesInTimeRange(0, 3)).length).toEqual(2)
+
+		const notes = m.notesInTimeRange(0, 4)
+		expect(notes[0].length).toEqual(1)
+		expect(notes[2].length).toEqual(1)
+	})
 });
 
 
@@ -182,7 +205,6 @@ describe('Song Class test', () => {
         expect(s.key).toBeDefined()
 
         s.measures.forEach((m) => {
-            console.log('sdf', m.key)
             expect(m.key).toBeDefined()
             expect(s.measureWithKey(m.key)).toEqual(m)
         })

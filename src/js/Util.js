@@ -1,4 +1,4 @@
-function rangeArray(start, end, step) {
+function rangeArray(start, end, step=1) {
     let a = []
     while (start < end) {
         a.push(start)

@@ -1,4 +1,5 @@
-import { IdGenerator } from './Util';
+import { IdGenerator, rangeArray } from './Util';
+
 
 class Measure {
     constructor(cfg, ctx) {
@@ -60,20 +61,37 @@ class Measure {
     }
 
     stringNotesInTimeRange(string, startTime, endTime) {
-        const notes = this.strings[string],
-            startPos = this.timeToPosition(startTime),
-            endPos = this.timeToPosition(endTime),
+        let notes = this.strings[string],
+			totalT = this.totalTime(),
+			startBound = Math.min(Math.max(0, startTime), totalT),
+			endBound = Math.min(Math.max(0, endTime), totalT),
+            startPos = this.timeToPosition(startBound),
+            endPos = this.timeToPosition(endBound),
             result = []
-        console.log('timerange', startPos, endPos)
+
+        //console.log('timerange', startPos, endPos)
         notes.forEach(note => {
-            console.log('note', note)
-            if (note.pos >= startPos && note.pos <= endPos) {
+        //    console.log('note', note)
+            if (note.p >= startPos && note.p <= endPos) {
                 result.push(note)
             }
         })
 
         return result
     }
+
+	notesInTimeRange(startTime, endTime) {
+		const result = {}
+
+		rangeArray(0, this.strings.length).forEach( string => {
+			const notes = this.stringNotesInTimeRange(string, startTime, endTime)
+			if (notes.length > 0) {
+				result[string] = notes
+			}
+		})
+
+		return result
+	}
 
 	doNotesOverlap(a, b) {
         const mi = this.i;
