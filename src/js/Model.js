@@ -114,13 +114,16 @@ class Measure {
         //console.log('notes ', notes);
         for (let i = 0; i < notes.length; i++) {
             if (skipIndex === i) {
+            //    console.log('skipping', skipIndex)
                 continue
             }
 
-            let n = notes[i]
-            //console.log('n ', n, n.p + (n.d / n.i * this.props.interval), pos, this.props.interval );
+            let n = notes[i],
+                extent = n.p + (n.d / n.i) * this.interval()
+
+            //console.log('n ', n, extent, pos, this.interval() );
             if (n.p < pos) {
-                if (n.p + (n.d / n.i * this.i) > pos) {
+                if (extent > pos) {
                     return 0
                 }
             } else {

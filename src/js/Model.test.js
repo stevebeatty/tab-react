@@ -16,7 +16,7 @@ describe('Measure test', () => {
                 [{ f: 7, d: 1, i: 4, p: 3 }],
                 [],
                 [],
-                []
+                [{ f: 1, d: 1, i: 4, p: 2 }, { f: 1, d: 1, i: 8, p: 3 }, { f: 1, d: 1, i: 4, p: 4 }]
             ]
         }
 
@@ -40,9 +40,19 @@ describe('Measure test', () => {
         expect(measure.nextNoteDistance(1, 1)).toEqual(-1);
         expect(measure.nextNoteDistance(1, 2)).toEqual(-1);
         expect(measure.nextNoteDistance(1, 2.5)).toEqual(-1);
-		expect(measure.nextNoteDistance(1, 3)).toEqual(-1);
+        expect(measure.nextNoteDistance(1, 3)).toEqual(-1);
+
+        expect(measure.nextNoteDistance(5, 1)).toEqual(1)
+        expect(measure.nextNoteDistance(5, 1.5)).toEqual(0.5)
+        expect(measure.nextNoteDistance(5, 2)).toEqual(0)
+        expect(measure.nextNoteDistance(5, 2.5)).toEqual(0)
 
     });
+
+    test('nextNoteDistanceOrRemaining', () => {
+        expect(measure.nextNoteDistanceOrRemaining(5, 2)).toEqual(0)
+        expect(measure.nextNoteDistanceOrRemaining(5, 2.5)).toEqual(0)
+    })
 
     test('prevNoteDistance', () => {
         expect(measure.prevNoteDistance(0, 1)).toEqual(-1);
@@ -57,8 +67,8 @@ describe('Measure test', () => {
     })
 
     test('validStringsForPosition', () => {
-        expect(measure.validStringsForPosition(3)).toEqual(expect.arrayContaining([0, 1, 3, 4, 5]))
-        expect(measure.validStringsForPosition(2)).toEqual(expect.arrayContaining([1, 2, 3, 4, 5]))
+        expect(measure.validStringsForPosition(3)).toEqual(expect.arrayContaining([0, 1, 3, 4]))
+        expect(measure.validStringsForPosition(2)).toEqual(expect.arrayContaining([1, 2, 3, 4]))
     })
 
     test('interval', () => {
@@ -121,9 +131,9 @@ describe('Measure test', () => {
 
 	test('notesInTimeRange', () => {
         expect(Object.keys(measure.notesInTimeRange(0, 1)).length).toEqual(0)
-		expect(Object.keys(measure.notesInTimeRange(0, 2)).length).toEqual(1)
-		expect(Object.keys(measure.notesInTimeRange(1, 2)).length).toEqual(1)
-		expect(Object.keys(measure.notesInTimeRange(0, 3)).length).toEqual(2)
+		expect(Object.keys(measure.notesInTimeRange(0, 2)).length).toEqual(2)
+		expect(Object.keys(measure.notesInTimeRange(1, 2)).length).toEqual(2)
+		expect(Object.keys(measure.notesInTimeRange(0, 3)).length).toEqual(3)
 
 		const notes = measure.notesInTimeRange(0, 4)
 		expect(notes[0].length).toEqual(1)

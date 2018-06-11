@@ -42,7 +42,8 @@ class MeasureDisplay extends Component {
         
         //console.log(' & ', maxI, subdivisions)
 
-		this.state = {
+        this.state = {
+            localRef: React.createRef()
 		};
 		
         this.handleClick = this.handleClick.bind(this);
@@ -50,7 +51,7 @@ class MeasureDisplay extends Component {
         this.handleNoteClick = this.handleNoteClick.bind(this);
         this.handleNoteDrag = this.handleNoteDrag.bind(this);
         this.handleStringDrop = this.handleStringDrop.bind(this);
-		this.handleStringDragOver = this.handleStringDragOver.bind(this);
+        this.handleStringDragOver = this.handleStringDragOver.bind(this);
 	}
 	
 	static getDerivedStateFromProps(props, state) {
@@ -73,12 +74,21 @@ class MeasureDisplay extends Component {
 		const diff = {}
 
 		if (subdivisions !== state.subdivisions) {
-			return {
-				subdivisions: subdivisions
-			}
+		    diff.subdivisions = subdivisions
 		}
 
-		return null
+        let ref = null
+        if (props.forwardedRef) {
+            ref = props.forwardedRef
+        } else {
+            ref = state.localRef
+        }
+
+        if (ref !== state.ref) {
+            diff.ref = ref
+        }
+
+		return diff
 	}
 
 	stringYOffset(stringNum) {
@@ -116,21 +126,34 @@ class MeasureDisplay extends Component {
 		this.props.onMeasureSelect(this);
     }
 
-    handleStringClick(index, e) {
-        this.props.onStringClick(this, index, e);
+    getMeasureBoundary() {
+        return this.state.ref.current.getBoundingClientRect()
     }
 
-	handleStringDrop(index, e) {
-        this.props.onStringDrop(this, index, e);
+    handleStringClick(index, e) {
+        const bound = this.state.ref.current.getBoundingClientRect(),
+            x = e.pageX - bound.left,
+            w = x / bound.width
+
+        console.log("handleStringClick ", index, x, w)
+        this.props.onStringClick(this, index, this.getMeasureBoundary(), e)
+    }
+
+    handleStringDrop(index, e) {
+        this.props.onStringDrop(this, index, this.getMeasureBoundary(), e);
     }
 
 	handleStringDragOver(index, e) {
-        this.props.onStringDragOver(this, index, e);
+        this.props.onStringDragOver(this, index, this.getMeasureBoundary(), e);
     }
 
     handleNoteClick(string, index, e) {
        // this.props.onStringClick(this, index, e);
-        console.log("noteClick ", string, index);
+        const bound = this.state.ref.current.getBoundingClientRect(),
+            x = e.pageX - bound.left,
+            w = x / bound.width
+
+        console.log("noteClick ", string, index, x, w)
         this.props.onNoteClick(this, string, index, e);
     }
 
@@ -203,7 +226,7 @@ class MeasureDisplay extends Component {
 
       
       return (
-          <div key={this.props.measure.key} className="measure" {...refAtt}
+          <div key={this.props.measure.key} className="measure" ref={this.state.ref}
                style={{ width: this.measureWidth() + 'em', height: this.measureHeight() + 'em' }}>
 
 		      <div className="strings">
@@ -237,7 +260,8 @@ class MeasureDisplay extends Component {
                       str.map((note, nidx) =>
                           <Note key={note.key} x={this.noteXPosition(note)} y={this.stringYOffset(idx + 1)} fret={note.f} string={idx} dy={noteTextOffset} measure={this.props.measure.key}
                               d={this.noteDurationSize(note)} index={nidx} onClick={this.handleNoteClick} selected={this.isNoteSelected(nidx, idx)}
-                              onDrag={this.handleNoteDrag} onDragStart={this.props.onNoteDragStart} onDragEnd={this.props.onNoteDragEnd} canDrag={this.props.canDragNote}
+                              onDrop={this.handleStringDrop} onDragStart={this.props.onNoteDragStart} onDragEnd={this.props.onNoteDragEnd} canDrag={this.props.canDragNote}
+                              onDragOver={this.handleStringDragOver}
                               layout={this.props.layout}  />
 				    )
 			    ))}
@@ -450,9 +474,13 @@ class Note extends Component {
         this.handleClick = this.handleClick.bind(this)
         this.handleDragStart = this.handleDragStart.bind(this)
         this.handleDragEnd = this.handleDragEnd.bind(this)
+        this.handleDragOver = this.handleDragOver.bind(this)
+        this.handleDrop = this.handleDrop.bind(this)
     }
 
     handleClick(e) {
+        const bound = e.target.getBoundingClientRect()
+        console.log('click', e.pageX, bound.left, e.target)
         this.props.onClick(this.props.string, this.props.index, e)
     }
 
@@ -479,6 +507,15 @@ class Note extends Component {
         })
     }
 
+    handleDragOver(evt) {
+        console.log('handleDragOver')
+        this.props.onDragOver(this.props.string, evt)
+    }
+
+    handleDrop(evt) {
+        console.log('handleDrop')
+        this.props.onDrop(this.props.string, evt)
+    }
 
     render() {
         const rectHeight = 0.2,
@@ -492,6 +529,7 @@ class Note extends Component {
 	  
         return (
             <div draggable={this.props.canDrag} onDragStart={this.handleDragStart} onDragEnd={this.handleDragEnd}
+                onDragOver={this.handleDragOver} onDrop={this.handleDrop}
                 className={this.state.isDragging ? 'note-dragging' : 'note-default-state'}
                 style={{
                     position: 'absolute',

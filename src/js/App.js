@@ -310,7 +310,7 @@ class App extends Component {
             this.songPlayer.loadSong(this.state.song)
             //const sound = this.soundPlayer.findSound(3, 3)
             //this.soundPlayer.createSoundNodes(sound, 1, 2, 0)
-            this.playSong()
+            //this.playSong()
         })
  
     }
