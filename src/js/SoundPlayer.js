@@ -9,6 +9,8 @@ class SoundPlayer {
         this.currentSounds = {}
 
         this.idGen = new IdGenerator()
+
+		this.startTime = 0
     }
 
     initialize() {
@@ -69,17 +71,39 @@ class SoundPlayer {
         this.currentSounds[soundId] = bufferSource
 
         bufferSource.onended = () => {
+			console.log('ending', soundId, this.audioContext.currentTime, 'expected', stopTime)
             delete this.currentSounds[soundId]
         }
 
+		console.log('start', soundId, 'at', startTime, 'to', stopTime)
         bufferSource.start(startTime)
         bufferSource.stop(stopTime)
     }
 
+	start() {
+		
+		if (this.audioContext.state == 'suspended') {
+			console.log('resuming', this.audioContext.currentTime)
+			this.audioContext.resume()
+		} else {
+			this.startTime = this.audioContext.currentTime
+		}
+	}
+
+	stop() {
+		Object.keys(this.currentSounds).forEach(id=> {
+			const sound = this.currentSounds[id]
+			sound.stop()
+
+			delete this.currentSounds[id]
+		})
+	}
+
     playNote(string, fret, startTime, endTime) {
-        const sound = this.findSound(string, fret)
-        console.log('playNote', string, fret, sound)
-        this.createSoundNodes(sound, startTime, endTime, fret * 100)
+        const sound = this.findSound(string, fret),
+			refTime = this.startTime
+        console.log('playNote', string, fret, startTime, endTime)
+        this.createSoundNodes(sound, refTime + startTime, refTime + endTime, fret * 100)
     }
 
     pause() {
@@ -89,6 +113,7 @@ class SoundPlayer {
     resume() {
         this.audioContext.resume()
     }
+
 }
 
 export default SoundPlayer

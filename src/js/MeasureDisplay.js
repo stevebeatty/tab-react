@@ -225,7 +225,8 @@ class MeasureDisplay extends Component {
                           width: this.props.layout.measureClickBoxWidth() + 'em', 
                           height: (this.props.measure.strings.length - 1) * this.props.layout.stringSpacing() + 'em',
                           top: this.stringYOffset(1) + 'em',
-                          zIndex: 40
+                          zIndex: 40,
+						  display: 'none'
                       }} />
               </div>
 

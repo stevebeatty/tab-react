@@ -341,6 +341,7 @@ class Song {
 			author: this.author,
 			i: this.i,
 			d: this.d,
+			tempo: this.t,
 			measures: []
 		}
 

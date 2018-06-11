@@ -154,7 +154,7 @@ class SaveDialog extends Component {
         return (
             <ModalDialog title="Save Song" onClose={this.handleClose} >
                 <form>
-                    <textarea cols="50" rows="10" readOnly value={JSON.stringify(this.props.controller.state.song.export())}>
+                    <textarea cols="50" rows="10" readOnly value={JSON.stringify(this.props.controller.state.song.export(), null, 2)}>
 
                     </textarea>
                 </form>

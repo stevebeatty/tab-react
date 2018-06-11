@@ -25,43 +25,207 @@ console.log(tab1);
  
  */
 var song = new Song({
-	title: 'Name',
-	author: 'Author',
-	d: 4,
-    i: 4,
-    tempo: 60,
-	measures: [
-		{
-			strings: [
-				[{f: 1, d:2, i:4, p: 2}],
-				[],
-				[{f: 7, d:1, i:4, p: 3}],
-				[],
-				[],
-				[]
-			]
-		},
-		{
-			strings: [
-				[],
-				[{f: 12, d:1, i:8, p: 1}],
-				[],
-				[{f: 4, d:1, i:4, p: 0}],
-				[],
-				[]
-			]
-		},
-		{
-			strings: [
-				[],
-				[{f: 12, d:1, i:16, p: 1}],
-				[],
-				[{f: 5, d:1, i:4, p: 0}],
-				[{f: 4, d:1, i:8, p: 0.5}],
-				[{f: 8, d:1, i:16, p: 1.25}]
-			]
-		}
-	]
+  "title": "Name",
+  "author": "Author",
+  "i": 4,
+  "d": 4,
+  "tempo": 60,
+  "measures": [
+    {
+      "strings": [
+        [],
+        [
+          {
+            "i": 4,
+            "d": 2,
+            "p": 0,
+            "f": 1
+          }
+        ],
+        [
+          {
+            "i": 4,
+            "d": 2,
+            "p": 1,
+            "f": 0
+          }
+        ],
+        [
+          {
+            "i": 4,
+            "d": 1,
+            "p": 1,
+            "f": 2
+          }
+        ],
+        [
+          {
+            "i": 4,
+            "d": 2,
+            "p": 2,
+            "f": 3
+          }
+        ],
+        []
+      ]
+    },
+    {
+      "strings": [
+        [],
+        [
+          {
+            "i": 8,
+            "d": 3,
+            "p": 2,
+            "f": 3
+          }
+        ],
+        [
+          {
+            "i": 8,
+            "d": 3,
+            "p": 2.5,
+            "f": 2
+          }
+        ],
+        [
+          {
+            "i": 4,
+            "d": 1,
+            "p": 0,
+            "f": 0
+          }
+        ],
+        [
+          {
+            "i": 4,
+            "d": 1,
+            "p": 1,
+            "f": 2
+          }
+        ],
+        []
+      ]
+    },
+    {
+      "strings": [
+        [
+          {
+            "i": 16,
+            "d": 1,
+            "p": 1,
+            "f": 1
+          },
+          {
+            "i": 16,
+            "d": 1,
+            "p": 1.5,
+            "f": 2
+          },
+          {
+            "i": 16,
+            "d": 1,
+            "p": 2,
+            "f": 3
+          },
+          {
+            "i": 8,
+            "d": 1,
+            "p": 2.5,
+            "f": 2
+          }
+        ],
+        [
+          {
+            "i": 16,
+            "d": 4,
+            "p": 0.5,
+            "f": 3
+          },
+          {
+            "i": 4,
+            "d": 1,
+            "p": 2.5,
+            "f": 0
+          }
+        ],
+        [
+          {
+            "i": 16,
+            "d": 1,
+            "p": 1.75,
+            "f": 2
+          }
+        ],
+        [
+          {
+            "i": 8,
+            "d": 3,
+            "p": 0,
+            "f": 0
+          },
+          {
+            "i": 16,
+            "d": 1,
+            "p": 2,
+            "f": 0
+          },
+          {
+            "i": 4,
+            "d": 1,
+            "p": 3,
+            "f": 2
+          }
+        ],
+        [
+          {
+            "i": 16,
+            "d": 1,
+            "p": 2.75,
+            "f": 2
+          }
+        ],
+        [
+          {
+            "i": 8,
+            "d": 1,
+            "p": 0.5,
+            "f": 2
+          },
+          {
+            "i": 16,
+            "d": 1,
+            "p": 2.25,
+            "f": 0
+          },
+          {
+            "i": 16,
+            "d": 1,
+            "p": 2.5,
+            "f": 0
+          },
+          {
+            "i": 16,
+            "d": 1,
+            "p": 2.75,
+            "f": 0
+          },
+          {
+            "i": 8,
+            "d": 1,
+            "p": 3,
+            "f": 3
+          },
+          {
+            "i": 8,
+            "d": 1,
+            "p": 3.5,
+            "f": 0
+          }
+        ]
+      ]
+    }
+  ]
 });
 
 var layout = new Layout();
@@ -86,7 +250,7 @@ class App extends Component {
             showLoadFile: false,
             showSaveFile: false,
             timerId: null,
-            lastTime: null,
+            lastScheduleTime: null,
             currentTime: 0,
             isPlayingSong: false,
             isPaused: false,
@@ -102,15 +266,23 @@ class App extends Component {
         }
 
         this.songPlayer = new SongPlayer({
-            soundPath: 'sounds/',
+            soundPath: 'sounds/clean/',
             soundMap: {
+                0: [{ begin: 0, end: 12, file: 'e.mp3' }],
+                1: [{ begin: 0, end: 12, file: 'b.mp3'}],
+                2: [{ begin: 0, end: 12, file: 'g.mp3' }],
+                3: [{ begin: 0, end: 12, file: 'd.mp3' }],
+                4: [{ begin: 0, end: 12, file: 'a.mp3' }],
+                5: [{ begin: 0, end: 12, file: 'ee.mp3' }]
+            }/*
+			soundMap: {
                 0: [{ begin: 0, end: 12, file: '1st_String_E_64kb.mp3' }],
                 1: [{ begin: 0, end: 12, file: '2nd_String_B__64kb.mp3'}],
                 2: [{ begin: 0, end: 12, file: '3rd_String_G_64kb.mp3' }],
                 3: [{ begin: 0, end: 12, file: '4th_String_D_64kb.mp3' }],
                 4: [{ begin: 0, end: 12, file: '5th_String_A_64kb.mp3' }],
                 5: [{ begin: 0, end: 12, file: '6th_String_E_64kb.mp3' }]
-            }
+            }*/
         })
 
         this.handleMeasureSelect = this.handleMeasureSelect.bind(this);
@@ -138,8 +310,6 @@ class App extends Component {
             this.songPlayer.loadSong(this.state.song)
             //const sound = this.soundPlayer.findSound(3, 3)
             //this.soundPlayer.createSoundNodes(sound, 1, 2, 0)
-            //this.songPlayer.scheduleNotesInTimeRange(0, 10)
-
             this.playSong()
         })
  
@@ -148,15 +318,22 @@ class App extends Component {
         this.stopSong()
     }
 
-    startTimer() {
+    startTimer(reset=true) {
         if (this.state.timerId) {
             this.stopTimer()
         }
 
         this.setState({
             timerId: setInterval(this.handleTimerTick, this.state.timerInterval),
-            lastTime: new Date().getTime()
+			lastTime: new Date().getTime()
         })
+
+		if (reset) {
+			this.setState({
+				lastScheduleTime: 0
+			})
+		}
+
     }
 
     stopTimer() {
@@ -164,21 +341,23 @@ class App extends Component {
     }
 
     handleTimerTick() {
-        const endTime = new Date().getTime(),
-            elapsed = (endTime - this.state.lastTime) / 1000,
-            interval = this.state.timerInterval / 1000,
-            diff = interval - elapsed,
-            adjustedNext = diff < 0 ? interval : interval - diff,
-            currentTime = this.state.currentTime + elapsed
+        const interval = this.state.timerInterval / 1000,
+			nextTime = this.state.lastScheduleTime + interval,
+			elapsed = (new Date().getTime() - this.state.lastTime) / 1000,
+			currentTime = this.state.currentTime + elapsed
 
-        console.log('diff', currentTime, adjustedNext)
+        //console.log('tick', this.state.lastScheduleTime, nextTime)
+
+		this.songPlayer.scheduleNotesInTimeRange(this.state.lastScheduleTime, nextTime)
 
         this.setState({
-            lastTime: endTime,
-            currentTime: currentTime
+            lastScheduleTime: nextTime,
+            currentTime: currentTime,
+			lastTime: new Date().getTime()
         })
 
         if (currentTime > this.state.song.totalTime()) {
+			console.log('stopping', currentTime)
             this.stopSong()
         }
     }
@@ -195,12 +374,14 @@ class App extends Component {
     }
 
     playSong() {
-        this.setState({
+        this.startTimer(!this.state.isPaused)
+		this.songPlayer.play()
+
+		this.setState({
             isPlayingSong: true,
             isPaused: false
         })
-
-        this.startTimer()
+        //this.songPlayer.scheduleNotesInTimeRange(0, 12)
     }
 
     pauseSong() {
@@ -210,6 +391,7 @@ class App extends Component {
         })
 
         this.stopTimer()
+		this.songPlayer.pause()
     }
 
     stopSong() {
@@ -220,6 +402,7 @@ class App extends Component {
         })
 
         this.stopTimer()
+		this.songPlayer.stop()
     }
 
     handleSongUpdated() {
@@ -273,23 +456,21 @@ class App extends Component {
     }
 
     selectedNoteModified(change) {
-        const selNote = this.state.selectedNote;
+        const selNote = this.state.selection.value;
+        console.log('selectedNoteModified ', this.state.selection.value)
         Object.keys(change).forEach(k => selNote.noteObj[k] = change[k])
 
-        console.log('selectedNoteModified ', this.state.selectedNote.noteObj)
         this.handleSongUpdated()
     }
 
 
     handleChangeSelectedNoteString(string) {
-        const measure = this.state.selectedNote.measureObj,
-            removed = measure.removeNote(this.state.selectedNote.string, this.state.selectedNote.note),
+        const measure = this.state.selection.value.measureObj,
+            removed = measure.removeNote(this.state.selection.value.string, this.state.selection.value.note),
             note = removed[0],
             idx = measure.addNote(string, note)
 
-        this.setState({
-            song: this.state.song
-        })
+        this.handleSongUpdated()
 
         this.setSelectedNote(measure, string, idx)
     }
@@ -378,6 +559,7 @@ class App extends Component {
  
             </NavBar>
             <div className="container" style={{ "marginTop": "1em" }}>
+				<div>{this.state.currentTime}</div>
 				<h4>{this.state.song.title}</h4>
 				<h6>{this.state.song.author}</h6>
 
