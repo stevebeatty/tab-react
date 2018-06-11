@@ -94,6 +94,24 @@ describe('Measure test', () => {
 		expect(measure.noteWithIndex(0, 0)).toBeDefined()
     })
 
+    test('noteWithKey', () => {
+        expect(measure.noteWithKey(measure.strings[5][1].key)).toEqual(measure.strings[5][1])
+        expect(measure.noteWithKey(measure.strings[0][0].key)).toEqual(measure.strings[0][0])
+        expect(measure.noteWithKey(-1)).toBeNull()
+    })
+
+    test('noteIndexWithKey', () => {
+        expect(measure.noteIndexWithKey(measure.strings[5][1].key)).toEqual(expect.objectContaining({ string: 5, note: 1 }))
+        expect(measure.noteIndexWithKey(measure.strings[0][0].key)).toEqual(expect.objectContaining({ string: 0, note: 0 }))
+        expect(measure.noteIndexWithKey(-1)).toBeNull()
+    })
+
+    test('noteEndPosition', () => {
+        expect(measure.noteEndPosition(measure.strings[0][0])).toEqual(3)
+        expect(measure.noteEndPosition(measure.strings[2][0])).toEqual(4)
+        expect(measure.noteEndPosition(measure.strings[5][1])).toEqual(3.5)
+    })
+
     test('timeToPosition', () => {
         expect(measure.timeToPosition(1)).toEqual(1)
         expect(measure.timeToPosition(2)).toEqual(2)
@@ -251,5 +269,28 @@ describe('Song Class test', () => {
         expect(song.measuresInTimeRange(4, 7.999).length).toEqual(1)
         expect(song.measuresInTimeRange(0, 12).length).toEqual(3)
         expect(song.measuresInTimeRange(0, 120000).length).toEqual(3)
+    })
+
+
+    test('measureAfter', () => {
+        for (let i = 0; i < song.measures.length - 1; i++) {
+            expect(song.measureAfter(song.measures[i].key).key).toEqual(song.measures[i + 1].key)
+        }
+
+        expect(song.measureAfter(song.measures[song.measures.length - 1].key)).toBeNull()
+    })
+
+    test('measureBefore', () => {
+        for (let i = 1; i < song.measures.length; i++) {
+            expect(song.measureBefore(song.measures[i].key).key).toEqual(song.measures[i - 1].key)
+        }
+
+        expect(song.measureBefore(song.measures[0].key)).toBeNull()
+    })
+
+    test('noteIndexWithKey', () => {
+        expect(song.noteIndexWithKey(song.measures[2].strings[5][0].key)).toEqual(expect.objectContaining({ string: 5, note: 0, measure: song.measures[2].key }))
+        expect(song.noteIndexWithKey(song.measures[1].strings[1][0].key)).toEqual(expect.objectContaining({ string: 1, note: 0, measure: song.measures[1].key }))
+        expect(song.noteIndexWithKey(-1)).toBeNull()
     })
 })

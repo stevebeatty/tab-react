@@ -171,9 +171,48 @@ class Measure {
         return valid
     }
 
+    noteLength(note) {
+        return (note.d / note.i) * this.interval()
+    }
+
+    noteEndPosition(note) {
+        return note.p + this.noteLength(note)
+    }
+
 	noteWithIndex(stringIndex, noteIndex) {
 		return this.strings[stringIndex][noteIndex]
 	}
+
+    noteWithKey(noteKey) {
+        for (let i = 0; i < this.strings.length; i++) {
+            let string = this.strings[i]
+            for (let j = 0; j < string.length; j++) {
+                let note = string[j]
+                if (note.key === noteKey) {
+                    return note
+                }
+            }
+        }
+
+        return null
+    }
+
+    noteIndexWithKey(noteKey) {
+        for (let i = 0; i < this.strings.length; i++) {
+            let string = this.strings[i]
+            for (let j = 0; j < string.length; j++) {
+                let note = string[j]
+                if (note.key === noteKey) {
+                    return {
+                        string: i,
+                        note: j
+                    }
+                }
+            }
+        }
+
+        return null
+    }
 
     addNote(string, note) {
         if (!note.i) {
@@ -270,6 +309,56 @@ class Song {
         return time
     }
 
+    getNoteSequence(noteKey, measureKey) {
+        let mIndex = this.measureIndexWithKey(measureKey),
+            nKey = noteKey,
+            seq = [],
+            note
+
+        while (mIndex < this.measures.length) {
+            let measure = this.measures[mIndex],
+                noteIndex = measure.noteIndexWithKey(nKey),
+                string = measure.strings[noteIndex.string],
+                isContinued = 'continuedBy' in note
+
+            note = string[noteIndex.note]
+            noteIndex.noteObj = note
+            seq.push(noteIndex)
+
+            if (!isContinued) {
+                break;
+            }
+
+            for (let i = noteIndex.note + 1; i < string.length; i++) {
+                let nextNote = string[i]
+                if (note.continuedBy !== nextNote.key) {
+                    return seq
+                }
+
+                note = nextNote
+            }
+
+            mIndex++
+        }
+
+        return seq
+    }
+
+    noteIndexWithKey(noteKey) {
+        for (let i = 0; i < this.measures.length; i++) {
+            let measure = this.measures[i],
+                index = measure.noteIndexWithKey(noteKey)
+
+            if (index) {
+                index.measure = measure.key
+                return index
+            }
+
+        }
+
+        return null
+    }
+
     measureAtTime(time) {
         let currTime = time,
             index = 0
@@ -320,6 +409,16 @@ class Song {
         }
 
         return measures
+    }
+
+    measureAfter(measureKey, playbackContext) {
+        const index = this.measureIndexWithKey(measureKey)
+        return index < this.measures.length - 1 ? this.measures[index + 1] : null
+    }
+
+    measureBefore(measureKey, playbackContext) {
+        const index = this.measureIndexWithKey(measureKey)
+        return index > 0 ? this.measures[index - 1] : null
     }
 
     measureWithKey(measureKey) {
