@@ -158,6 +158,8 @@ describe('Measure test', () => {
 		expect(notes[2].length).toEqual(1)
     })
 
+    
+
 });
 
 
@@ -303,5 +305,40 @@ describe('Song Class test', () => {
 
 		expect(song.getNoteSequence(song.measures[2].strings[3][0].key, song.measures[2].key).length).toEqual(1)
 	})
+
+    test('findNoteSpan', () => {
+        expect(song.findNoteSpan(song.measures[1].key, 1, 2, 4, 1).span.length).toEqual(1)
+        expect(song.findNoteSpan(song.measures[1].key, 1, 2, 4, 3).span.length).toEqual(2)
+        expect(song.findNoteSpan(song.measures[1].key, 1, 3, 4, 3).span.length).toEqual(2)
+        expect(song.findNoteSpan(song.measures[1].key, 3, 3, 4, 3).span.length).toEqual(1)
+        expect(song.findNoteSpan(song.measures[1].key, 3, 3, 4, 3, song.measures[2].strings[3][0].key).span.length).toEqual(2)
+
+        console.log(song.findNoteSpan(song.measures[1].key, 3, 3, 4, 3, song.measures[2].strings[3][0].key))
+        console.log(song.findNoteSpan(song.measures[1].key, 1, 1, 4, 1))
+        console.log(song.findNoteSpan(song.measures[1].key, 1, 2, 4, 1))
+    })
+
+    test('doesSequenceFit', () => {
+        console.log(song.doesSequenceFit(
+            song.getNoteSequence(song.measures[1].strings[5][0].key, song.measures[1].key),
+            song.measures[1].key,
+            1,
+            1)
+        )
+
+        console.log(song.doesSequenceFit(
+            song.getNoteSequence(song.measures[1].strings[5][0].key, song.measures[1].key),
+            song.measures[1].key,
+            2,
+            1)
+        )
+
+        console.log(song.doesSequenceFit(
+            song.getNoteSequence(song.measures[1].strings[5][0].key, song.measures[1].key),
+            song.measures[1].key,
+            5,
+            1)
+        )
+    })
 
 })

@@ -87,12 +87,14 @@ class NoteEditor extends Component {
             measure = note.measureObj.props.measure,
             measureDur = measure.duration(),
             noteLen = measure.noteLength(note.noteObj),
-            nextNoteDist = measure.nextNoteDistance(note.string, note.noteObj.p, note.note),
+            nextNoteDist = measure.nextNoteDistance(note.string, note.noteObj.p, note.noteObj.key),
             availableSpace = nextNoteDist === -1 ? measureDur - note.noteObj.p : nextNoteDist,
             nextInts = availableSpace * note.noteObj.i / measure.interval(),
             durations = rangeArray(1, Math.floor(nextInts) + 1, 1),
             intervals = [1, 2, 4, 8, 16].filter(i => availableSpace >= note.noteObj.d * measure.interval()/i ),
 			availableStrings = measure.validStringsForPosition(note.noteObj.p)
+
+        console.log('dist', nextNoteDist)
 
 		if (durations.length === 0) {
 			durations.push(1)
@@ -167,8 +169,8 @@ class NoteEditor extends Component {
                             <div className="form-group">
                                 <label>Continue?</label>
                                 <div className="form-check">
-                                    <input type="checkbox" checked={isContinuation} onChange={(e) => this.handleContinuedByChange(e, continuedNote)} className="form-check-input" id="customCheck1" />
-                                    <label class="form-check-label" for="customCheck1">Continue?</label>
+                                    <input type="checkbox" checked={isContinuation} disabled={!canContinue} onChange={(e) => this.handleContinuedByChange(e, continuedNote)} className="form-check-input" id="customCheck1" />
+                                    <label className="form-check-label" htmlFor="customCheck1">Continue?</label>
                                 </div>
                             </div>
                         </div>

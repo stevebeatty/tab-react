@@ -19,13 +19,13 @@ class MeasureController extends Component {
         this.handleStringDrop = this.handleStringDrop.bind(this);
     }
 
-    stringEventDistance(measure, stringIndex, bound, e, noteIndex) {
+    stringEventDistance(measure, stringIndex, bound, e, noteKey) {
         const x = e.pageX - bound.left,
             w = x / bound.width,
             pos = measure.closestPosition(w),
-            dist = measure.nextNoteDistanceOrRemaining(stringIndex, pos, noteIndex);
+            dist = measure.nextNoteDistanceOrRemaining(stringIndex, pos, noteKey);
 
-         console.log('stringEventDistance ', stringIndex, pos, dist, measure.props.measure.key);
+         //console.log('stringEventDistance ', stringIndex, pos, dist, measure.props.measure.key);
 
         return {
             p: pos,
@@ -62,15 +62,15 @@ class MeasureController extends Component {
 
     handleStringDrop(measure, stringIndex, bound, e) {
         const drag = this.props.dragging,
-            noteIndex = stringIndex === drag.string ? drag.note : undefined,
-            stringDist = this.stringEventDistance(measure, stringIndex, bound, e, noteIndex)
+            noteKey = stringIndex === drag.string ? drag.note.key : undefined,
+            stringDist = this.stringEventDistance(measure, stringIndex, bound, e, noteKey)
 
         console.log('handleStringDrop string ', stringIndex, ' dist ', stringDist.d)
 
         if (stringDist.d !== 0) {
             const drag = this.props.dragging,
-                m = this.props.song.measureWithKey(drag.measure),
-                note = m.noteWithIndex(drag.string, drag.note),
+                m = drag.measure,
+                note = drag.note,
                 d = note.d * m.interval() / note.i
 
             console.log('pos ', stringDist.p, ' end ', note.d + stringDist.p, 'dist & d ', stringDist.d, note.d)
@@ -79,7 +79,7 @@ class MeasureController extends Component {
                 console.log('cant fit')
                 return
             } else {
-                m.removeNote(drag.string, drag.note)
+                m.removeNote(drag.string, drag.noteIndex)
 
                 note.p = stringDist.p
                 const newIdx = measure.addNote(stringIndex, note)
@@ -93,15 +93,20 @@ class MeasureController extends Component {
     handleDragOver(measure, stringIndex, bound, evt) {
         evt.preventDefault()
 
-        const drag = this.props.dragging,
-            noteIndex = stringIndex === drag.string ? drag.note : undefined,
-            stringDist = this.stringEventDistance(measure, stringIndex, bound, evt, noteIndex)
-        console.log('dragover', stringIndex, stringDist)
+        console.log('%', this.props.dragging.note, measure.props.measure.key)
 
+        const drag = this.props.dragging,
+            noteKey = drag.note.key,
+            stringDist = this.stringEventDistance(measure, stringIndex, bound, evt, noteKey),
+            noteSeq = this.props.song.getNoteSequence(noteKey, drag.measure.key),
+            fits = this.props.song.doesSequenceFit(noteSeq, measure.props.measure.key, stringIndex, stringDist.p)
+
+        console.log('dragover', stringIndex, stringDist, fits, noteSeq)
+        /*
         if (stringDist.d !== 0) {
 
-            const m = this.props.song.measureWithKey(drag.measure),
-                note = m.noteWithIndex(drag.string, drag.note),
+            const m = drag.measure,
+                note = drag.note,
                 d = note.d * m.interval() / note.i
 
             console.log('pos', stringDist.p, 'end', note.d + stringDist.p, 'dist & d', stringDist.d, note.d, note.d*m.interval()/note.i )
@@ -114,9 +119,14 @@ class MeasureController extends Component {
 
             evt.dataTransfer.dropEffect = 'move'
             return
+        }*/
+
+        if (fits.status) {
+            evt.dataTransfer.dropEffect = 'move'
+        } else {
+            evt.dataTransfer.dropEffect = 'none'
         }
 
-        evt.dataTransfer.dropEffect = 'none'
     }
 
 

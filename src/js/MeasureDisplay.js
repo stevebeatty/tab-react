@@ -196,8 +196,8 @@ class MeasureDisplay extends Component {
         return closestInMeasure;
     }
 
-    nextNoteDistanceOrRemaining(string, pos, skipIndex) {
-        return this.props.measure.nextNoteDistanceOrRemaining(string, pos, skipIndex)
+    nextNoteDistanceOrRemaining(string, pos, skipKeys) {
+        return this.props.measure.nextNoteDistanceOrRemaining(string, pos, skipKeys)
     }
 
     addNote(string, note) {
@@ -258,7 +258,7 @@ class MeasureDisplay extends Component {
 			
 			    {this.props.measure.strings.map((str, idx) => (
                       str.map((note, nidx) =>
-                          <Note key={note.key} x={this.noteXPosition(note)} y={this.stringYOffset(idx + 1)} fret={note.f} string={idx} dy={noteTextOffset} measure={this.props.measure.key}
+                          <Note key={note.key} x={this.noteXPosition(note)} y={this.stringYOffset(idx + 1)} note={note} string={idx} dy={noteTextOffset} measure={this.props.measure}
                               d={this.noteDurationSize(note)} index={nidx} onClick={this.handleNoteClick} selected={this.isNoteSelected(nidx, idx)}
                               onDrop={this.handleStringDrop} onDragStart={this.props.onNoteDragStart} onDragEnd={this.props.onNoteDragEnd} canDrag={this.props.canDragNote}
                               onDragOver={this.handleStringDragOver}
@@ -490,7 +490,8 @@ class Note extends Component {
         this.props.onDragStart({
             measure: this.props.measure,
             string: this.props.string,
-            note: this.props.index
+            note: this.props.note,
+            noteIndex: this.props.index
         }, evt)
 
         this.setState({
@@ -558,7 +559,7 @@ class Note extends Component {
 						dy={this.props.dy + 'em'}
 						textAnchor="middle"
 						onClick={this.handleClick}
-						>{this.props.fret}</text>
+						>{this.props.note.f}</text>
 	  
 					<text className="note-text clickable" 
 							x={imgLeft + 'em'}
@@ -566,7 +567,7 @@ class Note extends Component {
 						dy={this.props.dy + 'em'} 
 						textAnchor="middle"
 						onClick={this.handleClick}
-						>{this.props.fret}</text>
+						>{this.props.note.f}</text>
 				</svg>
             </div>
 	    )
