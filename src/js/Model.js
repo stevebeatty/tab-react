@@ -309,38 +309,38 @@ class Song {
         return time
     }
 
+
+
     getNoteSequence(noteKey, measureKey) {
         let mIndex = this.measureIndexWithKey(measureKey),
-            nKey = noteKey,
-            seq = [],
-            note
+			measure = this.measures[mIndex],
+			index = measure.noteIndexWithKey(noteKey),
+			noteIndex = index.note + 1,
+            note = measure.noteWithKey(noteKey),
+            seq = []
 
-        while (mIndex < this.measures.length) {
+		seq.push(note)
+
+		while (mIndex < this.measures.length) {
             let measure = this.measures[mIndex],
-                noteIndex = measure.noteIndexWithKey(nKey),
-                string = measure.strings[noteIndex.string],
-                isContinued = 'continuedBy' in note
+				string = measure.strings[index.string]
 
-            note = string[noteIndex.note]
-            noteIndex.noteObj = note
-            seq.push(noteIndex)
+			for (let i = noteIndex; i < string.length; i++) {
+				let nextNote = string[i]
 
-            if (!isContinued) {
-                break;
-            }
+				if (note.continuedBy !== nextNote.key) {
+					return seq
+				}
 
-            for (let i = noteIndex.note + 1; i < string.length; i++) {
-                let nextNote = string[i]
-                if (note.continuedBy !== nextNote.key) {
-                    return seq
-                }
+				seq.push(nextNote)
 
-                note = nextNote
-            }
+				note = nextNote
+			}
 
-            mIndex++
-        }
-
+			mIndex++
+			noteIndex = 0
+		}
+      
         return seq
     }
 

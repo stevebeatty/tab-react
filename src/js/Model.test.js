@@ -184,17 +184,17 @@ describe('Song Class test', () => {
                 },
                 {
                     strings: [
-                        [],
+                        [{ key: 28, f: 4, d: 1, i: 8, p: 3.5, continuedBy: 29 }],
                         [{ f: 13, d: 1, i: 8, p: 1 }],
                         [],
                         [{ f: 4, d: 1, i: 4, p: 0 }],
                         [],
-                        []
+                        [{ key: 25, f: 4, d: 1, i: 4, p: 0, continuedBy: 26 }, { key: 26, f: 4, d: 1, i: 4, p: 1, continuedBy: 27 }, { key: 27, f: 4, d: 1, i: 4, p: 2 }]
                     ]
                 },
                 {
                     strings: [
-                        [],
+                        [{ key: 29, f: 4, d: 1, i: 4, p: 0 }],
                         [{ f: 13, d: 1, i: 16, p: 1 }],
                         [],
                         [{ f: 5, d: 1, i: 4, p: 0 }],
@@ -293,4 +293,15 @@ describe('Song Class test', () => {
         expect(song.noteIndexWithKey(song.measures[1].strings[1][0].key)).toEqual(expect.objectContaining({ string: 1, note: 0, measure: song.measures[1].key }))
         expect(song.noteIndexWithKey(-1)).toBeNull()
     })
+
+	test('getNoteSequence', () => {
+		expect(song.getNoteSequence(song.measures[1].strings[5][0].key, song.measures[1].key).length).toEqual(3)
+		expect(song.getNoteSequence(song.measures[1].strings[5][1].key, song.measures[1].key).length).toEqual(2)
+		expect(song.getNoteSequence(song.measures[1].strings[5][2].key, song.measures[1].key).length).toEqual(1)
+
+		expect(song.getNoteSequence(song.measures[1].strings[0][0].key, song.measures[1].key).length).toEqual(2)
+
+		expect(song.getNoteSequence(song.measures[2].strings[3][0].key, song.measures[2].key).length).toEqual(1)
+	})
+
 })

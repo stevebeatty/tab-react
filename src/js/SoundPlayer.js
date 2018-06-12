@@ -82,7 +82,7 @@ class SoundPlayer {
 
 	start() {
 		
-		if (this.audioContext.state == 'suspended') {
+		if (this.audioContext.state === 'suspended') {
 			console.log('resuming', this.audioContext.currentTime)
 			this.audioContext.resume()
 		} else {
