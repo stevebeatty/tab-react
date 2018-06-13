@@ -466,7 +466,7 @@ class App extends Component {
 
     handleChangeSelectedNoteString(string) {
         const measure = this.state.selection.value.measureObj,
-            removed = measure.removeNote(this.state.selection.value.string, this.state.selection.value.note),
+            removed = measure.removeNoteByIndex(this.state.selection.value.string, this.state.selection.value.note),
             note = removed[0],
             idx = measure.addNote(string, note)
 

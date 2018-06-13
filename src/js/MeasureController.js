@@ -60,7 +60,42 @@ class MeasureController extends Component {
 
     }
 
-    handleStringDrop(measure, stringIndex, bound, e) {
+    handleStringDrop(measure, stringIndex, bound, evt) {
+
+        const drag = this.props.dragging,
+            noteKey = drag.note.key,
+            stringDist = this.stringEventDistance(measure, stringIndex, bound, evt, noteKey),
+            noteSeq = this.props.song.getNoteSequence(noteKey, drag.measure.key),
+            fits = this.props.song.doesSequenceFit(noteSeq, measure.props.measure.key, stringIndex, stringDist.p)
+
+        if (fits.status) {
+            const updated = this.props.song.updateSequence(fits)
+            console.log('updated', updated)
+
+            noteSeq.forEach(n => {
+                console.log('seq', n)
+                n.measure.removeNoteByKey(n.note.key, n.string)
+            })
+
+            let firstIndex = undefined
+
+            updated.forEach(u => {
+                const newNote = Object.assign({}, u, {
+                    measure: undefined, note: undefined
+                })
+                const idx = u.measure.addNote(stringIndex, newNote)
+                if (firstIndex === undefined) {
+                    firstIndex = idx
+                }
+            })
+
+            this.props.onSongUpdate()
+            this.props.onNoteSelect(measure, stringIndex, firstIndex)
+        } else {
+        }
+
+        /*
+
         const drag = this.props.dragging,
             noteKey = stringIndex === drag.string ? drag.note.key : undefined,
             stringDist = this.stringEventDistance(measure, stringIndex, bound, e, noteKey)
@@ -79,7 +114,7 @@ class MeasureController extends Component {
                 console.log('cant fit')
                 return
             } else {
-                m.removeNote(drag.string, drag.noteIndex)
+                m.removeNoteByIndex(drag.string, drag.noteIndex)
 
                 note.p = stringDist.p
                 const newIdx = measure.addNote(stringIndex, note)
@@ -88,12 +123,14 @@ class MeasureController extends Component {
                 this.props.onNoteSelect(measure, stringIndex, newIdx)
             }
         }
+
+        */
     }
 
     handleDragOver(measure, stringIndex, bound, evt) {
         evt.preventDefault()
 
-        console.log('%', this.props.dragging.note, measure.props.measure.key)
+        //console.log('%', this.props.dragging.note, measure.props.measure.key)
 
         const drag = this.props.dragging,
             noteKey = drag.note.key,
@@ -101,7 +138,7 @@ class MeasureController extends Component {
             noteSeq = this.props.song.getNoteSequence(noteKey, drag.measure.key),
             fits = this.props.song.doesSequenceFit(noteSeq, measure.props.measure.key, stringIndex, stringDist.p)
 
-        console.log('dragover', stringIndex, stringDist, fits, noteSeq)
+        console.log('dragover', fits, noteSeq)
         /*
         if (stringDist.d !== 0) {
 
@@ -123,6 +160,8 @@ class MeasureController extends Component {
 
         if (fits.status) {
             evt.dataTransfer.dropEffect = 'move'
+            const updated = this.props.song.updateSequence(fits)
+            console.log('updated', updated)
         } else {
             evt.dataTransfer.dropEffect = 'none'
         }
@@ -144,7 +183,7 @@ class MeasureController extends Component {
 
     handleChangeSelectedNoteString(string) {
         const measure = this.props.selectedNote.measureObj,
-            removed = measure.removeNote(this.props.selectedNote.string, this.props.selectedNote.note),
+            removed = measure.removeNoteByIndex(this.props.selectedNote.string, this.props.selectedNote.note),
             note = removed[0],
             idx = measure.addNote(string, note)
 

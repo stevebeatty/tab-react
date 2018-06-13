@@ -202,8 +202,8 @@ class Measure {
         return null
     }
 
-    noteIndexWithKey(noteKey) {
-        for (let i = 0; i < this.strings.length; i++) {
+    noteIndexWithKey(noteKey, string = 0) {
+        for (let i = string; i < this.strings.length; i++) {
             let string = this.strings[i]
             for (let j = 0; j < string.length; j++) {
                 let note = string[j]
@@ -233,9 +233,14 @@ class Measure {
         return notes.indexOf(note)
     }
 
-    removeNote(string, noteIndex) {
+    removeNoteByIndex(string, noteIndex) {
         const notes = this.strings[string]
         return notes.splice(noteIndex, 1)
+    }
+
+    removeNoteByKey(noteKey, string) {
+        let idx = (string !== undefined) ? this.noteIndexWithKey(noteKey, string) : this.noteIndexWithKey(noteKey)
+        return this.removeNoteByIndex(idx.string, idx.note)
     }
 
     sortNotes(arr) {
@@ -367,6 +372,7 @@ class Song {
             }
 
             result.sequence.push({
+                note,
                 span: noteSpan.span
             })
 
@@ -379,35 +385,112 @@ class Song {
         return result
     }
 
+    updateSequence(sequenceStatus) {
+        let parts = []
+        sequenceStatus.sequence.forEach(r => {
+            console.log('updateSeq', r.note, r.span.length, ' => ')
+            let first = true
+
+            r.span.forEach(s => {
+
+                const dur = this.distanceToDurationAndInterval(s.distance, s.measure),
+                    p = { measure: s.measure, p: s.p, d: dur.d, i: dur.i, f: r.note.f, note: r.note }
+
+                parts.push(p)
+                console.log('    ', p)
+            })
+        })
+
+        console.log('parts', parts)
+
+        let last = parts[0], mergedParts = []
+        for (let i = 1; i < parts.length; i++) {
+            let curr = parts[i]
+
+            if (last.measure.key === curr.measure.key && last.f === curr.f) {
+                let baseInt = Math.max(last.i, curr.i),
+                    currMult = baseInt / curr.i,
+                    lastMult = baseInt / last.i,
+                    combined = { measure: last.measure, p: last.p, d: currMult * curr.d + lastMult * last.d, i: baseInt, f: last.f }
+
+                last = combined
+            } else {
+                last.key = this.context.idGen.next()
+                mergedParts.push(last)
+                last = curr
+            }
+        }
+        last.key = this.context.idGen.next()
+        mergedParts.push(last)
+
+        for (let i = 0; i < mergedParts.length; i++) {
+            let p = mergedParts[i]
+            this.simplifyNoteTiming(p)
+
+            if (i < mergedParts.length - 1) {
+                p.continuedBy = mergedParts[i + 1].key
+            }
+
+            if (i > 0) {
+                p.continues = mergedParts[i - 1].key
+            }
+        }
+
+        return mergedParts
+    }
+
+    distanceToDurationAndInterval(distance, measure) {
+        const baseInterval = measure.interval(),
+            intDist = 1 / baseInterval,
+            whole = Math.floor(distance),
+            fract = distance % 1,
+            safeFract = fract > 0 ? fract : 1,
+            fractInt = baseInterval / safeFract,
+            wholeInFrac = whole / safeFract
+
+        return {
+            d: (fract > 0 ? 1 : 0) + wholeInFrac,
+            i: fractInt
+        }
+    }
+
     findNoteSpan(measureKey, string, position, interval, duration, skipKeys) {
         let mIndex = this.measureIndexWithKey(measureKey),
+            measure = this.measures[mIndex],
             pos = position,
-            dur = duration,
+            dist = duration * measure.interval() / interval,
             result = []
-        //console.log('measureKey', measureKey, mIndex)
-        while (mIndex < this.measures.length && dur > 0) {
+
+        while (mIndex < this.measures.length && dist > 0) {
             let measure = this.measures[mIndex],
-                dist = measure.nextNoteDistance(string, pos, skipKeys),
+                noteDist = measure.nextNoteDistance(string, pos, skipKeys),
                 i = measure.interval() / interval,
-                span = Math.min(dist === -1 ? measure.duration() - pos : dist, dur)
+                span = Math.min(noteDist === -1 ? measure.duration() - pos : noteDist, dist)
 
             if (span <= 0) {
                 break
             }
 
-            console.log('fns', measure.key, pos, span, i, dist, dur)
+            console.log('fns', { m: measure.key, p: pos, span, noteDist, dist })
 
             result.push({ measure, distance: span, p: pos })
 
-            dur -= span / i
+            dist -= span
             pos = 0
             mIndex++
         }
 
         return {
             span: result,
-            remaining: dur,
+            remaining: dist,
             endPos: result.length > 0 ? result[result.length - 1].distance + result[result.length - 1].p : undefined
+        }
+    }
+
+    simplifyNoteTiming(note) {
+        while (note.d % 2 === 0 && note.i % 2 === 0) {
+            note.d /= 2
+            note.i /= 2
         }
     }
 

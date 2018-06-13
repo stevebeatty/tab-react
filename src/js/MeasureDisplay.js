@@ -204,8 +204,8 @@ class MeasureDisplay extends Component {
         return this.props.measure.addNote(string, note)
     }
 
-    removeNote(string, noteIndex) {
-        return this.props.measure.removeNote(string, noteIndex)
+    removeNoteByIndex(string, noteIndex) {
+        return this.props.measure.removeNoteByIndex(string, noteIndex)
     }
 
     render() {
