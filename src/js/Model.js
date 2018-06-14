@@ -248,7 +248,8 @@ class Measure {
     }
 
 	export() {
-		const obj = {
+        const obj = {
+            key: this.key,
 			i: this.i,
 			d: this.d,
 			strings: []
@@ -256,14 +257,8 @@ class Measure {
 
 		for (let i = 0; i < this.strings.length; i++) {
 			let string = []
-			for (let j = 0; j < this.strings[i].length; j++) {
-				let note = {},
-					orig = this.strings[i][j]
-
-				note.i = orig.i
-				note.d = orig.d
-				note.p = orig.p
-				note.f = orig.f
+            for (let j = 0; j < this.strings[i].length; j++) {
+                let note = Object.assign({}, this.strings[i][j])
 
 				string.push(note)
 			}

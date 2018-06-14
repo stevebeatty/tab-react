@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import '../css/App.css';
-import tab1 from '../tab.js';
+import tab1 from '../songs/tab.js';
 import Layout from './Layout.js';
 import MeasureController from './MeasureController';
 import MeasureDisplay from './MeasureDisplay';
@@ -9,9 +9,9 @@ import MeasureEditor from './MeasureEditor'
 import { Song, Measure } from './Model'
 import { NavBar, ModalDialog } from './BaseBoot'
 import { FileLoader, SaveDialog, SettingsEditor } from './Dialogs'
-import $ from 'jquery'
 import SoundPlayer from './SoundPlayer';
 import SongPlayer from './SongPlayer'
+import testTab from '../songs/test1.json'
 
 console.log(tab1);
 
@@ -24,214 +24,9 @@ console.log(tab1);
  }
  
  */
-var song = new Song({
-  "title": "Name",
-  "author": "Author",
-  "i": 4,
-  "d": 4,
-  "tempo": 60,
-  "measures": [
-    {
-      "strings": [
-        [],
-        [
-          {
-            "i": 4,
-            "d": 2,
-            "p": 0,
-            "f": 1
-          }
-        ],
-        [
-          {
-            "i": 4,
-            "d": 2,
-            "p": 1,
-            "f": 0
-          }
-        ],
-        [
-          {
-            "i": 4,
-            "d": 1,
-            "p": 1,
-            "f": 2
-          }
-        ],
-        [
-          {
-            "i": 4,
-            "d": 2,
-            "p": 2,
-            "f": 3
-          }
-        ],
-        []
-      ]
-    },
-    {
-      "strings": [
-        [],
-        [
-          {
-            "i": 8,
-            "d": 3,
-            "p": 2,
-            "f": 3
-          }
-        ],
-        [
-          {
-            "i": 8,
-            "d": 3,
-            "p": 2.5,
-            "f": 2
-          }
-        ],
-        [
-          {
-            "i": 4,
-            "d": 1,
-            "p": 0,
-            "f": 0
-          }
-        ],
-        [
-          {
-            "i": 4,
-            "d": 1,
-            "p": 1,
-            "f": 2
-          }
-        ],
-        []
-      ]
-    },
-    {
-      "strings": [
-        [
-          {
-            "i": 16,
-            "d": 1,
-            "p": 1,
-            "f": 1
-          },
-          {
-            "i": 16,
-            "d": 1,
-            "p": 1.5,
-            "f": 2
-          },
-          {
-            "i": 16,
-            "d": 1,
-            "p": 2,
-            "f": 3
-          },
-          {
-            "i": 8,
-            "d": 1,
-            "p": 2.5,
-            "f": 2
-          }
-        ],
-        [
-          {
-            "i": 16,
-            "d": 4,
-            "p": 0.5,
-            "f": 3
-          },
-          {
-            "i": 4,
-            "d": 1,
-            "p": 2.5,
-            "f": 0
-          }
-        ],
-        [
-          {
-            "i": 16,
-            "d": 1,
-            "p": 1.75,
-            "f": 2
-          }
-        ],
-        [
-          {
-            "i": 8,
-            "d": 3,
-            "p": 0,
-            "f": 0
-          },
-          {
-            "i": 16,
-            "d": 1,
-            "p": 2,
-            "f": 0
-          },
-          {
-            "i": 4,
-            "d": 1,
-            "p": 3,
-            "f": 2
-          }
-        ],
-        [
-          {
-            "i": 16,
-            "d": 1,
-            "p": 2.75,
-            "f": 2
-          }
-        ],
-        [
-          {
-            "i": 8,
-            "d": 1,
-            "p": 0.5,
-            "f": 2
-          },
-          {
-            "i": 16,
-            "d": 1,
-            "p": 2.25,
-            "f": 0
-          },
-          {
-            "i": 16,
-            "d": 1,
-            "p": 2.5,
-            "f": 0
-          },
-          {
-            "i": 16,
-            "d": 1,
-            "p": 2.75,
-            "f": 0
-          },
-          {
-            "i": 8,
-            "d": 1,
-            "p": 3,
-            "f": 3
-          },
-          {
-            "i": 8,
-            "d": 1,
-            "p": 3.5,
-            "f": 0
-          }
-        ]
-      ]
-    }
-  ]
-});
+var song = new Song(testTab);
 
 var layout = new Layout();
-
-
-
 
 
 class App extends Component {
@@ -534,6 +329,20 @@ class App extends Component {
             currentlyPlaying = this.state.isPlayingSong ? this.findCurrentlyPlayingMeasure() : {},
             showPlay = this.state.isPlayingSong && this.state.isPaused || !this.state.isPlayingSong
 
+        const unit = '',
+            height = 160,
+            width = 400,
+            startPoint = { x: 10, y: height / 2 },
+            curveAmp = 70,
+            pointDist = 55,
+            ctrlOffset = 30,
+            curveDeltas = {
+                startCtrl: { dx: ctrlOffset, dy: -curveAmp },
+                endCtrl: { dx: pointDist, dy: -curveAmp },
+                end: { dx: ctrlOffset + pointDist, dy: 0 }
+            }
+
+
     //    console.log('selnote: ', this.state.selectedNote);
      //   console.log('layout2 ', this.state.layout);
     return (
@@ -580,6 +389,7 @@ class App extends Component {
             {this.state.showSettings && <SettingsEditor controller={this} />}
             {this.state.showLoadFile && <FileLoader controller={this} />}
 			{this.state.showSaveFile && <SaveDialog controller={this} />}
+
 
             </React.Fragment>
     );

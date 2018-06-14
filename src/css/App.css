@@ -5,9 +5,6 @@ nav {
   margin-bottom: 20px;
 }
 
-.music-notes {
-
-}
 
 .note-default-state {
     z-index: 20;
@@ -15,6 +12,10 @@ nav {
 
 .note-dragging {
     z-index: 20;
+}
+
+.note-with-effect .note-extent {
+    opacity: 0.35;
 }
 
 .note-text,
@@ -61,10 +62,10 @@ nav {
 
 .string-1 {
   fill: #FF0000; 
- }
+}
 
 .string-2 {
-  fill: #0000FF; 
+    fill: #0000FF;
 }
 
 .string-3 {
@@ -81,6 +82,30 @@ nav {
 
 .string-6 {
   fill: #7300FF;
+}
+
+.string-1-stroke {
+    stroke: #FF0000;
+}
+
+.string-2-stroke {
+    stroke: #0000FF;
+}
+
+.string-3-stroke {
+    stroke: #008A00;
+}
+
+.string-4-stroke {
+    stroke: #D149BD;
+}
+
+.string-5-stroke {
+    stroke: #F78C00;
+}
+
+.string-6-stroke {
+    stroke: #7300FF;
 }
 
 .selected-note {

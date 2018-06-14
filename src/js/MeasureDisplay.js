@@ -522,7 +522,8 @@ class Note extends Component {
         const rectHeight = 0.2,
             imgHeight = 1.5,
             imgLeft = .75,
-            imgMiddle = imgHeight/2
+            imgMiddle = imgHeight / 2,
+            hasEffect = 'effect' in this.props.note
 
         
 	    const x = this.props.x + 'em';
@@ -539,14 +540,17 @@ class Note extends Component {
                     top: this.props.y - imgHeight / 2 + 'em',
                     height: imgHeight + 'em'
                 }}>
-				<svg 
+                <svg className={(hasEffect ? ' note-with-effect' : '')}
 					 style={{ width: this.props.d + imgLeft + 'em', height: imgHeight + 'em' }}>
 
-					<rect className={"string-" + this.props.string} 
+                    <rect className={"note-extent string-" + this.props.string} 
 							x={imgLeft + 'em'}
 							y={imgMiddle - rectHeight/2 + 'em'}
 							width={this.props.d + 'em'} 
 							height="0.2em" />
+
+                    {hasEffect && this.props.note.effect === 'vibrato' && <SvgWavePath width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} cyclesPerEm={1}
+                        amplitude={0.6} pathClass={"string-" + this.props.string + '-stroke'}/>}
 
 					{this.props.selected &&
 						<circle className="selected-note" cx={imgLeft + 'em'}
@@ -571,6 +575,70 @@ class Note extends Component {
 				</svg>
             </div>
 	    )
+    }
+}
+
+class SvgWavePath extends Component {
+
+    constructor(props) {
+        super(props)
+    }
+
+    generateCycles(cycleCount, cfg) {
+        const unit = cfg.unit
+
+        let d = `M ${cfg.startPoint.x + unit} ${cfg.startPoint.y + unit}`
+            + ` c ${cfg.curveDeltas.startCtrl.dx + unit} ${cfg.curveDeltas.startCtrl.dy + unit}, ${cfg.curveDeltas.endCtrl.dx + unit} ${cfg.curveDeltas.endCtrl.dy + unit}, ${cfg.curveDeltas.end.dx + unit} ${cfg.curveDeltas.end.dy + unit}`
+
+        const whole = Math.floor(cycleCount),
+            fract = cycleCount - whole
+
+        let count = whole * 2 + (fract >= 0.5 ? 1 : 0),
+            sign = 1
+
+        while (count > 0) {
+            if (count % 2 === 0) {
+                sign = -1
+            } else {
+                sign = 1
+            }
+
+            d += ` s ${cfg.pointDist + unit} ${sign * cfg.curveAmp + unit}, ${cfg.ctrlOffset + cfg.pointDist + unit} 0`
+
+            count--
+        }
+
+        return d
+    }
+
+    render() {
+        const height = this.props.height,
+            width = this.props.width,
+            cyclesPerEm = this.props.cyclesPerEm,
+            curveAmp = this.props.amplitude * height / 2,
+            pointDist = 1 / (width * cyclesPerEm),
+            ctrlOffset = pointDist / 2,
+            cfg = {
+                unit: '',
+                height: height,
+                width: width,
+                startPoint: { x: 0, y: height / 2 },
+                curveAmp: curveAmp,
+                pointDist: pointDist,
+                ctrlOffset: ctrlOffset,
+                curveDeltas: {
+                    startCtrl: { dx: ctrlOffset, dy: -curveAmp },
+                    endCtrl: { dx: pointDist, dy: -curveAmp },
+                    end: { dx: ctrlOffset + pointDist, dy: 0 }
+                }
+            }
+
+        return (
+            <svg viewBox={"0 0 " + cfg.width + " " + height} width={cfg.width + 'em'} height={height + 'em'} x={this.props.x + 'em'}>
+                <path d={this.generateCycles(width * cyclesPerEm, cfg)} className={this.props.pathClass}
+                    stroke="black" vector-effect="non-scaling-stroke" fill="transparent" />
+            </svg>
+        )
     }
 }
 
