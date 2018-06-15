@@ -523,7 +523,8 @@ class Note extends Component {
             imgHeight = 1.5,
             imgLeft = .75,
             imgMiddle = imgHeight / 2,
-            hasEffect = 'effect' in this.props.note
+            hasEffect = 'effect' in this.props.note,
+            isContinued = 'continues' in this.props.note
 
         
 	    const x = this.props.x + 'em';
@@ -559,28 +560,27 @@ class Note extends Component {
 
 					{this.props.note.effect === 'slide-down' && <line x1={imgLeft + 'em'} x2={imgLeft + this.props.d + 'em'} y1={imgMiddle - slideHeight + 'em'} y2={imgMiddle + slideHeight + 'em'} 
 							className={"string-" + this.props.string + '-stroke'} stroke="black" vectorEffect="non-scaling-stroke"/>}
+        
+                    {this.props.note.effect === 'bend-up' && <SvgBend width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} pathClass={"string-" + this.props.string + '-stroke'} />}
 
-					{false && <svg viewBox={"0 0 " + this.props.d + " " + imgHeight} width={this.props.d + 'em'} height={imgHeight + 'em'} x={imgLeft + 'em'}>
-						<path d={"M 0 0.5 l " + this.props.d + ' ' + imgHeight/2 + ' l 0 -' + imgHeight/ 6 + " l -" + this.props.d + ' -' + imgHeight/2 + ' l 0 ' + imgHeight/ 6} className={"string-" + this.props.string}
-							stroke="black" vectorEffect="non-scaling-stroke" fill="transparent" />
-					</svg>}
+                    {this.props.note.effect === 'bend-down' && <SvgBend width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} pathClass={"string-" + this.props.string + '-stroke'} direction={-1} />}
 
 					{this.props.selected &&
 						<circle className="selected-note" cx={imgLeft + 'em'}
 							cy={imgMiddle + 'em'}
 						    r={this.props.layout.noteRadius() + 0.05 + 'em'} />}
 
-					<text className="note-text-outline clickable"
-							x={imgLeft + 'em'}
-							y={imgMiddle + 'em'}
+                    <text className={"note-text-outline clickable"}
+						x={imgLeft + 'em'}
+						y={imgMiddle + 'em'}
 						dy={this.props.dy + 'em'}
 						textAnchor="middle"
 						onClick={this.handleClick}
 						>{this.props.note.f}</text>
 	  
-					<text className="note-text clickable" 
-							x={imgLeft + 'em'}
-							y={imgMiddle + 'em'}
+                    <text className={"note-text clickable"}
+						x={imgLeft + 'em'}
+						y={imgMiddle + 'em'}
 						dy={this.props.dy + 'em'} 
 						textAnchor="middle"
 						onClick={this.handleClick}
@@ -650,6 +650,25 @@ class SvgWavePath extends Component {
             <svg viewBox={"0 0 " + cfg.width + " " + height} width={cfg.width + 'em'} height={height + 'em'} x={this.props.x + 'em'}>
                 <path d={this.generateCycles(width * cyclesPerEm, cfg)} className={this.props.pathClass}
                     stroke="black" vectorEffect="non-scaling-stroke" fill="transparent" />
+            </svg>
+        )
+    }
+}
+
+class SvgBend extends Component {
+
+    render() {
+        const width = this.props.width - this.props.x,
+            height = this.props.height,
+            ctrlY = 0.1 * height,
+            heightExtent = 0.6,
+            widthExtent = 0.9 * width,
+            direction = this.props.direction || 1,
+            pathD = `M 0 ${.5 * height} c ${width * .75} ${direction * ctrlY}, ${widthExtent} ${direction * ctrlY}, ${width - 0.1} ${direction * -heightExtent}`
+
+        return (
+            <svg width={width + 'em'} height={height + 'em'} viewBox={`0 0 ${width} ${height}`} x={this.props.x + 'em'} >
+                <path d={pathD} fill="transparent" strokeWidth="1.5" className={this.props.pathClass} vectorEffect="non-scaling-stroke" />
             </svg>
         )
     }

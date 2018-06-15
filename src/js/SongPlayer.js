@@ -49,11 +49,28 @@ class SongPlayer {
                 console.log('string', s)
                 stringMap[s].forEach(n => {
                     const start = n.p * beatDelay + measureStart,
-                        dur = (n.d / (n.i/mi)) * beatDelay
+                        dur = (n.d / (n.i / mi)) * beatDelay,
+                        end = start + dur
 
                     //console.log('note sd', start, dur, 'pdi', n.p, n.d, n.i)
 
-                    this.soundPlayer.playNote(s, n.f, start, start + dur)
+                    const node = this.soundPlayer.playNote(s, n.f, start, end)
+                    if (n.effect === 'vibrato') {
+                        console.log('vibrato')
+                        this.soundPlayer.addVibrato(node, start, end, 50, beatDelay * 4)
+                    } else if (n.effect === 'slide-up') {
+                        console.log('slide-up')
+                        this.soundPlayer.addSlide(node, start, end, 200)
+                    } else if (n.effect === 'slide-down') {
+                        console.log('slide-down')
+                        this.soundPlayer.addSlide(node, start, end, -200)
+                    } else if (n.effect === 'bend-up') {
+                        console.log('bend-up')
+                        this.soundPlayer.addBend(node, start, end, 200)
+                    } else if (n.effect === 'bend-down') {
+                        console.log('bend-down')
+                        this.soundPlayer.addBend(node, start, end, -200)
+                    }
                 })
 
             })

@@ -78,6 +78,78 @@ class SoundPlayer {
 		console.log('start', soundId, 'at', startTime, 'to', stopTime)
         bufferSource.start(startTime)
         bufferSource.stop(stopTime)
+
+        return bufferSource
+    }
+
+    addVibrato(node, startTime, stopTime, detune, frequency) {
+        const { actualStart, actualStop } = this.getActualTimes(startTime, stopTime)
+
+        let osc = this.audioContext.createOscillator()
+        osc.type = 'sine'
+        osc.frequency.value = frequency
+
+        let oscGain = this.audioContext.createGain()
+        oscGain.gain.value = detune
+
+        osc.connect(oscGain)
+        oscGain.connect(node.detune)
+
+        osc.onended = () => {
+            console.log('ending osc', this.audioContext.currentTime, 'expected', actualStop)
+        }
+
+        console.log('start vibrato at', actualStart, 'to', actualStop)
+
+        osc.start(actualStart)
+        osc.stop(actualStop)
+    }
+
+    addSlide(node, startTime, stopTime, detune) {
+        const { actualStart, actualStop } = this.getActualTimes(startTime, stopTime)
+
+        let src = this.audioContext.createConstantSource()
+        src.offset.setValueAtTime(0.001, actualStart)
+        src.offset.linearRampToValueAtTime(detune, actualStop)
+
+        src.connect(node.detune)
+
+        src.onended = () => {
+            console.log('ending slide', this.audioContext.currentTime, 'expected', actualStop)
+        }
+
+        console.log('start slide at', actualStart, 'to', actualStop)
+
+        src.start(actualStart)
+        src.stop(actualStop)
+    }
+
+    addBend(node, startTime, stopTime, detune) {
+        const { actualStart, actualStop } = this.getActualTimes(startTime, stopTime),
+            dur = stopTime - startTime
+
+        let src = this.audioContext.createConstantSource()
+        src.offset.setValueAtTime(0.001, actualStart)
+        src.offset.setTargetAtTime(detune, actualStart + 0.1, 0.5)
+        //src.offset.exponentialRampToValueAtTime(detune, actualStart + dur / 8)
+
+        src.connect(node.detune)
+
+        src.onended = () => {
+            console.log('ending bend', this.audioContext.currentTime, 'expected', actualStop)
+        }
+
+        console.log('start bend at', actualStart, 'to', actualStop)
+
+        src.start(actualStart)
+        src.stop(actualStop)
+    }
+
+    getActualTimes(startTime, stopTime) {
+        return {
+            actualStart: this.startTime + startTime,
+            actualStop: this.startTime + stopTime
+        }
     }
 
 	start() {
@@ -103,7 +175,7 @@ class SoundPlayer {
         const sound = this.findSound(string, fret),
 			refTime = this.startTime
         console.log('playNote', string, fret, startTime, endTime)
-        this.createSoundNodes(sound, refTime + startTime, refTime + endTime, fret * 100)
+        return this.createSoundNodes(sound, refTime + startTime, refTime + endTime, fret * 100)
     }
 
     pause() {
