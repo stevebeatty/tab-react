@@ -1,0 +1,33 @@
+{
+  "title": "Name",
+  "author": "Author",
+  "i": 4,
+  "d": 4,
+  "tempo": 60,
+  "measures": [
+    {
+      "strings": [
+        [],
+        [
+
+        ],
+        [
+          {
+            "i": 4,
+            "d": 2,
+            "p": 1,
+            "f": 0,
+            "effect": "bend-down"
+          }
+        ],
+        [
+
+        ],
+        [
+
+        ],
+        []
+      ]
+    }
+   ]
+}
