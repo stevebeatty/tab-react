@@ -529,6 +529,8 @@ class Note extends Component {
 	    const x = this.props.x + 'em';
 	    const y = this.props.y + 'em';
 	  
+		const slideHeight = 0.35
+
         return (
             <div draggable={this.props.canDrag} onDragStart={this.handleDragStart} onDragEnd={this.handleDragEnd}
                 onDragOver={this.handleDragOver} onDrop={this.handleDrop}
@@ -549,8 +551,19 @@ class Note extends Component {
 							width={this.props.d + 'em'} 
 							height="0.2em" />
 
-                    {hasEffect && this.props.note.effect === 'vibrato' && <SvgWavePath width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} cyclesPerEm={1}
+                    {this.props.note.effect === 'vibrato' && <SvgWavePath width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} cyclesPerEm={1}
                         amplitude={0.6} pathClass={"string-" + this.props.string + '-stroke'}/>}
+
+					{this.props.note.effect === 'slide-up' && <line x1={imgLeft + 'em'} x2={imgLeft + this.props.d + 'em'} y1={imgMiddle + slideHeight + 'em'} y2={imgMiddle - slideHeight + 'em'} 
+							className={"string-" + this.props.string + '-stroke'} stroke="black" vectorEffect="non-scaling-stroke"/>}
+
+					{this.props.note.effect === 'slide-down' && <line x1={imgLeft + 'em'} x2={imgLeft + this.props.d + 'em'} y1={imgMiddle - slideHeight + 'em'} y2={imgMiddle + slideHeight + 'em'} 
+							className={"string-" + this.props.string + '-stroke'} stroke="black" vectorEffect="non-scaling-stroke"/>}
+
+					{false && <svg viewBox={"0 0 " + this.props.d + " " + imgHeight} width={this.props.d + 'em'} height={imgHeight + 'em'} x={imgLeft + 'em'}>
+						<path d={"M 0 0.5 l " + this.props.d + ' ' + imgHeight/2 + ' l 0 -' + imgHeight/ 6 + " l -" + this.props.d + ' -' + imgHeight/2 + ' l 0 ' + imgHeight/ 6} className={"string-" + this.props.string}
+							stroke="black" vectorEffect="non-scaling-stroke" fill="transparent" />
+					</svg>}
 
 					{this.props.selected &&
 						<circle className="selected-note" cx={imgLeft + 'em'}
@@ -636,7 +649,7 @@ class SvgWavePath extends Component {
         return (
             <svg viewBox={"0 0 " + cfg.width + " " + height} width={cfg.width + 'em'} height={height + 'em'} x={this.props.x + 'em'}>
                 <path d={this.generateCycles(width * cyclesPerEm, cfg)} className={this.props.pathClass}
-                    stroke="black" vector-effect="non-scaling-stroke" fill="transparent" />
+                    stroke="black" vectorEffect="non-scaling-stroke" fill="transparent" />
             </svg>
         )
     }
