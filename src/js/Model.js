@@ -418,21 +418,30 @@ class Song {
         return result
     }
 
-    updateSequence(sequenceStatus) {
+    flattenSequenceSpans(sequence) {
         let parts = []
-        sequenceStatus.sequence.forEach(r => {
-            console.log('updateSeq', r.note, r.span.length, ' => ')
-            let first = true
+        sequence.forEach(r => {
+            console.log('flattenSequenceSpans', r.note, r.span.length, ' => ')
 
             r.span.forEach(s => {
 
                 const dur = this.distanceToDurationAndInterval(s.distance, s.measure),
                     p = { measure: s.measure, p: s.p, d: dur.d, i: dur.i, f: r.note.f, note: r.note }
 
+                if (r.note.effect) {
+                    p.effect = r.note.effect
+                }
+
                 parts.push(p)
                 console.log('    ', p)
             })
         })
+
+        return parts
+    }
+
+    updateSequence(sequenceStatus) {
+        let parts = this.flattenSequenceSpans(sequenceStatus.sequence)
 
         console.log('parts', parts)
 
@@ -440,7 +449,8 @@ class Song {
         for (let i = 1; i < parts.length; i++) {
             let curr = parts[i]
 
-            if (last.measure.key === curr.measure.key && last.f === curr.f) {
+            if (last.measure.key === curr.measure.key && last.f === curr.f && 
+                    !('effect' in curr) && !('effect' in last)) {
                 let baseInt = Math.max(last.i, curr.i),
                     currMult = baseInt / curr.i,
                     lastMult = baseInt / last.i,
@@ -468,6 +478,35 @@ class Song {
                 p.continues = mergedParts[i - 1].key
             }
         }
+
+        return mergedParts
+    }
+
+    analyzeSequence(sequence) {
+        let parts = this.flattenSequenceSpans(sequence)
+
+        console.log('parts', parts)
+
+        let last = parts[0], mergedParts = []
+        for (let i = 1; i < parts.length; i++) {
+            let curr = parts[i]
+
+            if (last.measure.key === curr.measure.key && last.f === curr.f &&
+                !('effect' in curr) && !('effect' in last)) {
+                let baseInt = Math.max(last.i, curr.i),
+                    currMult = baseInt / curr.i,
+                    lastMult = baseInt / last.i,
+                    combined = { measure: last.measure, p: last.p, d: currMult * curr.d + lastMult * last.d, i: baseInt, f: last.f }
+
+                last = combined
+            } else {
+                last.key = this.context.idGen.next()
+                mergedParts.push(last)
+                last = curr
+            }
+        }
+        last.key = this.context.idGen.next()
+        mergedParts.push(last)
 
         return mergedParts
     }
@@ -526,6 +565,30 @@ class Song {
             note.i /= 2
         }
     }
+
+    noteWithKey(noteKey, measureKey) {
+        if (measureKey !== undefined) {
+            let measure = this.measureWithKey(measureKey)
+            return {
+                note: measure.noteWithKey(noteKey),
+                measure
+            }
+        } else {
+            for (let i = 0; i < this.measures.length; i++) {
+                let measure = this.measures[i],
+                    note = measure.noteWithKey(noteKey)
+
+                if (note) {
+                    return {
+                        note,
+                        measure
+                    }
+                }
+
+            }  
+        }
+    }
+
 
     noteIndexWithKey(noteKey) {
         for (let i = 0; i < this.measures.length; i++) {

@@ -35,6 +35,8 @@ class SongPlayer {
 		this.soundPlayer.stop()
 	}
 
+    
+
     scheduleNotesInTimeRange(startTime, endTime) {
         this.song.measuresInTimeRange(startTime, endTime).forEach(m => {
             const measure = m.measure,
@@ -50,11 +52,24 @@ class SongPlayer {
                 stringMap[s].forEach(n => {
                     const start = n.p * beatDelay + measureStart,
                         dur = (n.d / (n.i / mi)) * beatDelay,
-                        end = start + dur
+                        end = start + dur,
+                        isContinued = 'continuedBy' in n,
+                        continuesPrevious = 'continues' in n
+
+                    if (isContinued && !continuesPrevious) { // start of sequence
+                        console.log('sequence start', n.key, measure.key)
+                        const seq = this.song.getNoteSequence(n.key, measure.key)
+                        const result = this.song.doesSequenceFit(seq, measure.key, s, start)
+                        const analyzed = this.song.analyzeSequence(result.sequence)
+
+                        console.log('seq', seq, result, analyzed)
+                    }
 
                     //console.log('note sd', start, dur, 'pdi', n.p, n.d, n.i)
 
-                    const node = this.soundPlayer.playNote(s, n.f, start, end)
+                    const result = this.soundPlayer.playNote(s, n.f, start, end),
+                        node = result.bufferSource
+
                     if (n.effect === 'vibrato') {
                         console.log('vibrato')
                         this.soundPlayer.addVibrato(node, start, end, 50, beatDelay * 4)

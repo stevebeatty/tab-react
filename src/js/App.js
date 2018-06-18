@@ -11,7 +11,7 @@ import { NavBar, ModalDialog } from './BaseBoot'
 import { FileLoader, SaveDialog, SettingsEditor } from './Dialogs'
 import SoundPlayer from './SoundPlayer';
 import SongPlayer from './SongPlayer'
-import testTab from '../songs/test1.json'
+import testTab from '../songs/vib.json'
 
 console.log(tab1);
 

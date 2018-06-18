@@ -79,7 +79,10 @@ class SoundPlayer {
         bufferSource.start(startTime)
         bufferSource.stop(stopTime)
 
-        return bufferSource
+        return {
+            bufferSource,
+            gain
+        }
     }
 
     addVibrato(node, startTime, stopTime, detune, frequency) {
