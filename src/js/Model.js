@@ -91,7 +91,19 @@ class Measure {
 		})
 
 		return result
-	}
+    }
+
+    noteTiming(note, startTime) {
+        const beatDelay = 60 / this.tempo(),
+            start = note.p * beatDelay + startTime,
+            dur = (note.d / (note.i / this.interval())) * beatDelay,
+            end = start + dur
+
+        return {
+            start,
+            end
+        }
+    }
 
 	doNotesOverlap(a, b) {
         const mi = this.i;
@@ -387,7 +399,7 @@ class Song {
         return seq
     }
 
-    doesSequenceFit(sequence, measureKey, string, position) {
+    sequenceSpan(sequence, measureKey, string, position) {
         const keys = []
         sequence.forEach(s => { keys.push(s.note.key) })
 
@@ -409,7 +421,7 @@ class Song {
                 span: noteSpan.span
             })
 
-            console.log('notespan', noteSpan)
+            //console.log('notespan', noteSpan)
 
             mKey = noteSpan.span[noteSpan.span.length - 1].measure.key
             pos = noteSpan.endPos
@@ -482,31 +494,56 @@ class Song {
         return mergedParts
     }
 
-    analyzeSequence(sequence) {
+    analyzeSequence(sequence, startTime) {
         let parts = this.flattenSequenceSpans(sequence)
 
         console.log('parts', parts)
 
-        let last = parts[0], mergedParts = []
-        for (let i = 1; i < parts.length; i++) {
-            let curr = parts[i]
+        let last = null, mergedParts = []
+        for (let i = 0; i < parts.length; i++) {
+            let p = parts[i],
+                curr = p.measure.noteTiming(p, startTime)
 
-            if (last.measure.key === curr.measure.key && last.f === curr.f &&
-                !('effect' in curr) && !('effect' in last)) {
-                let baseInt = Math.max(last.i, curr.i),
-                    currMult = baseInt / curr.i,
-                    lastMult = baseInt / last.i,
-                    combined = { measure: last.measure, p: last.p, d: currMult * curr.d + lastMult * last.d, i: baseInt, f: last.f }
+            curr.f = p.f
 
-                last = combined
+            if ('effect' in p) {
+                curr.effect = p.effect
+            }
+
+            if (last && last.f === curr.f) {
+                if (!last.effect) {
+                    if (!curr.effect) {
+                        last.end = curr.end
+                    } else {
+                        if (curr.effect === 'vibrato') {
+                            last.delayedEffects = [{ effect: curr.effect, start: curr.start, end: curr.end }]
+                            last.end = curr.end
+                        } else {
+                            mergedParts.push(curr)
+                            last = curr
+                        }
+                    }
+                } else {
+                    mergedParts.push(curr)
+                    last = curr
+                }
             } else {
-                last.key = this.context.idGen.next()
-                mergedParts.push(last)
+                mergedParts.push(curr)
                 last = curr
             }
+
+            /*
+            if (last && last.f === curr.f &&
+                !('effect' in curr) && !('effect' in last)) {
+                last.end = curr.end
+            } else {
+                mergedParts.push(curr)
+            }*/
+
+            
         }
-        last.key = this.context.idGen.next()
-        mergedParts.push(last)
+
+        console.log('after', mergedParts)
 
         return mergedParts
     }
@@ -543,7 +580,7 @@ class Song {
                 break
             }
 
-            console.log('fns', { m: measure.key, p: pos, span, noteDist, dist })
+            //console.log('fns', { m: measure.key, p: pos, span, noteDist, dist })
 
             result.push({ measure, distance: span, p: pos })
 

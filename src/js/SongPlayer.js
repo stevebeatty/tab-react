@@ -35,7 +35,35 @@ class SongPlayer {
 		this.soundPlayer.stop()
 	}
 
-    
+    addSoundEffect(effect, node, start, end) {
+        if (effect === 'vibrato') {
+            console.log('vibrato')
+            this.soundPlayer.addVibrato(node, start, end, 50, (60/this.song.tempo()) * 4)
+        } else if (effect === 'slide-up') {
+            console.log('slide-up')
+            this.soundPlayer.addSlide(node, start, end, 200)
+        } else if (effect === 'slide-down') {
+            console.log('slide-down')
+            this.soundPlayer.addSlide(node, start, end, -200)
+        } else if (effect === 'bend-up') {
+            console.log('bend-up')
+            this.soundPlayer.addBend(node, start, end, 200)
+        } else if (effect === 'bend-down') {
+            console.log('bend-down')
+            this.soundPlayer.addBend(node, start, end, -200)
+        }
+    }
+
+    playNote(string, fret, start, end, effect) {
+        const result = this.soundPlayer.playNote(string, fret, start, end),
+            node = result.bufferSource
+
+        if (effect) {
+            this.addSoundEffect(effect, node, start, end)
+        }
+
+        return result
+    }
 
     scheduleNotesInTimeRange(startTime, endTime) {
         this.song.measuresInTimeRange(startTime, endTime).forEach(m => {
@@ -56,36 +84,30 @@ class SongPlayer {
                         isContinued = 'continuedBy' in n,
                         continuesPrevious = 'continues' in n
 
-                    if (isContinued && !continuesPrevious) { // start of sequence
-                        console.log('sequence start', n.key, measure.key)
-                        const seq = this.song.getNoteSequence(n.key, measure.key)
-                        const result = this.song.doesSequenceFit(seq, measure.key, s, start)
-                        const analyzed = this.song.analyzeSequence(result.sequence)
 
-                        console.log('seq', seq, result, analyzed)
+                    if (!continuesPrevious) {
+                        if (isContinued) { // start of sequence
+                            console.log('sequence start', n.key, measure.key, start)
+                            const seq = this.song.getNoteSequence(n.key, measure.key)
+                            const result = this.song.sequenceSpan(seq, measure.key, s, start)
+                            const analyzed = this.song.analyzeSequence(result.sequence, measureStart)
+
+                            console.log('seq', analyzed)
+                            for (const t of analyzed) {
+                                let res = this.playNote(s, t.f, t.start, t.end, t.effect)
+
+                                if (t.delayedEffects) {
+                                    for (const eff of t.delayedEffects) {
+                                        this.addSoundEffect(eff.effect, res.bufferSource, eff.start, eff.end)
+                                    }
+                                }
+                            }
+
+                        } else {
+                            this.playNote(s, n.f, start, end, n.effect)
+                        }
                     }
-
-                    //console.log('note sd', start, dur, 'pdi', n.p, n.d, n.i)
-
-                    const result = this.soundPlayer.playNote(s, n.f, start, end),
-                        node = result.bufferSource
-
-                    if (n.effect === 'vibrato') {
-                        console.log('vibrato')
-                        this.soundPlayer.addVibrato(node, start, end, 50, beatDelay * 4)
-                    } else if (n.effect === 'slide-up') {
-                        console.log('slide-up')
-                        this.soundPlayer.addSlide(node, start, end, 200)
-                    } else if (n.effect === 'slide-down') {
-                        console.log('slide-down')
-                        this.soundPlayer.addSlide(node, start, end, -200)
-                    } else if (n.effect === 'bend-up') {
-                        console.log('bend-up')
-                        this.soundPlayer.addBend(node, start, end, 200)
-                    } else if (n.effect === 'bend-down') {
-                        console.log('bend-down')
-                        this.soundPlayer.addBend(node, start, end, -200)
-                    }
+                    
                 })
 
             })

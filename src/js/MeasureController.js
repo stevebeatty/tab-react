@@ -66,7 +66,7 @@ class MeasureController extends Component {
             noteKey = drag.note.key,
             stringDist = this.stringEventDistance(measure, stringIndex, bound, evt, noteKey),
             noteSeq = this.props.song.getNoteSequence(noteKey, drag.measure.key),
-            fits = this.props.song.doesSequenceFit(noteSeq, measure.props.measure.key, stringIndex, stringDist.p)
+            fits = this.props.song.sequenceSpan(noteSeq, measure.props.measure.key, stringIndex, stringDist.p)
 
         if (fits.status) {
             const updated = this.props.song.updateSequence(fits)
@@ -136,7 +136,7 @@ class MeasureController extends Component {
             noteKey = drag.note.key,
             stringDist = this.stringEventDistance(measure, stringIndex, bound, evt, noteKey),
             noteSeq = this.props.song.getNoteSequence(noteKey, drag.measure.key),
-            fits = this.props.song.doesSequenceFit(noteSeq, measure.props.measure.key, stringIndex, stringDist.p)
+            fits = this.props.song.sequenceSpan(noteSeq, measure.props.measure.key, stringIndex, stringDist.p)
 
         console.log('dragover', fits, noteSeq)
         /*
