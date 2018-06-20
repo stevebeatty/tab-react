@@ -25,7 +25,7 @@
             "d": 1,
             "p": 1,
             "f": 0,
-            "effect": "slide-up",
+            "effect": "bend-up",
             "continuedBy": 101
           },
           {
@@ -41,7 +41,6 @@
 
         ],
         [
-
         ],
         []
       ]

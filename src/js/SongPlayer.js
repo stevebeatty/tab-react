@@ -35,33 +35,30 @@ class SongPlayer {
 		this.soundPlayer.stop()
 	}
 
-    addSoundEffect(effect, node, start, end) {
+    addSoundEffect(playResult, effectObj) {
+        const { start, stop, effect } = effectObj,
+            node = playResult.bufferSource,
+            gain = playResult.gain
+
         if (effect === 'vibrato') {
             console.log('vibrato')
-            this.soundPlayer.addVibrato(node, start, end, 50, (60/this.song.tempo()) * 4)
-        } else if (effect === 'slide-up') {
-            console.log('slide-up')
-            this.soundPlayer.addSlide(node, start, end, 200)
-        } else if (effect === 'slide-down') {
-            console.log('slide-down')
-            this.soundPlayer.addSlide(node, start, end, -200)
+            effectObj.frequency = effectObj.frequency || (60 / this.song.tempo()) * 4
+            this.soundPlayer.addVibrato(node, effectObj)
+        } else if (effect === 'slide-up' || effect === 'slide-down') {
+            console.log('slide')
+            this.soundPlayer.addSlide(node, effectObj)
         } else if (effect === 'bend-up') {
             console.log('bend-up')
-            this.soundPlayer.addBend(node, start, end, 200)
-        } else if (effect === 'bend-down') {
-            console.log('bend-down')
-            this.soundPlayer.addBend(node, start, end, -200)
+            this.soundPlayer.addBend(node, effectObj)
+        } else if (effect === 'pre-bend') {
+            console.log('pre-bend')
+            this.soundPlayer.addPreBend(node, effectObj)
         }
     }
 
-    playNote(string, fret, start, end, effect) {
-        const result = this.soundPlayer.playNote(string, fret, start, end),
-            node = result.bufferSource
-
-        if (effect) {
-            this.addSoundEffect(effect, node, start, end)
-        }
-
+    playNote(string, fret, start, stop) {
+        const result = this.soundPlayer.playNote(string, fret, start, stop)
+        this.soundPlayer.addNoteFade(result.gain, stop)
         return result
     }
 
@@ -80,7 +77,7 @@ class SongPlayer {
                 stringMap[s].forEach(n => {
                     const start = n.p * beatDelay + measureStart,
                         dur = (n.d / (n.i / mi)) * beatDelay,
-                        end = start + dur,
+                        stop = start + dur,
                         isContinued = 'continuedBy' in n,
                         continuesPrevious = 'continues' in n
 
@@ -94,17 +91,25 @@ class SongPlayer {
 
                             console.log('seq', analyzed)
                             for (const t of analyzed) {
-                                let res = this.playNote(s, t.f, t.start, t.end, t.effect)
+                                let result = this.soundPlayer.playNote(s, t.f, t.start, t.stop)
 
-                                if (t.delayedEffects) {
-                                    for (const eff of t.delayedEffects) {
-                                        this.addSoundEffect(eff.effect, res.bufferSource, eff.start, eff.end)
+                                if (t.effects) {
+                                    for (const eff of t.effects) {
+                                        this.addSoundEffect(result, eff)
                                     }
                                 }
                             }
 
                         } else {
-                            this.playNote(s, n.f, start, end, n.effect)
+                            const result = this.soundPlayer.playNote(s, n.f, start, stop)
+
+                            if (n.effect) {
+                                this.addSoundEffect(result, {
+                                    effect: n.effect,
+                                    start,
+                                    stop
+                                })
+                            }
                         }
                     }
                     

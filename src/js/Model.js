@@ -97,11 +97,11 @@ class Measure {
         const beatDelay = 60 / this.tempo(),
             start = note.p * beatDelay + startTime,
             dur = (note.d / (note.i / this.interval())) * beatDelay,
-            end = start + dur
+            stop = start + dur
 
         return {
             start,
-            end
+            stop
         }
     }
 
@@ -494,6 +494,23 @@ class Song {
         return mergedParts
     }
 
+    seqPartAddEffect(part, effectObj) {
+        part.effects = part.effects || []
+        part.effects.push(effectObj)
+    }
+
+    seqPartRemoveFirstEffect(part, effect) {
+        if (Array.isArray(part.effects)) {
+            const idx = part.effects.findIndex(e => e.effect === effect)
+            if (idx >= 0) {
+                const removed = part.effects.splice(idx, 1)
+                return removed.length > 0 ? removed[0] : null
+            }
+        }
+
+        return null
+    }
+
     analyzeSequence(sequence, startTime) {
         let parts = this.flattenSequenceSpans(sequence)
 
@@ -510,36 +527,40 @@ class Song {
                 curr.effect = p.effect
             }
 
-            if (last && last.f === curr.f) {
-                if (!last.effect) {
-                    if (!curr.effect) {
-                        last.end = curr.end
-                    } else {
-                        if (curr.effect === 'vibrato') {
-                            last.delayedEffects = [{ effect: curr.effect, start: curr.start, end: curr.end }]
-                            last.end = curr.end
+            if (last) {
+                if (last.f === curr.f) {
+                    if (!last.effect) {
+                        if (!curr.effect) {
+                            last.stop = curr.stop
                         } else {
-                            mergedParts.push(curr)
-                            last = curr
+                            if (curr.effect === 'vibrato') {
+                                this.seqPartAddEffect(last, { effect: curr.effect, start: curr.start, stop: curr.stop })
+                                last.stop = curr.stop
+                            } 
                         }
+                        continue
                     }
-                } else {
-                    mergedParts.push(curr)
-                    last = curr
+                } else if (['slide-up', 'slide-down', 'bend-up'].includes(last.effect) && !curr.effect) {
+                    const removed = this.seqPartRemoveFirstEffect(last, last.effect)
+                    this.seqPartAddEffect(last, {
+                        effect: last.effect, start: last.start, stop: curr.stop, transistionStop: last.stop, detune: (curr.f - last.f) * 100
+                    })
+                    last.stop = curr.stop
+                    delete last.effect
+                    continue
+                } else if (['pre-bend'].includes(last.effect) && !curr.effect) {
+                    const removed = this.seqPartRemoveFirstEffect(last, last.effect)
+                    this.seqPartAddEffect(last, {
+                        effect: last.effect, start: last.start, stop: last.stop, detune: (last.f - curr.f) * 100
+                    })
+                    last.stop = curr.stop
+                    delete last.effect
+                    continue
                 }
-            } else {
-                mergedParts.push(curr)
-                last = curr
             }
 
-            /*
-            if (last && last.f === curr.f &&
-                !('effect' in curr) && !('effect' in last)) {
-                last.end = curr.end
-            } else {
-                mergedParts.push(curr)
-            }*/
-
+            mergedParts.push(curr)
+            last = curr
             
         }
 

@@ -561,9 +561,9 @@ class Note extends Component {
 					{this.props.note.effect === 'slide-down' && <line x1={imgLeft + 'em'} x2={imgLeft + this.props.d + 'em'} y1={imgMiddle - slideHeight + 'em'} y2={imgMiddle + slideHeight + 'em'} 
 							className={"string-" + this.props.string + '-stroke'} stroke="black" vectorEffect="non-scaling-stroke"/>}
         
-                    {this.props.note.effect === 'bend-up' && <SvgBend width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} pathClass={"string-" + this.props.string + '-stroke'} />}
+                    {this.props.note.effect === 'bend-up' && <SvgBend width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} pathClass={"string-" + this.props.string} />}
 
-                    {this.props.note.effect === 'bend-down' && <SvgBend width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} pathClass={"string-" + this.props.string + '-stroke'} direction={-1} />}
+                    {this.props.note.effect === 'pre-bend' && <SvgBend width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} pathClass={"string-" + this.props.string} direction={-1} offset={- 0.45 * imgHeight}/>}
 
 					{this.props.selected &&
 						<circle className="selected-note" cx={imgLeft + 'em'}
@@ -656,6 +656,35 @@ class SvgWavePath extends Component {
 }
 
 class SvgBend extends Component {
+
+    render() {
+        const width = this.props.width - this.props.x,
+            height = this.props.height,
+            ctrlY = 0.1 * height,
+            heightExtent = 0.6,
+            widthExtent = 0.9 * width,
+            direction = this.props.direction || 1,
+            offset = this.props.offset || 0,
+            //pathD = `M 0 ${.5 * height} l ${width * .5} 0 c ${width * .05} ${.5 * -height} ${width * .05} ${.5 * -height} ${width * .05} ${.5 * -height} l 0 ${0.4 * -height}`
+            pathD = `M 0 ${.5 * height + offset} l ${width * .25} 0 c ${width * .25} 0 ${width * .25} 0 ${width * .25} ${-0.4 * direction * height}`
+
+        return (
+            <svg width={width + 'em'} height={height + 'em'} viewBox={`0 0 ${width} ${height}`} x={this.props.x + 'em'} >
+                <defs>
+                    <marker id='head' viewBox="0 0 40 40" orient="auto"
+                        markerWidth='1' markerHeight='1'
+                        refX='5' refY='5'>
+                        <path d="M 0 0 L 10 5 L 0 10 z" />
+                    </marker>
+                </defs>
+                <path d={pathD} fill="none" strokeWidth="1.5" className={this.props.pathClass + '-stroke'} vectorEffect="non-scaling-stroke" marker-end='url(#head)' />
+            </svg>
+        )
+    }
+}
+
+
+class SvgBend2 extends Component {
 
     render() {
         const width = this.props.width - this.props.x,

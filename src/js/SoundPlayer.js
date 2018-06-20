@@ -85,8 +85,12 @@ class SoundPlayer {
         }
     }
 
-    addVibrato(node, startTime, stopTime, detune, frequency) {
-        const { actualStart, actualStop } = this.getActualTimes(startTime, stopTime)
+    addVibrato(node, effect) {
+        const { start, stop } = effect,
+            detune = this.numberOrDefault(effect.detune, 50),
+            frequency = this.numberOrDefault(effect.frequency, 4)
+
+        const [actualStart, actualStop] = this.getActualTimes(start, stop)
 
         let osc = this.audioContext.createOscillator()
         osc.type = 'sine'
@@ -108,12 +112,21 @@ class SoundPlayer {
         osc.stop(actualStop)
     }
 
-    addSlide(node, startTime, stopTime, detune) {
-        const { actualStart, actualStop } = this.getActualTimes(startTime, stopTime)
+    numberOrDefault(value, defaultValue) {
+        return typeof value === 'number' ? value : defaultValue
+    }
+
+    addSlide(node, effect) {
+        const { start, stop } = effect,
+            detune = this.numberOrDefault(effect.detune, effect.effect === 'slide-up' ? 200 : -200),
+            transistionStop = this.numberOrDefault(effect.transistionStop, stop)
+
+
+        const [actualStart, actualStop, actualTransitionStop] = this.getActualTimes(start, stop, transistionStop)
 
         let src = this.audioContext.createConstantSource()
         src.offset.setValueAtTime(0.001, actualStart)
-        src.offset.linearRampToValueAtTime(detune, actualStop)
+        src.offset.linearRampToValueAtTime(detune, actualTransitionStop)
 
         src.connect(node.detune)
 
@@ -121,15 +134,18 @@ class SoundPlayer {
             console.log('ending slide', this.audioContext.currentTime, 'expected', actualStop)
         }
 
-        console.log('start slide at', actualStart, 'to', actualStop)
+        console.log('start slide at', actualStart, 'to', actualStop, 'transitionStop', transistionStop)
 
         src.start(actualStart)
         src.stop(actualStop)
     }
 
-    addBend(node, startTime, stopTime, detune) {
-        const { actualStart, actualStop } = this.getActualTimes(startTime, stopTime),
-            dur = stopTime - startTime
+    addBend(node, effect) {
+        const { start, stop } = effect,
+            detune = this.numberOrDefault(effect.detune, 200),
+            transistionStop = this.numberOrDefault(effect.transistionStop, stop)
+
+        const [actualStart, actualStop, actualTransitionStop] = this.getActualTimes(start, stop, transistionStop)
 
         let src = this.audioContext.createConstantSource()
         src.offset.setValueAtTime(0.001, actualStart)
@@ -148,11 +164,36 @@ class SoundPlayer {
         src.stop(actualStop)
     }
 
-    getActualTimes(startTime, stopTime) {
-        return {
-            actualStart: this.startTime + startTime,
-            actualStop: this.startTime + stopTime
+    addPreBend(node, effect) {
+        const { start, stop } = effect,
+            detune = this.numberOrDefault(effect.detune, 200)
+
+        const [actualStart, actualStop] = this.getActualTimes(start, stop)
+
+        let src = this.audioContext.createConstantSource()
+        src.offset.setValueAtTime(detune, 0.0001)
+        src.offset.setTargetAtTime(0, actualStart + 0.01, 0.5)
+        //src.offset.exponentialRampToValueAtTime(detune, actualStart + dur / 8)
+
+        src.connect(node.detune)
+
+        src.onended = () => {
+            console.log('ending prebend', this.audioContext.currentTime, 'expected', actualStop)
         }
+
+        console.log('start prebend at', actualStart, 'to', actualStop)
+
+        src.start(actualStart)
+        src.stop(actualStop)
+    }
+
+    addNoteFade(gainNode, noteStopTime, timeConstant = 0.015) {
+        const [actualStop] = this.getActualTimes(noteStopTime - 2 * timeConstant)
+        gainNode.gain.setTargetAtTime(0, actualStop, timeConstant)
+    }
+
+    getActualTimes() {
+        return Array.from(arguments).map(a => this.startTime + a)
     }
 
 	start() {
