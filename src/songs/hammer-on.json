@@ -1,0 +1,49 @@
+{
+  "title": "Name",
+  "author": "Author",
+  "i": 4,
+  "d": 4,
+  "tempo": 60,
+  "measures": [
+    {
+      "strings": [
+        [],
+        [
+
+        ],
+        [
+          {
+            "key": 99,
+            "i": 4,
+            "d": 1,
+            "p": 0,
+            "f": 0
+          },
+          {
+            "key": 100,
+            "i": 4,
+            "d": 1,
+            "p": 1,
+            "f": 0,
+            "effect": "hammer-on",
+            "continuedBy": 101
+          },
+          {
+            "key": 101,
+            "i": 4,
+            "d": 2,
+            "p": 2,
+            "f": 2,
+            "continues": 100
+          }
+        ],
+        [
+
+        ],
+        [
+        ],
+        []
+      ]
+    }
+   ]
+}
