@@ -91,7 +91,7 @@ class SongPlayer {
 
                             console.log('seq', analyzed)
                             for (const t of analyzed) {
-                                let result = this.soundPlayer.playNote(s, t.f, t.start, t.stop)
+                                let result = this.playNote(s, t.f, t.start, t.stop)
 
                                 if (t.effects) {
                                     for (const eff of t.effects) {
@@ -101,7 +101,7 @@ class SongPlayer {
                             }
 
                         } else {
-                            const result = this.soundPlayer.playNote(s, n.f, start, stop)
+                            const result = this.playNote(s, n.f, start, stop)
 
                             if (n.effect) {
                                 this.addSoundEffect(result, {
