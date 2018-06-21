@@ -18,7 +18,12 @@ class SoundPlayer {
 
         this.masterGain = this.audioContext.createGain()
         this.masterGain.gain.value = 1
-        this.masterGain.connect(this.audioContext.destination)
+        //this.masterGain.connect(this.audioContext.destination)
+
+        this.analyser = this.audioContext.createAnalyser()
+
+        this.masterGain.connect(this.analyser)
+        this.analyser.connect(this.audioContext.destination)
     }
 
     loadSounds() {
@@ -190,6 +195,70 @@ class SoundPlayer {
     addNoteFade(gainNode, noteStopTime, timeConstant = 0.015) {
         const [actualStop] = this.getActualTimes(noteStopTime - 2 * timeConstant)
         gainNode.gain.setTargetAtTime(0, actualStop, timeConstant)
+    }
+
+
+    addDetune(node, effect) {
+        const { start, stop } = effect,
+            detune = this.numberOrDefault(effect.detune, 200)
+
+        const [actualStart, actualStop] = this.getActualTimes(start, stop)
+
+        let src = this.audioContext.createConstantSource()
+        src.offset.value = detune
+
+        src.connect(node.detune)
+
+        src.onended = () => {
+            console.log('ending detune', this.audioContext.currentTime, 'expected', actualStop)
+        }
+
+        console.log('start detune at', actualStart, 'to', actualStop)
+
+        src.start(actualStart)
+        src.stop(actualStop)
+    }
+
+    addFilter(sourceNode, gainNode, effect) {
+        const { start, stop } = effect
+        const [actualStart, actualStop] = this.getActualTimes(start, stop)
+        const filter = this.audioContext.createBiquadFilter()
+        filter.type = 'highpass'
+        filter.frequency.value = 4000
+        filter.Q.value = 0.707
+
+        gainNode.disconnect(this.masterGain)
+
+        gainNode.connect(filter).connect(this.masterGain)
+        
+        /*
+        const gainDampen = this.audioContext.createGain()
+        gainDampen.gain.value = 0.7
+        //gainDampen.gain.setTargetAtTime(0.85, actualStart, 0.5)
+
+        gainNode.disconnect(this.masterGain)
+
+        gainNode.connect(gainDampen).connect(this.masterGain)*/
+    }
+
+    addPullOff(sourceNode, gainNode, effect) {
+        const { start, stop } = effect
+        const [actualStart, actualStop] = this.getActualTimes(start, stop)
+        /*const filter = this.audioContext.createBiquadFilter()
+        filter.type = 'lowpass'
+        filter.frequency.value = 800
+
+        gainNode.disconnect(this.masterGain)
+
+        gainNode.connect(filter).connect(this.masterGain)
+        */
+        const gainDampen = this.audioContext.createGain()
+        gainDampen.gain.value = 0.7
+        //gainDampen.gain.setTargetAtTime(0.85, actualStart, 0.5)
+
+        gainNode.disconnect(this.masterGain)
+
+        gainNode.connect(gainDampen).connect(this.masterGain)
     }
 
     getActualTimes() {

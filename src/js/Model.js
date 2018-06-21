@@ -536,7 +536,7 @@ class Song {
                             if (curr.effect === 'vibrato') {
                                 this.seqPartAddEffect(last, { effect: curr.effect, start: curr.start, stop: curr.stop })
                                 last.stop = curr.stop
-                            } 
+                            }
                         }
                         continue
                     }
@@ -556,7 +556,31 @@ class Song {
                     last.stop = curr.stop
                     delete last.effect
                     continue
+                } else if (['pull-off', 'hammer-on'].includes(last.effect)) {
+                    this.seqPartAddEffect(curr, {
+                        effect: last.effect, start: curr.start, stop: curr.stop
+                    })
+                    delete last.effect
                 }
+            }
+
+            if (curr.effect === 'harmonic') {
+                let detune = curr.f * 100
+                if (curr.f === 12) {
+                    detune = 1200
+                } else if (curr.f === 7 || curr.f === 19) {
+                    detune = 1900
+                } else if (curr.f === 5 || curr.f === 24) {
+                    detune = 2400
+                }
+
+                this.seqPartAddEffect(curr, {
+                    effect: curr.effect, start: curr.start, stop: curr.stop, detune
+                })
+
+                curr.f = 0
+
+                delete curr.effect
             }
 
             mergedParts.push(curr)

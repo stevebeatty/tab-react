@@ -543,7 +543,7 @@ class Note extends Component {
                     top: this.props.y - imgHeight / 2 + 'em',
                     height: imgHeight + 'em'
                 }}>
-                <svg className={(hasEffect ? ' note-with-effect' : '')}
+                <svg className={(hasEffect ? 'note-with-effect' : '')}
 					 style={{ width: this.props.d + imgLeft + 'em', height: imgHeight + 'em' }}>
 
                     <rect className={"note-extent string-" + this.props.string} 
@@ -564,6 +564,8 @@ class Note extends Component {
                     {this.props.note.effect === 'bend-up' && <SvgBend width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} pathClass={"string-" + this.props.string} />}
 
                     {this.props.note.effect === 'pre-bend' && <SvgBend width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} pathClass={"string-" + this.props.string} direction={-1} offset={- 0.45 * imgHeight}/>}
+
+                    {(this.props.note.effect === 'pull-off' || this.props.note.effect === 'hammer-on') && <SvgArc width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} pathClass={"string-" + this.props.string} />}}
 
 					{this.props.selected &&
 						<circle className="selected-note" cx={imgLeft + 'em'}
@@ -684,20 +686,20 @@ class SvgBend extends Component {
 }
 
 
-class SvgBend2 extends Component {
+class SvgArc extends Component {
 
     render() {
         const width = this.props.width - this.props.x,
             height = this.props.height,
-            ctrlY = 0.1 * height,
+            ctrlY = 0.9 * height,
             heightExtent = 0.6,
-            widthExtent = 0.9 * width,
+            widthExtent = 0.95 * width,
             direction = this.props.direction || 1,
-            pathD = `M 0 ${.5 * height} c ${width * .75} ${direction * ctrlY}, ${widthExtent} ${direction * ctrlY}, ${width - 0.1} ${direction * -heightExtent}`
+            pathD = `M 0.1 ${.5 * height} q ${width * .5} ${direction * -ctrlY}, ${widthExtent} 0`
 
         return (
             <svg width={width + 'em'} height={height + 'em'} viewBox={`0 0 ${width} ${height}`} x={this.props.x + 'em'} >
-                <path d={pathD} fill="transparent" strokeWidth="1.5" className={this.props.pathClass} vectorEffect="non-scaling-stroke" />
+                <path d={pathD} fill="transparent" strokeWidth="1.5" stroke="black" vectorEffect="non-scaling-stroke" />
             </svg>
         )
     }

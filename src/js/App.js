@@ -11,7 +11,7 @@ import { NavBar, ModalDialog } from './BaseBoot'
 import { FileLoader, SaveDialog, SettingsEditor } from './Dialogs'
 import SoundPlayer from './SoundPlayer';
 import SongPlayer from './SongPlayer'
-import testTab from '../songs/pre-bend.json'
+import testTab from '../songs/harmonic.json'
 
 console.log(tab1);
 
@@ -390,10 +390,98 @@ class App extends Component {
             {this.state.showLoadFile && <FileLoader controller={this} />}
 			{this.state.showSaveFile && <SaveDialog controller={this} />}
 
+            <Canvas height="100" width="200" player={this.songPlayer} />
             </React.Fragment>
     );
   }
 }
 
+
+class SvgArc extends Component {
+
+    render() {
+        const width = this.props.width - this.props.x,
+            height = this.props.height,
+            ctrlY = 0.9 * height,
+            heightExtent = 0.6,
+            widthExtent = 0.95 * width,
+            direction = this.props.direction || 1,
+            pathD = `M 0.1 ${.5 * height} q ${width * .5} ${direction * -ctrlY}, ${widthExtent} 0`
+
+        return (
+            <svg width={width + 'em'} height={height + 'em'} viewBox={`0 0 ${width} ${height}`} x={this.props.x + 'em'} >
+                <path d={pathD} fill="transparent" strokeWidth="1.5" stroke="black" vectorEffect="non-scaling-stroke" />
+            </svg>
+        )
+    }
+}
+
+class Canvas extends Component {
+
+    constructor(props) {
+        super(props)
+
+        this.canvasRef = React.createRef();
+        this.dataArray = null
+    }
+
+    componentDidMount() {
+        this.updateCanvas();
+    }
+    componentDidUpdate() {
+        this.updateCanvas();
+    }
+    updateCanvas() {
+        const ctx = this.canvasRef.current.getContext('2d');
+        ctx.clearRect(0, 0, this.props.width, this.props.height);
+        ctx.fillStyle = "rgb(200, 200, 200)";
+        ctx.fillRect(0, 0, this.props.width, this.props.height);
+
+        const analyser = this.props.player.analyser()
+
+        if (!analyser) return
+
+        const bufferSize = analyser.frequencyBinCount,
+            chunkWidth = this.props.width / bufferSize
+
+       
+        if (!this.dataArray) {
+            this.dataArray = new Float32Array(bufferSize)
+        }
+
+        analyser.getFloatFrequencyData(this.dataArray)
+
+        ctx.beginPath()
+        let x = 0, min, max 
+
+        for (let i = 0; i < bufferSize; i++) {
+            let v = this.dataArray[i] + 200,
+                y = this.props.height - (v / 400) * this.props.height
+
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+            x += chunkWidth;
+
+            min = min === undefined ? this.dataArray[i] : Math.min(this.dataArray[i], min)
+            max = max === undefined ? this.dataArray[i] : Math.max(this.dataArray[i], max)
+        }
+
+        console.log('min', min, 'max', max)
+
+        //ctx.lineTo(this.props.width, this.props.height / 2);
+        ctx.stroke();
+
+    }
+
+    render() {
+
+        return (
+            <canvas ref={this.canvasRef} width={this.props.width + 'px'} height={this.props.height + 'px'} />
+        )
+    }
+}
 
 export { App };
