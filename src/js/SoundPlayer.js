@@ -224,8 +224,28 @@ class SoundPlayer {
         const [actualStart, actualStop] = this.getActualTimes(start, stop)
         const filter = this.audioContext.createBiquadFilter()
         filter.type = 'highpass'
-        filter.frequency.value = 4000
+        filter.frequency.value = 7000
         filter.Q.value = 0.707
+
+        var myFrequencyArray = new Float32Array(9);
+        myFrequencyArray[0] = 100;
+        myFrequencyArray[1] = 250;
+        myFrequencyArray[2] = 500;
+        myFrequencyArray[3] = 750;
+        myFrequencyArray[4] = 1000;
+        myFrequencyArray[5] = 2000;
+        myFrequencyArray[6] = 3000;
+        myFrequencyArray[7] = 4000;
+        myFrequencyArray[8] = 5000;
+
+        var magResponseOutput = new Float32Array(myFrequencyArray.length);
+        var phaseResponseOutput = new Float32Array(myFrequencyArray.length);
+
+        filter.getFrequencyResponse(myFrequencyArray, magResponseOutput, phaseResponseOutput);
+
+        for (let i = 0; i <= myFrequencyArray.length - 1; i++) {
+            console.log(`${myFrequencyArray[i]} Hz, Magnitude ${magResponseOutput[i]}, Phase ${phaseResponseOutput[i]} radians.`);
+        }
 
         gainNode.disconnect(this.masterGain)
 

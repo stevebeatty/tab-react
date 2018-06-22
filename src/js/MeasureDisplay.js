@@ -556,10 +556,10 @@ class Note extends Component {
                         amplitude={0.6} pathClass={"string-" + this.props.string + '-stroke'}/>}
 
 					{this.props.note.effect === 'slide-up' && <line x1={imgLeft + 'em'} x2={imgLeft + this.props.d + 'em'} y1={imgMiddle + slideHeight + 'em'} y2={imgMiddle - slideHeight + 'em'} 
-							className={"string-" + this.props.string + '-stroke'} stroke="black" vectorEffect="non-scaling-stroke"/>}
+                        className={"string-" + this.props.string + '-stroke'} strokeWidth="1.5" stroke="black" vectorEffect="non-scaling-stroke"/>}
 
 					{this.props.note.effect === 'slide-down' && <line x1={imgLeft + 'em'} x2={imgLeft + this.props.d + 'em'} y1={imgMiddle - slideHeight + 'em'} y2={imgMiddle + slideHeight + 'em'} 
-							className={"string-" + this.props.string + '-stroke'} stroke="black" vectorEffect="non-scaling-stroke"/>}
+                        className={"string-" + this.props.string + '-stroke'} strokeWidth="1.5" stroke="black" vectorEffect="non-scaling-stroke"/>}
         
                     {this.props.note.effect === 'bend-up' && <SvgBend width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} pathClass={"string-" + this.props.string} />}
 

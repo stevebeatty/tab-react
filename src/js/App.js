@@ -11,7 +11,7 @@ import { NavBar, ModalDialog } from './BaseBoot'
 import { FileLoader, SaveDialog, SettingsEditor } from './Dialogs'
 import SoundPlayer from './SoundPlayer';
 import SongPlayer from './SongPlayer'
-import testTab from '../songs/harmonic.json'
+import testTab from '../songs/test1.json'
 
 console.log(tab1);
 
@@ -390,7 +390,7 @@ class App extends Component {
             {this.state.showLoadFile && <FileLoader controller={this} />}
 			{this.state.showSaveFile && <SaveDialog controller={this} />}
 
-            <Canvas height="100" width="200" player={this.songPlayer} />
+            <Canvas height="100" width="1024" player={this.songPlayer} />
             </React.Fragment>
     );
   }
@@ -444,13 +444,12 @@ class Canvas extends Component {
         const bufferSize = analyser.frequencyBinCount,
             chunkWidth = this.props.width / bufferSize
 
-       
         if (!this.dataArray) {
             this.dataArray = new Float32Array(bufferSize)
         }
 
         analyser.getFloatFrequencyData(this.dataArray)
-
+        
         ctx.beginPath()
         let x = 0, min, max 
 
@@ -473,7 +472,31 @@ class Canvas extends Component {
 
         //ctx.lineTo(this.props.width, this.props.height / 2);
         ctx.stroke();
+        
+        /*
+        const divisionSize = Math.max(Math.floor(bufferSize / this.props.width), 1),
+            barWidth = Math.max(1, (this.props.width / bufferSize))
 
+        let posX = 0, min, max
+        for (let i = 0; i < bufferSize; i++) {
+            let value = this.dataArray[i], end = i + divisionSize - 1
+            for (; i < end; i++) {
+                value += this.dataArray[i + 1]
+            }
+
+            value /= divisionSize
+
+            const barHeight = ((value + 140) / 110) * this.props.height;
+            ctx.fillStyle = 'rgb(' + Math.floor(barHeight + 100) + ', 50, 50)';
+            ctx.fillRect(posX, this.props.height - barHeight / 2, barWidth, barHeight / 2);
+            posX += barWidth + 1;
+
+            min = min === undefined ? value : Math.min(value, min)
+            max = max === undefined ? value : Math.max(value, max)
+        }
+
+        console.log('min', min, 'max', max)
+        */
     }
 
     render() {
