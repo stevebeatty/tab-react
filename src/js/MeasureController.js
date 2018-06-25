@@ -17,6 +17,7 @@ class MeasureController extends Component {
         this.handleDragEnd = this.handleDragEnd.bind(this);
         this.handleDragOver = this.handleDragOver.bind(this);
         this.handleStringDrop = this.handleStringDrop.bind(this);
+        this.handleRulerClick = this.handleRulerClick.bind(this)
     }
 
     stringEventDistance(measure, stringIndex, bound, e, noteKey) {
@@ -48,7 +49,7 @@ class MeasureController extends Component {
             const note = {
                 p: stringDist.p, d: dur, f: 0, i: int
             }
-            this.simplifyNoteTiming(note);
+            measure.props.measure.simplifyNoteTiming(note);
 
             console.log(' str ', int, note)
 
@@ -93,38 +94,6 @@ class MeasureController extends Component {
             this.props.onNoteSelect(measure, stringIndex, firstIndex)
         } else {
         }
-
-        /*
-
-        const drag = this.props.dragging,
-            noteKey = stringIndex === drag.string ? drag.note.key : undefined,
-            stringDist = this.stringEventDistance(measure, stringIndex, bound, e, noteKey)
-
-        console.log('handleStringDrop string ', stringIndex, ' dist ', stringDist.d)
-
-        if (stringDist.d !== 0) {
-            const drag = this.props.dragging,
-                m = drag.measure,
-                note = drag.note,
-                d = note.d * m.interval() / note.i
-
-            console.log('pos ', stringDist.p, ' end ', note.d + stringDist.p, 'dist & d ', stringDist.d, note.d)
-
-            if (stringDist.d < d) {
-                console.log('cant fit')
-                return
-            } else {
-                m.removeNoteByIndex(drag.string, drag.noteIndex)
-
-                note.p = stringDist.p
-                const newIdx = measure.addNote(stringIndex, note)
-
-                this.props.onSongUpdate()
-                this.props.onNoteSelect(measure, stringIndex, newIdx)
-            }
-        }
-
-        */
     }
 
     handleDragOver(measure, stringIndex, bound, evt) {
@@ -139,24 +108,6 @@ class MeasureController extends Component {
             fits = this.props.song.sequenceSpan(noteSeq, measure.props.measure.key, stringIndex, stringDist.p)
 
         console.log('dragover', fits, noteSeq)
-        /*
-        if (stringDist.d !== 0) {
-
-            const m = drag.measure,
-                note = drag.note,
-                d = note.d * m.interval() / note.i
-
-            console.log('pos', stringDist.p, 'end', note.d + stringDist.p, 'dist & d', stringDist.d, note.d, note.d*m.interval()/note.i )
-
-            if (stringDist.d < d) {
-                // console.log('cant fit')
-                evt.dataTransfer.dropEffect = 'none'
-                return
-            }
-
-            evt.dataTransfer.dropEffect = 'move'
-            return
-        }*/
 
         if (fits.status) {
             evt.dataTransfer.dropEffect = 'move'
@@ -191,11 +142,8 @@ class MeasureController extends Component {
         this.props.onNoteSelect(measure, string, idx)
     }
 
-    simplifyNoteTiming(note) {
-        while (note.d % 2 === 0 && note.i % 2 === 0) {
-            note.d /= 2
-            note.i /= 2
-        }
+    handleRulerClick(measure, pos) {
+        console.log('ruler click', pos, measure.props.measure.notesAtPosition(pos))
     }
 
     createMeasureTag(measure) {
@@ -220,6 +168,7 @@ class MeasureController extends Component {
                 onStringClick={this.handleStringClick} onStringDragOver={this.handleDragOver} onStringDrop={this.handleStringDrop}
                 onNoteClick={this.props.onNoteSelect} 
                 onNoteDragStart={this.handleDragStart} onNoteDragEnd={this.handleDragEnd} canDragNote={this.props.canDragNote}
+                onRulerClick={this.handleRulerClick}
                 isPlaying={isPlaying} isPaused={this.props.isPaused}
                 {...optionalAtts}
             />)
@@ -230,7 +179,7 @@ class MeasureController extends Component {
         const hasSelectedMeasure = this.props.selection.type === 'measure';
 
         if (hasSelectedNote) {
-            return measure.key === this.props.selection.value.measure;
+            return measure.key === this.props.selection.value.measure.key;
         } else if (hasSelectedMeasure) {
             return measure.key === this.props.selection.value.measure.key;
         } else {

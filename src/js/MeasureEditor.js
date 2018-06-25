@@ -62,10 +62,10 @@ class MeasureEditor extends Component {
                         <div className="form-group">
                             <label>Insert Empty</label>
 							<div>
-								<button type="button" onClick={this.insertBefore} className="btn btn-default" aria-label="">
+								<button type="button" onClick={this.insertBefore} className="btn btn-default btn-primary mx-2" aria-label="">
 									<span aria-hidden="true">Before</span>
 								</button>
-								<button type="button" onClick={this.insertAfter} className="btn btn-default" aria-label="">
+                                <button type="button" onClick={this.insertAfter} className="btn btn-default btn-primary mx-2" aria-label="">
 									<span aria-hidden="true">After</span>
 								</button>
 							</div>

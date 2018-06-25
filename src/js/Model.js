@@ -1,4 +1,4 @@
-import { IdGenerator, rangeArray } from './Util';
+import { IdGenerator, rangeArray, range } from './Util';
 
 
 class Measure {
@@ -93,6 +93,22 @@ class Measure {
 		return result
     }
 
+    notesAtPosition(pos) {
+        const result = {}
+
+        for (const string of range(0, this.strings.length)) {
+            let notes = this.strings[string]
+            for (const note of notes) {
+                if (note.p <= pos && this.noteEndPosition(note) > pos) {
+                    result[string] = note
+                    break
+                }
+            }
+        }
+
+        return result
+    }
+
     noteTiming(note, startTime) {
         const beatDelay = 60 / this.tempo(),
             start = note.p * beatDelay + startTime,
@@ -102,6 +118,13 @@ class Measure {
         return {
             start,
             stop
+        }
+    }
+
+    simplifyNoteTiming(note) {
+        while (note.d % 2 === 0 && note.i % 2 === 0) {
+            note.d /= 2
+            note.i /= 2
         }
     }
 
@@ -292,7 +315,7 @@ class Song {
 
         this.key = this.context.idGen.nextOrValue(cfg.key)
         this.title = cfg.title
-        this.author = cfg.author
+        this.artist = cfg.artist
 		this.i = cfg.i
         this.d = cfg.d
         this.t = cfg.tempo
@@ -432,20 +455,21 @@ class Song {
 
     flattenSequenceSpans(sequence) {
         let parts = []
-        sequence.forEach(r => {
-            console.log('flattenSequenceSpans', r.note, r.span.length, ' => ')
 
-            r.span.forEach(s => {
+        sequence.forEach(segment => {
+            //console.log('flattenSequenceSpans', segment.note, segment.span.length, ' => ')
 
-                const dur = this.distanceToDurationAndInterval(s.distance, s.measure),
-                    p = { measure: s.measure, p: s.p, d: dur.d, i: dur.i, f: r.note.f, note: r.note }
+            segment.span.forEach(segSpan => {
 
-                if (r.note.effect) {
-                    p.effect = r.note.effect
+                const dur = this.distanceToDurationAndInterval(segSpan.distance, segSpan.measure),
+                    p = { measure: segSpan.measure, p: segSpan.p, d: dur.d, i: dur.i, f: segment.note.f, note: segment.note }
+
+                if (segment.note.effect) {
+                    p.effect = segment.note.effect
                 }
 
                 parts.push(p)
-                console.log('    ', p)
+                //console.log('    ', p)
             })
         })
 
@@ -480,7 +504,7 @@ class Song {
 
         for (let i = 0; i < mergedParts.length; i++) {
             let p = mergedParts[i]
-            this.simplifyNoteTiming(p)
+            p.measure.simplifyNoteTiming(p)
 
             if (i < mergedParts.length - 1) {
                 p.continuedBy = mergedParts[i + 1].key
@@ -593,6 +617,8 @@ class Song {
         return mergedParts
     }
 
+
+
     distanceToDurationAndInterval(distance, measure) {
         const baseInterval = measure.interval(),
             intDist = 1 / baseInterval,
@@ -641,12 +667,7 @@ class Song {
         }
     }
 
-    simplifyNoteTiming(note) {
-        while (note.d % 2 === 0 && note.i % 2 === 0) {
-            note.d /= 2
-            note.i /= 2
-        }
-    }
+    
 
     noteWithKey(noteKey, measureKey) {
         if (measureKey !== undefined) {
@@ -768,7 +789,7 @@ class Song {
 	export() {
 		const obj = {
 			title: this.title,
-			author: this.author,
+            artist: this.artist,
 			i: this.i,
 			d: this.d,
 			tempo: this.t,

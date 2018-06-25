@@ -7,6 +7,13 @@ function rangeArray(start, end, step=1) {
     return a
 }
 
+function* range(start, end, step = 1) {
+    while (start < end) {
+        yield start
+        start += step
+    }
+}
+
 class IdGenerator {
     constructor(start = 1) {
         this.index = start
@@ -33,4 +40,4 @@ class IdGenerator {
 }
 
 
-export { rangeArray, IdGenerator }
+export { rangeArray, IdGenerator, range }

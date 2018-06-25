@@ -52,6 +52,7 @@ class MeasureDisplay extends Component {
         this.handleNoteDrag = this.handleNoteDrag.bind(this);
         this.handleStringDrop = this.handleStringDrop.bind(this);
         this.handleStringDragOver = this.handleStringDragOver.bind(this);
+        this.handleRulerClick = this.handleRulerClick.bind(this)
 	}
 	
 	static getDerivedStateFromProps(props, state) {
@@ -171,7 +172,7 @@ class MeasureDisplay extends Component {
             this.props.selection.type === 'note' &&
             this.props.selection.value.note === noteIndex &&
             this.props.selection.value.string === stringIndex &&
-            this.props.selection.value.measure === this.props.measure.key;
+            this.props.selection.value.measure.key === this.props.measure.key;
     }
 
     /**
@@ -206,6 +207,10 @@ class MeasureDisplay extends Component {
 
     removeNoteByIndex(string, noteIndex) {
         return this.props.measure.removeNoteByIndex(string, noteIndex)
+    }
+
+    handleRulerClick(pos) {
+        this.props.onRulerClick(this, pos)
     }
 
     render() {
@@ -248,8 +253,7 @@ class MeasureDisplay extends Component {
                           width: this.props.layout.measureClickBoxWidth() + 'em', 
                           height: (this.props.measure.strings.length - 1) * this.props.layout.stringSpacing() + 'em',
                           top: this.stringYOffset(1) + 'em',
-                          zIndex: 40,
-						  display: 'none'
+                          zIndex: 40
                       }} />
               </div>
 
@@ -270,7 +274,7 @@ class MeasureDisplay extends Component {
 
               <Ruler y={this.rulerBottom()} d={this.props.measure.duration()} dx={beginningOffset} subdivisions={this.state.subdivisions} subdivisionSpacing={subDivSize}
                   width={this.measureWidth()} height={subDivSize} showIndicator={this.props.isPlaying} isPaused={this.props.isPaused}
-                  totalTime={this.props.measure.totalTime()} measure={this.props.measure} currentTime={this.props.currentTime} />
+                  totalTime={this.props.measure.totalTime()} measure={this.props.measure} currentTime={this.props.currentTime} onRulerClick={this.handleRulerClick} />
 	      </div>
 	  )
   }
@@ -331,6 +335,7 @@ class Ruler extends Component {
 
         this.indicatorRef = React.createRef()
         this.endAnimation = this.endAnimation.bind(this)
+        this.rulerMarkClick = this.rulerMarkClick.bind(this)
 	}
 
     static getDerivedStateFromProps(props, state) {
@@ -422,12 +427,20 @@ class Ruler extends Component {
 	
 	tickHeight(index, subdivs) {
 		return 0.8 * this.props.subdivisionSpacing - 0.65 * this.props.subdivisionSpacing / subdivs;
-	}
+    }
+
+    rulerMarkClick(evt) {
+        console.log('rulerclick', evt.target.dataset)
+        const pos = parseFloat(evt.target.dataset.position, 10)
+
+        this.props.onRulerClick(pos)
+    }
 	
     render() {
         //console.log('render')
         const ticks = getRuler(this.props.d, this.props.subdivisions);
-        const bottom = this.props.subdivisionSpacing - 0.1
+        const bottom = this.props.subdivisionSpacing - 0.1,
+            tickClickWidth = 0.6 * this.props.subdivisionSpacing
 	  
         return (
             <svg width={this.props.width + 'em'} height={this.props.height + 'em'} style={{ position: 'absolute', top: this.props.y - this.props.height + 'em' }}>
@@ -435,16 +448,18 @@ class Ruler extends Component {
 					<line className="string"
 							x1="0" y1={bottom + 'em'}
 							x2="100%" y2={bottom + 'em'}  />
-					<g>
 					{ticks.map((i, idx) => (
-						<line key={idx} className={"ruler-tick"}
-								x1={this.tickXPostition(idx) + 'em'} 
-								x2={this.tickXPostition(idx) + 'em'} 
-								y1={this.tickHeight(idx, i) + 'em'}
-									y2={bottom + 'em'}
-						/>
+					    <g>
+                            <line key={idx} className={"ruler-tick"}
+                                x1={this.tickXPostition(idx) + 'em'}
+                                x2={this.tickXPostition(idx) + 'em'}
+                                y1={this.tickHeight(idx, i) + 'em'}
+                                y2={bottom + 'em'}
+                            />
+                            <rect className="" x={this.tickXPostition(idx) - 0.5 * tickClickWidth + 'em'} y={0} width={tickClickWidth + 'em'} height={this.props.height + 'em'}
+                                onClick={this.rulerMarkClick} style={{ zIndex: 20 }} fill="transparent" data-position={idx / this.props.subdivisions}/>
+                      </g>
 					))}
-                    </g>
 
                     {<line ref={this.indicatorRef} className={"ruler-tick"} style={{
                         stroke: 'blue',
