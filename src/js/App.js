@@ -96,6 +96,7 @@ class App extends Component {
         this.playSong = this.playSong.bind(this)
         this.pauseSong = this.pauseSong.bind(this)
         this.stopSong = this.stopSong.bind(this)
+        this.saveFile = this.saveFile.bind(this)
 	}
 
     componentDidMount() {
@@ -240,7 +241,7 @@ class App extends Component {
             selection: {
                 type: 'note',
                 value: {
-                    measure: measure.props.measure.key,
+                    measure: measure.props.measure,
                     string: stringIndex,
                     note: noteIndex,
                     noteObj: noteObj,
@@ -249,15 +250,6 @@ class App extends Component {
             }
         })
     }
-
-    selectedNoteModified(change) {
-        const selNote = this.state.selection.value;
-        console.log('selectedNoteModified ', this.state.selection.value)
-        Object.keys(change).forEach(k => selNote.noteObj[k] = change[k])
-
-        this.handleSongUpdated()
-    }
-
 
     handleChangeSelectedNoteString(string) {
         const measure = this.state.selection.value.measureObj,
@@ -299,6 +291,18 @@ class App extends Component {
         this.setState(prevState => ({
             showSaveFile: !prevState.showSaveFile
         }));
+    }
+
+    saveFile() {
+        const exported = JSON.stringify(this.state.song.export(), null, 2),
+            blob = new Blob([exported], { type: 'application/json' }),
+            a = document.createElement('a'),
+            filename = this.state.song.artist + '-' + this.state.song.title + '.json'
+
+        a.download = filename
+        a.href = window.URL.createObjectURL(blob)
+        a.dataset.downloadurl = [blob.type, a.download, a.href].join(':')
+        a.click()
     }
 
     handleLock() {
@@ -362,7 +366,7 @@ class App extends Component {
                     </button>
                     <div className="dropdown-menu" aria-labelledby="dropdownMenuButton">
                         <a className="dropdown-item" href="#" onClick={this.toggleShowLoadFile}>Load Song</a>
-						<a className="dropdown-item" href="#" onClick={this.toggleShowSaveFile}>Save Song</a>
+                        <a className="dropdown-item" href="#" onClick={this.saveFile}>Save Song</a>
                     </div>
                 </div>
  
@@ -370,7 +374,7 @@ class App extends Component {
             <div className="container" style={{ "marginTop": "1em" }}>
 				<div>{this.state.currentTime}</div>
 				<h4>{this.state.song.title}</h4>
-				<h6>{this.state.song.author}</h6>
+				<h6>{this.state.song.artist}</h6>
 
 
                 <MeasureController song={this.state.song} onSongUpdate={this.handleSongUpdated}
@@ -390,7 +394,7 @@ class App extends Component {
             {this.state.showLoadFile && <FileLoader controller={this} />}
 			{this.state.showSaveFile && <SaveDialog controller={this} />}
 
-            <Canvas height="100" width="1024" player={this.songPlayer} />
+            {false && <Canvas height="100" width="1024" player={this.songPlayer} />}
             </React.Fragment>
     );
   }
