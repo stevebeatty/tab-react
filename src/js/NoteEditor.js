@@ -83,9 +83,9 @@ class NoteEditor extends Component {
 
     handleDeleteNote() {
         const note = this.props.selection.value,
-            measure = note.measureObj.props.measure
+            measure = note.measure
 
-        measure.removeNoteByIndex(note.string, note.note)
+        measure.removeNoteByIndex(note.string, note.noteIndex)
         this.props.controller.clearSelectedNote()
         this.props.controller.handleSongUpdated()
     }
@@ -94,7 +94,7 @@ class NoteEditor extends Component {
     render() {
         const value = this.props.selection.value,
             note = Array.isArray(value) ? value[0] : value,
-            measure = note.measureObj.props.measure,
+            measure = note.measure,
             measureDur = measure.duration(),
             noteLen = measure.noteLength(note.noteObj),
             nextNoteDist = measure.nextNoteDistance(note.string, note.noteObj.p, note.noteObj.key),
@@ -113,7 +113,7 @@ class NoteEditor extends Component {
         let canContinue = false, continuedNote = null
         if (nextNoteDist - noteLen === 0) {
             canContinue = true
-            continuedNote = measure.strings[note.string][note.note + 1]
+            continuedNote = measure.strings[note.string][note.noteIndex + 1]
             console.log('can continue')
         } else if (measureDur - note.noteObj.p - noteLen === 0) {
             const next = this.props.song.measureAfter(measure.key),

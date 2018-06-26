@@ -83,7 +83,6 @@ class App extends Component {
         this.handleMeasureSelect = this.handleMeasureSelect.bind(this);
         this.clearSelectedMeasure = this.clearSelectedMeasure.bind(this);
         this.clearSelectedNote = this.clearSelectedNote.bind(this);
-        this.handleChangeSelectedNoteString = this.handleChangeSelectedNoteString.bind(this);
         this.handleLock = this.handleLock.bind(this);
 		this.handleSongUpdated = this.handleSongUpdated.bind(this);
         this.toggleShowSettings = this.toggleShowSettings.bind(this);
@@ -245,21 +244,10 @@ class App extends Component {
                     string: stringIndex,
                     note: noteIndex,
                     noteObj: noteObj,
-                    measureObj: measure
+					noteIndex: noteIndex
                 }
             }
         })
-    }
-
-    handleChangeSelectedNoteString(string) {
-        const measure = this.state.selection.value.measureObj,
-            removed = measure.removeNoteByIndex(this.state.selection.value.string, this.state.selection.value.note),
-            note = removed[0],
-            idx = measure.addNote(string, note)
-
-        this.handleSongUpdated()
-
-        this.setSelectedNote(measure, string, idx)
     }
 
     insertNewOffsetFromSelectedMeasure(offset = 0) {
