@@ -17,7 +17,7 @@ class SoundPlayer {
         this.audioContext = new AudioContext()
 
         this.masterGain = this.audioContext.createGain()
-        this.masterGain.gain.value = 1
+        this.masterGain.gain.setValueAtTime(1, this.audioContext.currentTime)
         //this.masterGain.connect(this.audioContext.destination)
 
         this.analyser = this.audioContext.createAnalyser()

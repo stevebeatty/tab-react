@@ -449,8 +449,8 @@ class Ruler extends Component {
 							x1="0" y1={bottom + 'em'}
 							x2="100%" y2={bottom + 'em'}  />
 					{ticks.map((i, idx) => (
-					    <g>
-                            <line key={idx} className={"ruler-tick"}
+					    <g key={idx}>
+                            <line className={"ruler-tick"}
                                 x1={this.tickXPostition(idx) + 'em'}
                                 x2={this.tickXPostition(idx) + 'em'}
                                 y1={this.tickHeight(idx, i) + 'em'}
