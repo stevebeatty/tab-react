@@ -53,6 +53,10 @@ class MeasureDisplay extends Component {
         this.handleStringDrop = this.handleStringDrop.bind(this);
         this.handleStringDragOver = this.handleStringDragOver.bind(this);
         this.handleRulerClick = this.handleRulerClick.bind(this)
+        this.handleSelectionDragStart = this.handleSelectionDragStart.bind(this)
+        this.handleDragStart = this.handleDragStart.bind(this)
+
+        this.selectionRef = React.createRef()
 	}
 	
 	static getDerivedStateFromProps(props, state) {
@@ -148,14 +152,14 @@ class MeasureDisplay extends Component {
         this.props.onStringDragOver(this, index, this.getMeasureBoundary(), e);
     }
 
-    handleNoteClick(string, index, e) {
+    handleNoteClick(string, noteIndex, note, e) {
        // this.props.onStringClick(this, index, e);
         const bound = this.state.ref.current.getBoundingClientRect(),
             x = e.pageX - bound.left,
             w = x / bound.width
 
-        console.log("noteClick ", string, index, x, w)
-        this.props.onNoteClick(this, string, index, e);
+        console.log("noteClick ", string, noteIndex, x, w)
+        this.props.onNoteClick({ measure: this.props.measure, string, note, noteIndex });
     }
 
     handleNoteDrag(e) {
@@ -167,12 +171,27 @@ class MeasureDisplay extends Component {
         console.log('pos ', pos, e.clientX, e.clientY, e.target.getBoundingClientRect())
     }
 
+    isObjectSameNote(value, string, noteIndex) {
+        return value.noteIndex === noteIndex &&
+            value.string === string &&
+            value.measure.key === this.props.measure.key;
+    }
+
     isNoteSelected(noteIndex, stringIndex) {
-        return this.props.selection &&
-            this.props.selection.type === 'note' &&
-            this.props.selection.value.note === noteIndex &&
-            this.props.selection.value.string === stringIndex &&
-            this.props.selection.value.measure.key === this.props.measure.key;
+        if (this.props.selection &&
+            this.props.selection.type === 'note') {
+
+            if (Array.isArray(this.props.selection.value)) {
+                return this.props.selection.value.some(v => {
+                    return this.isObjectSameNote(v, stringIndex, noteIndex)
+                })
+            } else {
+                return this.isObjectSameNote(this.props.selection.value, stringIndex, noteIndex)
+            }
+
+        }
+
+        return false
     }
 
     /**
@@ -209,8 +228,38 @@ class MeasureDisplay extends Component {
         return this.props.measure.removeNoteByIndex(string, noteIndex)
     }
 
+    handleDragStart(info, evt, isSelected) {
+        console.log('dragstart measuredisplay', evt.clientX, evt.clientY, evt.pageX, evt.pageY)
+        if (isSelected) {
+            const el = this.selectionRef.current,
+                bound = el.getBoundingClientRect()
+            const x = evt.pageX - bound.left,
+                 y = evt.pageY - bound.top
+
+                console.log(bound, x, y)
+
+            evt.dataTransfer.setDragImage(this.selectionRef.current, x, y)
+            this.props.onNoteDragStart(info, evt)
+        } else {
+            this.props.onNoteDragStart(info, evt)
+        }
+    }
+
     handleRulerClick(pos) {
         this.props.onRulerClick(this, pos)
+    }
+
+    generateNoteCmp(note, noteIndex, string, isSelected) {
+        return <Note key={note.key} x={this.noteXPosition(note)} y={this.stringYOffset(string + 1)} note={note} string={string} dy={this.props.layout.noteTextOffset()} measure={this.props.measure}
+            d={this.noteDurationSize(note)} index={noteIndex} onClick={this.handleNoteClick} selected={isSelected}
+            onDrop={this.handleStringDrop} onDragStart={this.handleDragStart} onDragEnd={this.props.onNoteDragEnd} canDrag={this.props.canDragNote}
+            onDragOver={this.handleStringDragOver}
+            layout={this.props.layout} />
+    }
+
+    handleSelectionDragStart(evt) {
+        console.log('select drag start', this.selectionRef.current)
+        evt.dataTransfer.setDragImage(this.selectionRef.current, 0, 0)
     }
 
     render() {
@@ -229,6 +278,18 @@ class MeasureDisplay extends Component {
             // console.log('no ref')
         }
 
+        const selectedNotes = [], unselectedNotes = []
+
+        this.props.measure.strings.forEach((str, idx) => {
+            str.forEach((note, nidx) => {
+                const isSelected = this.isNoteSelected(nidx, idx),
+                    noteList = (isSelected ? selectedNotes : unselectedNotes)
+
+                noteList.push([note, nidx, idx, isSelected])
+            })
+        })
+
+        //console.log(selectedNotes, unselectedNotes)
       
       return (
           <div key={this.props.measure.key} className="measure" ref={this.state.ref}
@@ -259,17 +320,11 @@ class MeasureDisplay extends Component {
 
               
               <div className="notes" style={{ position: 'relative' }}>
-			
-			    {this.props.measure.strings.map((str, idx) => (
-                      str.map((note, nidx) =>
-                          <Note key={note.key} x={this.noteXPosition(note)} y={this.stringYOffset(idx + 1)} note={note} string={idx} dy={noteTextOffset} measure={this.props.measure}
-                              d={this.noteDurationSize(note)} index={nidx} onClick={this.handleNoteClick} selected={this.isNoteSelected(nidx, idx)}
-                              onDrop={this.handleStringDrop} onDragStart={this.props.onNoteDragStart} onDragEnd={this.props.onNoteDragEnd} canDrag={this.props.canDragNote}
-                              onDragOver={this.handleStringDragOver}
-                              layout={this.props.layout}  />
-				    )
-			    ))}
-			
+                  {unselectedNotes.map(v => this.generateNoteCmp(...v))}
+              </div>
+
+              <div ref={this.selectionRef} style={{ position: 'relative', pointerEvents: 'none', zIndex: '21' }}>
+                  {selectedNotes.map(v => this.generateNoteCmp(...v))}
               </div>
 
               <Ruler y={this.rulerBottom()} d={this.props.measure.duration()} dx={beginningOffset} subdivisions={this.state.subdivisions} subdivisionSpacing={subDivSize}
@@ -496,18 +551,18 @@ class Note extends Component {
     handleClick(e) {
         const bound = e.target.getBoundingClientRect()
         console.log('click', e.pageX, bound.left, e.target)
-        this.props.onClick(this.props.string, this.props.index, e)
+        this.props.onClick(this.props.string, this.props.index, this.props.note, e)
     }
 
     handleDragStart(evt) {
-        console.log('dragstart')
+        console.log('note dragstart')
 
         this.props.onDragStart({
             measure: this.props.measure,
             string: this.props.string,
             note: this.props.note,
             noteIndex: this.props.index
-        }, evt)
+        }, evt, this.props.selected)
 
         this.setState({
             isDragging: true
@@ -524,7 +579,7 @@ class Note extends Component {
     }
 
     handleDragOver(evt) {
-        console.log('handleDragOver')
+        //console.log('handleDragOver')
         this.props.onDragOver(this.props.string, evt)
     }
 
@@ -556,7 +611,8 @@ class Note extends Component {
                     width: this.props.d + imgLeft + 'em',
                     left: this.props.x - imgLeft + 'em',
                     top: this.props.y - imgHeight / 2 + 'em',
-                    height: imgHeight + 'em'
+                    height: imgHeight + 'em',
+                    pointerEvents: 'auto'
                 }}>
                 <svg className={(hasEffect ? 'note-with-effect' : '')}
 					 style={{ width: this.props.d + imgLeft + 'em', height: imgHeight + 'em' }}>
@@ -580,7 +636,7 @@ class Note extends Component {
 
                     {this.props.note.effect === 'pre-bend' && <SvgBend width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} pathClass={"string-" + this.props.string} direction={-1} offset={- 0.45 * imgHeight}/>}
 
-                    {(this.props.note.effect === 'pull-off' || this.props.note.effect === 'hammer-on') && <SvgArc width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} pathClass={"string-" + this.props.string} />}}
+                    {(this.props.note.effect === 'pull-off' || this.props.note.effect === 'hammer-on') && <SvgArc width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} pathClass={"string-" + this.props.string} />}
 
 					{this.props.selected &&
 						<circle className="selected-note" cx={imgLeft + 'em'}

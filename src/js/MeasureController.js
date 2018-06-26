@@ -34,10 +34,10 @@ class MeasureController extends Component {
         }
     }
 
-    handleStringClick(measure, stringIndex, bound, e) {
+    handleStringClick(measure, string, bound, e) {
         if (!this.props.canClickString) return
 
-        const stringDist = this.stringEventDistance(measure, stringIndex, bound, e)
+        const stringDist = this.stringEventDistance(measure, string, bound, e)
 
         if (stringDist.d !== 0) {
             // doing calcs in larger values and then simplifying to avoid fractions
@@ -53,21 +53,26 @@ class MeasureController extends Component {
 
             console.log(' str ', int, note)
 
-            const idx = measure.addNote(stringIndex, note)
+            const noteIndex = measure.addNote(string, note)
 
             this.props.onSongUpdate()
-            this.props.onNoteSelect(measure, stringIndex, idx)
+            this.props.onNoteSelect({ measure: measure.props.measure, string, note, noteIndex })
         }
 
     }
 
-    handleStringDrop(measure, stringIndex, bound, evt) {
+    handleStringDrop(measure, string, bound, evt) {
+
+        if (!this.props.dragging.note) {
+            console.log('no note, but dropping')
+            return
+        }
 
         const drag = this.props.dragging,
             noteKey = drag.note.key,
-            stringDist = this.stringEventDistance(measure, stringIndex, bound, evt, noteKey),
+            stringDist = this.stringEventDistance(measure, string, bound, evt, noteKey),
             noteSeq = this.props.song.getNoteSequence(noteKey, drag.measure.key),
-            fits = this.props.song.sequenceSpan(noteSeq, measure.props.measure.key, stringIndex, stringDist.p)
+            fits = this.props.song.sequenceSpan(noteSeq, measure.props.measure.key, string, stringDist.p)
 
         if (fits.status) {
             const updated = this.props.song.updateSequence(fits)
@@ -78,28 +83,36 @@ class MeasureController extends Component {
                 n.measure.removeNoteByKey(n.note.key, n.string)
             })
 
-            let firstIndex = undefined
+            let seqStart = undefined
 
             updated.forEach(u => {
-                const newNote = Object.assign({}, u, {
+                const note = Object.assign({}, u, {
                     measure: undefined, note: undefined
                 })
-                const idx = u.measure.addNote(stringIndex, newNote)
-                if (firstIndex === undefined) {
-                    firstIndex = idx
+                const noteIndex = u.measure.addNote(string, note)
+                if (seqStart === undefined) {
+                    seqStart = { note, noteIndex }
                 }
             })
 
             this.props.onSongUpdate()
-            this.props.onNoteSelect(measure, stringIndex, firstIndex)
+            this.props.onNoteSelect({ measure: measure.props.measure, string, note: seqStart.note, noteIndex: seqStart.noteIndex })
         } else {
         }
+
+        this.props.onDragging({})
     }
 
     handleDragOver(measure, stringIndex, bound, evt) {
         evt.preventDefault()
 
         //console.log('%', this.props.dragging.note, measure.props.measure.key)
+        if (!this.props.dragging.note) {
+            console.log('no note, but dragging')
+            return
+        }
+
+        //console.log(this.props.dragging.note)
 
         const drag = this.props.dragging,
             noteKey = drag.note.key,
@@ -107,12 +120,12 @@ class MeasureController extends Component {
             noteSeq = this.props.song.getNoteSequence(noteKey, drag.measure.key),
             fits = this.props.song.sequenceSpan(noteSeq, measure.props.measure.key, stringIndex, stringDist.p)
 
-        console.log('dragover', fits, noteSeq)
+       // console.log('dragover', fits, noteSeq)
 
         if (fits.status) {
             evt.dataTransfer.dropEffect = 'move'
             const updated = this.props.song.updateSequence(fits)
-            console.log('updated', updated)
+      //      console.log('updated', updated)
         } else {
             evt.dataTransfer.dropEffect = 'none'
         }
@@ -136,14 +149,22 @@ class MeasureController extends Component {
         const measure = this.props.selectedNote.measureObj,
             removed = measure.removeNoteByIndex(this.props.selectedNote.string, this.props.selectedNote.note),
             note = removed[0],
-            idx = measure.addNote(string, note)
+            noteIndex = measure.addNote(string, note)
 
         this.props.onSongUpdate()
-        this.props.onNoteSelect(measure, string, idx)
+        this.props.onNoteSelect({ measure: measure.props.measure, string, note, noteIndex })
     }
 
-    handleRulerClick(measure, pos) {
-        console.log('ruler click', pos, measure.props.measure.notesAtPosition(pos))
+    handleRulerClick(measureCmp, pos) {
+        const measure = measureCmp.props.measure,
+            notes = measure.notesAtPosition(pos),
+            selection = []
+
+        for (const [string, noteObj] of notes) {
+            selection.push({ measure, string, note: noteObj.note, noteIndex: noteObj.noteIndex })
+        }
+        console.log('ruler click', selection, notes)
+        this.props.onNoteSelect(selection)
     }
 
     createMeasureTag(measure) {
@@ -176,14 +197,15 @@ class MeasureController extends Component {
 
     measureNeedsRef(measure) {
         const hasSelectedNote = this.props.selection.type === 'note';
-        const hasSelectedMeasure = this.props.selection.type === 'measure';
+        const hasSelectedMeasure = this.props.selection.type === 'measure',
+            value = Array.isArray(this.props.selection.value) ? this.props.selection.value[0] : this.props.selection.value
 
         if (hasSelectedNote) {
-            return measure.key === this.props.selection.value.measure.key;
+            return measure.key === value.measure.key
         } else if (hasSelectedMeasure) {
-            return measure.key === this.props.selection.value.measure.key;
+            return measure.key === value.measure.key
         } else {
-            return false;
+            return false
         }
     }
 

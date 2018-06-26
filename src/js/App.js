@@ -69,18 +69,10 @@ class App extends Component {
                 3: [{ begin: 0, end: 12, file: 'd.mp3' }],
                 4: [{ begin: 0, end: 12, file: 'a.mp3' }],
                 5: [{ begin: 0, end: 12, file: 'ee.mp3' }]
-            }/*
-			soundMap: {
-                0: [{ begin: 0, end: 12, file: '1st_String_E_64kb.mp3' }],
-                1: [{ begin: 0, end: 12, file: '2nd_String_B__64kb.mp3'}],
-                2: [{ begin: 0, end: 12, file: '3rd_String_G_64kb.mp3' }],
-                3: [{ begin: 0, end: 12, file: '4th_String_D_64kb.mp3' }],
-                4: [{ begin: 0, end: 12, file: '5th_String_A_64kb.mp3' }],
-                5: [{ begin: 0, end: 12, file: '6th_String_E_64kb.mp3' }]
-            }*/
+            }
         })
 
-        this.handleMeasureSelect = this.handleMeasureSelect.bind(this);
+        this.setSelectedMeasure = this.setSelectedMeasure.bind(this);
         this.clearSelectedMeasure = this.clearSelectedMeasure.bind(this);
         this.clearSelectedNote = this.clearSelectedNote.bind(this);
         this.handleLock = this.handleLock.bind(this);
@@ -208,7 +200,7 @@ class App extends Component {
 
     // Selection
 
-    handleMeasureSelect(measure) {
+    setSelectedMeasure(measure) {
         console.log('click ' + Object.keys(measure.state));
 		
 		this.setState(prevState => ({
@@ -225,31 +217,6 @@ class App extends Component {
         this.setState({ selectedMeasure: {}, selection: {} });
     }
 
-
-
-    clearSelectedNote() {
-        this.setState({ selectedNote: {}, selection: {} });
-    }
-
-    setSelectedNote(measure, stringIndex, noteIndex) {
-        console.log('setSelectedNote', measure, stringIndex, noteIndex)
-        const m = measure.props.measure,
-            noteObj = m.noteWithIndex(stringIndex, noteIndex)
-
-        this.setState({
-            selection: {
-                type: 'note',
-                value: {
-                    measure: measure.props.measure,
-                    string: stringIndex,
-                    note: noteIndex,
-                    noteObj: noteObj,
-					noteIndex: noteIndex
-                }
-            }
-        })
-    }
-
     insertNewOffsetFromSelectedMeasure(offset = 0) {
         const song = this.state.song,
             index = song.measureIndexWithKey(this.state.selectedMeasure.key),
@@ -260,6 +227,27 @@ class App extends Component {
 
         this.handleSongUpdated()
     }
+
+
+
+    clearSelectedNote() {
+        this.setState({ selectedNote: {}, selection: {} });
+    }
+
+    setSelectedNote(value) {
+        console.log('setSelectedNote', value)
+        //console.log('setSelectedNote', measure, stringIndex, noteIndex)
+        //const m = measure.props.measure,
+        //    noteObj = m.noteWithIndex(stringIndex, noteIndex)
+
+        this.setState({
+            selection: {
+                type: 'note',
+                value: value
+            }
+        })
+    }
+
 
     
 
@@ -366,7 +354,7 @@ class App extends Component {
 
 
                 <MeasureController song={this.state.song} onSongUpdate={this.handleSongUpdated}
-                    selection={this.state.selection} onMeasureSelect={this.handleMeasureSelect}
+                    selection={this.state.selection} onMeasureSelect={this.setSelectedMeasure}
                     onNoteSelect={this.setSelectedNote} layout={this.state.layout}
                     dragging={this.state.dragging} canDragNote={!this.state.locked} onDragging={this.setDragging} measureRef={this.measureRef}
                     canClickString={!this.state.locked}

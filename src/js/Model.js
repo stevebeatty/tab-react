@@ -94,13 +94,13 @@ class Measure {
     }
 
     notesAtPosition(pos) {
-        const result = {}
+        const result = new Map()
 
         for (const string of range(0, this.strings.length)) {
             let notes = this.strings[string]
-            for (const note of notes) {
+            for (const [noteIndex, note] of notes.entries()) {
                 if (note.p <= pos && this.noteEndPosition(note) > pos) {
-                    result[string] = note
+                    result.set(string, { note, noteIndex })
                     break
                 }
             }
@@ -479,7 +479,7 @@ class Song {
     updateSequence(sequenceStatus) {
         let parts = this.flattenSequenceSpans(sequenceStatus.sequence)
 
-        console.log('parts', parts)
+        //console.log('parts', parts)
 
         let last = parts[0], mergedParts = []
         for (let i = 1; i < parts.length; i++) {
