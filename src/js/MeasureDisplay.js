@@ -229,16 +229,14 @@ class MeasureDisplay extends Component {
     }
 
     handleDragStart(info, evt, isSelected) {
-        console.log('dragstart measuredisplay', evt.clientX, evt.clientY, evt.pageX, evt.pageY)
+        //console.log('dragstart measuredisplay', evt.clientX, evt.clientY, evt.pageX, evt.pageY)
         if (isSelected) {
             const el = this.selectionRef.current,
-                bound = el.getBoundingClientRect()
-            const x = evt.pageX - bound.left,
-                 y = evt.pageY - bound.top
+                bound = el.getBoundingClientRect(),
+                x = window.devicePixelRatio * (evt.clientX - bound.left),
+                y = window.devicePixelRatio * (evt.clientY - bound.top)
 
-                console.log(bound, x, y)
-
-            evt.dataTransfer.setDragImage(this.selectionRef.current, x, y)
+            evt.dataTransfer.setDragImage(el, x, y)
             this.props.onNoteDragStart(info, evt)
         } else {
             this.props.onNoteDragStart(info, evt)
@@ -266,7 +264,8 @@ class MeasureDisplay extends Component {
         const noteTextOffset = this.props.layout.noteTextOffset();
         const beginningOffset = this.props.layout.measureSideOffset();
         const subDivSize = this.props.layout.subdivisionOffset();
-        const clickBoxHeight = this.props.layout.stringClickBoxHeight();
+        const clickBoxHeight = this.props.layout.stringClickBoxHeight(),
+            bottomStringHeight = this.stringYOffset(this.props.measure.strings.length) - this.stringYOffset(1)
 
         //console.log('sel note ', this.props.measure.key, ' ', this.props.selectedNote);
 
@@ -304,7 +303,7 @@ class MeasureDisplay extends Component {
 		  
 		      <div className="etc">
                   <div className="measure-begin" x1="1" x2="1" style={{
-                      width: '1px', height: this.stringYOffset(this.props.measure.strings.length) - this.stringYOffset(1) + 'em', backgroundColor: 'black',
+                      width: '1px', height: bottomStringHeight + 'em', backgroundColor: 'black',
                       top: this.stringYOffset(1) + 'em', position: 'absolute'
                   }} />
 				<div className={"transparent clickable" + (this.props.selected ? ' selected-measure' : '')}
@@ -323,7 +322,7 @@ class MeasureDisplay extends Component {
                   {unselectedNotes.map(v => this.generateNoteCmp(...v))}
               </div>
 
-              <div ref={this.selectionRef} style={{ position: 'relative', pointerEvents: 'none', zIndex: '21' }}>
+              <div ref={this.selectionRef} style={{ position: 'relative', pointerEvents: 'none', zIndex: '21', width: this.measureWidth() + 'em', height: this.stringYOffset(this.props.measure.strings.length) + 0.8 + 'em' }}>
                   {selectedNotes.map(v => this.generateNoteCmp(...v))}
               </div>
 
@@ -555,7 +554,7 @@ class Note extends Component {
     }
 
     handleDragStart(evt) {
-        console.log('note dragstart')
+        //console.log('note dragstart')
 
         this.props.onDragStart({
             measure: this.props.measure,
@@ -570,7 +569,7 @@ class Note extends Component {
     }
 
     handleDragEnd(evt) {
-        console.log('dragend')
+        //console.log('dragend')
         this.props.onDragEnd(evt)
 
         this.setState({
