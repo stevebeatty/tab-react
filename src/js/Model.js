@@ -275,6 +275,7 @@ class Measure {
 
     removeNoteByKey(noteKey, string) {
         let idx = (string !== undefined) ? this.noteIndexWithKey(noteKey, string) : this.noteIndexWithKey(noteKey)
+        console.log('re', noteKey, string, idx)
         return this.removeNoteByIndex(idx.string, idx.note)
     }
 
@@ -428,7 +429,7 @@ class Song {
 
         let mKey = measureKey,
             pos = position,
-            result = { status: true, sequence: [] }
+            result = { status: true, sequence: [], original: sequence }
 
         for (let i = 0; i < sequence.length; i++) {
             let { note } = sequence[i],

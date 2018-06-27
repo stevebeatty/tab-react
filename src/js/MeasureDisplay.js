@@ -237,7 +237,7 @@ class MeasureDisplay extends Component {
                 y = window.devicePixelRatio * (evt.clientY - bound.top)
 
             evt.dataTransfer.setDragImage(el, x, y)
-            this.props.onNoteDragStart(info, evt)
+            this.props.onNoteDragStart({ value: this.props.selection.value, originalString: info.string }, evt)
         } else {
             this.props.onNoteDragStart(info, evt)
         }

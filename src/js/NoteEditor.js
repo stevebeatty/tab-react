@@ -4,7 +4,7 @@ import { rangeArray } from './Util';
 class NoteEditor extends Component {
 
 	constructor(props) {
-		console.log('construct')
+		//console.log('construct')
         super(props);
         this.editorRef = React.createRef();
 
