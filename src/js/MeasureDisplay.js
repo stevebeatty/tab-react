@@ -237,9 +237,9 @@ class MeasureDisplay extends Component {
                 y = window.devicePixelRatio * (evt.clientY - bound.top)
 
             evt.dataTransfer.setDragImage(el, x, y)
-            this.props.onNoteDragStart({ value: this.props.selection.value, originalString: info.string }, evt)
+            this.props.onNoteDragStart({ value: this.props.selection.value, dragOrigin: info }, evt)
         } else {
-            this.props.onNoteDragStart(info, evt)
+            this.props.onNoteDragStart({ value: info, dragOrigin: info }, evt)
         }
     }
 
@@ -749,7 +749,7 @@ class SvgBend extends Component {
                         <path d="M 0 0 L 10 5 L 0 10 z" />
                     </marker>
                 </defs>
-                <path d={pathD} fill="none" strokeWidth="1.5" className={this.props.pathClass + '-stroke'} vectorEffect="non-scaling-stroke" marker-end='url(#head)' />
+                <path d={pathD} fill="none" strokeWidth="1.5" className={this.props.pathClass + '-stroke'} vectorEffect="non-scaling-stroke" markerEnd='url(#head)' />
             </svg>
         )
     }

@@ -486,14 +486,10 @@ class Song {
         for (let i = 1; i < parts.length; i++) {
             let curr = parts[i]
 
-            if (last.measure.key === curr.measure.key && last.f === curr.f && 
-                    !('effect' in curr) && !('effect' in last)) {
-                let baseInt = Math.max(last.i, curr.i),
-                    currMult = baseInt / curr.i,
-                    lastMult = baseInt / last.i,
-                    combined = { measure: last.measure, p: last.p, d: currMult * curr.d + lastMult * last.d, i: baseInt, f: last.f }
+            console.log('can', this.canCombineParts(last, curr), last, curr)
 
-                last = combined
+            if (this.canCombineParts(last, curr)) {
+                last = this.combineParts(last, curr)
             } else {
                 last.key = this.context.idGen.next()
                 mergedParts.push(last)
@@ -519,12 +515,30 @@ class Song {
         return mergedParts
     }
 
-    seqPartAddEffect(part, effectObj) {
+    canCombineParts(first, second) {
+        return first.measure.key === second.measure.key && first.f === second.f &&
+            effectForName(first.effect).canCombine(effectForName(second.effect))
+    }
+
+    combineParts(first, second) {
+        const baseInt = Math.max(first.i, second.i),
+            secondMult = baseInt / second.i,
+            firstMult = baseInt / first.i,
+            combined = { measure: first.measure, p: first.p, d: secondMult * second.d + firstMult * first.d, i: baseInt, f: first.f }
+
+        if (first.effect) {
+            combined.effect = first.effect
+        }
+
+        return combined
+    }
+
+    static seqPartAddEffect(part, effectObj) {
         part.effects = part.effects || []
         part.effects.push(effectObj)
     }
 
-    seqPartRemoveFirstEffect(part, effect) {
+    static seqPartRemoveFirstEffect(part, effect) {
         if (Array.isArray(part.effects)) {
             const idx = part.effects.findIndex(e => e.effect === effect)
             if (idx >= 0) {
@@ -542,6 +556,34 @@ class Song {
         console.log('parts', parts)
 
         let last = null, mergedParts = []
+        for (const part of parts) {
+            let curr = part.measure.noteTiming(part, startTime)
+            curr.f = part.f
+
+            if ('effect' in part) {
+                curr.effect = part.effect
+            }
+
+            let addToMerged = true
+
+            if (last) {
+                let lastEff = effectForName(last.effect)
+                if (lastEff.canApplyEffect(last, curr)) {
+                    addToMerged = addToMerged && lastEff.applyEffect(last, curr)
+                }
+            }
+
+            let currEff = effectForName(curr.effect)
+            if (currEff.canApplyEffect(last, curr)) {
+                addToMerged = addToMerged && currEff.applyEffect(last, curr)
+            }
+
+            if (addToMerged) {
+                mergedParts.push(curr)
+                last = curr
+            }
+        }
+        /*
         for (let i = 0; i < parts.length; i++) {
             let p = parts[i],
                 curr = p.measure.noteTiming(p, startTime)
@@ -612,7 +654,7 @@ class Song {
             last = curr
             
         }
-
+        */
         console.log('after', mergedParts)
 
         return mergedParts
@@ -668,7 +710,69 @@ class Song {
         }
     }
 
-    
+    findDistance(startMeasureKey, startPos, endMeasureKey, endPos) {
+        let startIndex = this.measureIndexWithKey(startMeasureKey),
+            endIndex = this.measureIndexWithKey(endMeasureKey),
+            direction = Math.sign(endIndex - startIndex),
+            measure = this.measures[startIndex],
+            pos = startPos,
+            dist = 0,
+            currIndex = startIndex,
+            result = []
+
+        while (currIndex < this.measures.length && currIndex >= 0) {
+            let measure = this.measures[currIndex]
+
+            if (currIndex > endIndex) {
+                result.push({ d: pos, i: measure.interval() })
+                pos = this.measures[currIndex + direction].duration()
+            } else if (currIndex < endIndex) {
+                result.push({ d: measure.duration() - pos, i: measure.interval() })
+                pos = 0
+            } else {
+                result.push({ d: endPos - pos, i: measure.interval() })
+                break
+            }
+
+            currIndex += direction
+        }
+
+        return {
+            distance: result
+        }
+    }
+
+    movePositionList(measure, pos, distanceObj) {
+        console.log('pos', pos)
+        let index = this.measureIndexWithKey(measure.key),
+            result = {}
+        for (const d of distanceObj.distance) {
+            result = this.movePosition(index, pos, d)
+            console.log('mv', result)
+        }
+    }
+
+    movePosition(measureIndex, pos, distance) {
+        let measure = this.measures[measureIndex],
+            mDist = (pos) * distance.i,
+            d = (distance.d) * measure.interval(),
+            mSize = measure.duration() * distance.i
+
+        const newDist = mDist + d
+        let rem = 0, newPos = 0
+        if (newDist > mSize) {
+            rem = newDist - mSize
+            newPos = measure.duration()
+        } else if (newDist < 0) {
+            rem = -newDist
+        } else {
+            newPos = newDist / measure.interval()
+        }
+
+        console.log('mdist', mDist, d, newDist, rem, mSize, pos)
+
+        return { d: rem, i: measure.interval(), pos: newPos }
+    }
 
     noteWithKey(noteKey, measureKey) {
         if (measureKey !== undefined) {
@@ -807,5 +911,182 @@ class Song {
 	}
 }
 
+class Effect {
+    constructor(name) {
+        this._name = name
+    }
+
+    get name() { return this._name }
+
+    canCombine(effect) {
+        return effect.name === this.name
+    }
+
+    canApplyEffect(lastPart, currPart) {
+        return false
+    }
+
+    applyEffect(last, curr) {
+        return false
+    }
+}
+
+class NoEffect extends Effect {
+    constructor() {
+        super(undefined)
+    }
+
+    canApplyEffect(last, curr) {
+        return last && curr && last.f === curr.f
+    }
+
+    applyEffect(last, curr) {
+        last.stop = curr.stop
+        return false
+    }
+}
+
+class BaseSlideEffect extends Effect {
+    constructor(name) {
+        super(name)
+    }
+
+    canApplyEffect(last, curr) {
+        return last && last.effect === this.name
+    }
+
+    applyEffect(last, curr) {
+        const removed = Song.seqPartRemoveFirstEffect(last, last.effect)
+        Song.seqPartAddEffect(last, {
+            effect: last.effect, start: last.start, stop: curr.stop, transistionStop: last.stop, detune: (curr.f - last.f) * 100
+        })
+        last.stop = curr.stop
+        delete last.effect
+
+        return false
+    }
+}
+
+class VibratoEffect extends Effect {
+    constructor() {
+        super('vibrato')
+    }
+
+    canApplyEffect(last, curr) {
+        return curr.effect === this.name
+    }
+
+    applyEffect(last, curr) {
+        Song.seqPartAddEffect(last, { effect: curr.effect, start: curr.start, stop: curr.stop })
+        last.stop = curr.stop
+        return false
+    }
+}
+
+class BasePullEffect extends Effect {
+    constructor(name) {
+        super(name)
+    }
+
+    canApplyEffect(last, curr) {
+        return last && last.effect === this.name
+    }
+
+    applyEffect(last, curr) {
+        Song.seqPartAddEffect(curr, {
+            effect: last.effect, start: curr.start, stop: curr.stop
+        })
+        delete last.effect
+
+        return true
+    }
+}
+
+class PreBendEffect extends Effect {
+    constructor() {
+        super('pre-bend')
+    }
+
+    canApplyEffect(last, curr) {
+        return last && last.effect === this.name
+    }
+
+    applyEffect(last, curr) {
+        const removed = Song.seqPartRemoveFirstEffect(last, last.effect)
+        Song.seqPartAddEffect(last, {
+            effect: last.effect, start: last.start, stop: last.stop, detune: (last.f - curr.f) * 100
+        })
+        last.stop = curr.stop
+        delete last.effect
+
+        return false
+    }
+}
+
+class HarmonicEffect extends Effect {
+    constructor() {
+        super('harmonic')
+    }
+
+    canApplyEffect(last, curr) {
+        return curr.effect === this.name
+    }
+
+    applyEffect(last, curr) {
+        let detune = curr.f * 100
+        if (curr.f === 12) {
+            detune = 1200
+        } else if (curr.f === 7 || curr.f === 19) {
+            detune = 1900
+        } else if (curr.f === 5 || curr.f === 24) {
+            detune = 2400
+        }
+
+        Song.seqPartAddEffect(curr, {
+            effect: curr.effect, start: curr.start, stop: curr.stop, detune
+        })
+
+        curr.f = 0
+
+        delete curr.effect
+
+        return true
+    }
+
+}
+
+function addEffectToMap(effect) {
+    effectMap.set(effect.name, effect)
+    return effect
+}
+
+const effectMap = new Map()
+effectMap.set('none', new NoEffect())
+
+function effectForName(name) {
+    if (effectMap.has(name)) {
+        return effectMap.get(name)
+    }
+
+    if (!name) {
+        return effectMap.get('none')
+    }
+
+    switch (name) {
+        case 'slide-up':
+        case 'slide-down':
+        case 'bend-up':
+            return addEffectToMap(new BaseSlideEffect(name))
+        case 'pull-off':
+        case 'hammer-on':
+            return addEffectToMap(new BasePullEffect(name))
+        case 'vibrato':
+            return addEffectToMap(new VibratoEffect())
+        case 'pre-bend':
+            return addEffectToMap(new PreBendEffect())
+        case 'harmonic':
+            return addEffectToMap(new HarmonicEffect())
+    }
+}
 
 export { Measure, Song };

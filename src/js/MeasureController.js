@@ -26,7 +26,7 @@ class MeasureController extends Component {
             pos = measure.closestPosition(w),
             dist = measure.nextNoteDistanceOrRemaining(stringIndex, pos, noteKey);
 
-         //console.log('stringEventDistance ', stringIndex, pos, dist, measure.props.measure.key);
+         console.log('stringEventDistance ', stringIndex, pos, dist, measure.props.measure.key);
 
         return {
             p: pos,
@@ -74,7 +74,7 @@ class MeasureController extends Component {
             noteSeq = this.props.song.getNoteSequence(noteKey, drag.measure.key),
             fits = this.props.song.sequenceSpan(noteSeq, measure.props.measure.key, string, stringDist.p)
             */
-        const stringDelta = string - this.props.dragging.originalString,
+        const stringDelta = string - this.props.dragging.dragOrigin.string,
             fits = this.checkNoteListFit(this.props.dragging, measure, stringDelta, bound, evt)
             
         console.log('drop', this.props.dragging, fits)
@@ -136,7 +136,7 @@ class MeasureController extends Component {
     }
 
     checkNoteFit(drag, measure, stringIndex, distance, processed) {
-        console.log('checkNoteFit', stringIndex, distance)
+        //console.log('checkNoteFit', stringIndex, distance)
         if (stringIndex < 0 || stringIndex >= measure.props.measure.strings.length) {
             return { status: false }
         }
@@ -155,22 +155,30 @@ class MeasureController extends Component {
     }
 
     checkNoteListFit(drag, measure, stringDelta, bound, evt) {
-        console.log('stringDelta', stringDelta)
+    //    console.log('stringDelta', stringDelta)
         let fitResult = [],
             fits = true,
-            value = Array.isArray(drag.value) ? drag.value : [drag.value],
-            first = value[0]
 
-        const stringDist = this.stringEventDistance(measure, first.string + stringDelta, bound, evt, first.note.key),
-            posDelta = stringDist.p - first.note.p,
+            value = Array.isArray(drag.value) ? drag.value : [drag.value],
+            first = value[0],
+            origin = drag.dragOrigin
+
+        const stringDist = this.stringEventDistance(measure, origin.string + stringDelta, bound, evt, origin.note.key),
+            posDelta = stringDist.p - origin.note.p,
 			processed = new Set()
+        //console.log('key', origin.note.key, 'pos', origin.note.p, '=>', stringDist.p)
+        const d = this.props.song.findDistance(origin.measure.key, origin.note.p, measure.props.measure.key, stringDist.p)
+        console.log('findDistance', d.distance)
+        if (d.distance.length > 0) {
+            this.props.song.movePositionList(origin.measure, origin.note.p, { distance: [{ d: 2, i: 4 }] })
+        }
 
         for (let i = 0; i < value.length; i++) {
             let d = value[i],
                 string = d.string + stringDelta,
                 fit = this.checkNoteFit(d, measure, string, d.note.p + posDelta, processed)
 
-            console.log('d', d, fit)
+        //    console.log('d', d, fit)
 			if (!fit.duplicate) {
 				fits = fits && fit.status
 				fit.string = string
@@ -191,7 +199,7 @@ class MeasureController extends Component {
             let upd = this.props.song.updateSequence(fit)
 
             result.push({ updated: upd, string: fit.string })
-                  console.log('updated', upd)
+                  //console.log('updated', upd)
         }
 
         return result
@@ -214,8 +222,8 @@ class MeasureController extends Component {
             noteSeq = this.props.song.getNoteSequence(noteKey, drag.measure.key),
             fits = this.props.song.sequenceSpan(noteSeq, measure.props.measure.key, stringIndex, stringDist.p)
             */
-        const stringDelta = string - this.props.dragging.originalString
-        console.log(this.props.dragging)
+        const stringDelta = string - this.props.dragging.dragOrigin.string
+        //console.log(this.props.dragging)
         const fits = this.checkNoteListFit(this.props.dragging, measure, stringDelta, bound, evt)
 
        // console.log('dragover', fits, noteSeq)
@@ -263,6 +271,7 @@ class MeasureController extends Component {
             selection.push({ measure, string, note: noteObj.note, noteIndex: noteObj.noteIndex })
         }
         console.log('ruler click', selection, notes)
+
         this.props.onNoteSelect(selection)
     }
 

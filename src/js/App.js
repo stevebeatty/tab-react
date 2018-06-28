@@ -214,7 +214,7 @@ class App extends Component {
 	}
 
     clearSelectedMeasure() {
-        this.setState({ selectedMeasure: {}, selection: {} });
+        this.setState({ selection: {} });
     }
 
     insertNewOffsetFromSelectedMeasure(offset = 0) {
@@ -228,24 +228,33 @@ class App extends Component {
         this.handleSongUpdated()
     }
 
+    isEmptyValue(value) {
+        if (Array.isArray(value)) {
+            return value.length === 0
+        } else if (!value) {
+            return true
+        }
 
+        return typeof value === 'object' && Object.getOwnPropertyNames(value) === 0
+    }
 
     clearSelectedNote() {
-        this.setState({ selectedNote: {}, selection: {} });
+        this.setState({ selection: {} });
     }
 
     setSelectedNote(value) {
         console.log('setSelectedNote', value)
-        //console.log('setSelectedNote', measure, stringIndex, noteIndex)
-        //const m = measure.props.measure,
-        //    noteObj = m.noteWithIndex(stringIndex, noteIndex)
 
-        this.setState({
-            selection: {
-                type: 'note',
-                value: value
-            }
-        })
+        if (!this.isEmptyValue(value)) {
+            this.setState({
+                selection: {
+                    type: 'note',
+                    value: value
+                }
+            })
+        } else {
+            this.clearSelectedNote()
+        }
     }
 
 
