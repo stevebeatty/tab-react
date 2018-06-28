@@ -135,15 +135,22 @@ class MeasureController extends Component {
         this.props.onDragging({})
     }
 
-    checkNoteFit(drag, measure, stringIndex, distance) {
+    checkNoteFit(drag, measure, stringIndex, distance, processed) {
         console.log('checkNoteFit', stringIndex, distance)
         if (stringIndex < 0 || stringIndex >= measure.props.measure.strings.length) {
             return { status: false }
         }
 
         const noteSeq = this.props.song.getNoteSequence(drag.note.key, drag.measure.key),
-            fits = this.props.song.sequenceSpan(noteSeq, measure.props.measure.key, stringIndex, distance)
+			noteKey = noteSeq[0].note.key
 
+		if (processed.has(noteKey)) {
+			return { status: true, duplicate: noteKey }
+		}
+		
+		processed.add(noteKey)
+
+        const fits = this.props.song.sequenceSpan(noteSeq, measure.props.measure.key, stringIndex, distance)
         return fits
     }
 
@@ -155,17 +162,20 @@ class MeasureController extends Component {
             first = value[0]
 
         const stringDist = this.stringEventDistance(measure, first.string + stringDelta, bound, evt, first.note.key),
-            posDelta = stringDist.p - first.note.p
+            posDelta = stringDist.p - first.note.p,
+			processed = new Set()
 
         for (let i = 0; i < value.length; i++) {
             let d = value[i],
                 string = d.string + stringDelta,
-                fit = this.checkNoteFit(d, measure, string, d.note.p + posDelta)
+                fit = this.checkNoteFit(d, measure, string, d.note.p + posDelta, processed)
 
             console.log('d', d, fit)
-            fits = fits && fit.status
-            fit.string = string
-            fitResult.push(fit)
+			if (!fit.duplicate) {
+				fits = fits && fit.status
+				fit.string = string
+				fitResult.push(fit)
+			}
         }
 
         return {
