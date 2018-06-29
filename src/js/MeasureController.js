@@ -94,9 +94,11 @@ class MeasureController extends Component {
 
             for (const upd of updated) {
                 for (const u of upd.updated) {
-                    const note = Object.assign({}, u, {
-                        measure: undefined, note: undefined
-                    })
+                    const note = Object.assign({}, u)
+
+                    delete note.measure
+                    delete note.note
+
                     const noteIndex = u.measure.addNote(upd.string, note)
                     selection.push({ measure: u.measure, string: upd.string, note, noteIndex })
                 }

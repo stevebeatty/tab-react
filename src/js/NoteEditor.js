@@ -15,6 +15,7 @@ class NoteEditor extends Component {
         this.handleIntervalChange = this.handleIntervalChange.bind(this)
         this.handleContinuedByChange = this.handleContinuedByChange.bind(this)
         this.handleDeleteNote = this.handleDeleteNote.bind(this)
+        this.handleEffectChange = this.handleEffectChange.bind(this)
     }
 
     componentDidMount() {
@@ -67,6 +68,10 @@ class NoteEditor extends Component {
 
 	handleIntervalChange(evt) {
         this.selectedNoteModified({ i: this.parseValue(evt) })
+    }
+
+    handleEffectChange(evt) {
+        //this.selectedNoteModified({ f: this.parseValue(evt) })
     }
 
     handleContinuedByChange(evt, continuedNote) {
@@ -153,6 +158,14 @@ class NoteEditor extends Component {
                     <form>
                         <div className="form-row align-items-center">
                             <div className="col-auto">
+                                <label>Duration</label>
+                                <select id="duration" className="form-control" value={note.note.d} onChange={this.handleDurationChange}>
+                                    {settings.durations.map((d) => (
+                                        <option key={d}>{d}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="col-auto">
                                 <label>Interval</label>
                                 <select id="interval" className="form-control" value={note.note.i} onChange={this.handleIntervalChange}>
                                     {settings.intervals.map((i) => (
@@ -169,11 +182,17 @@ class NoteEditor extends Component {
                                 </select>
                             </div>
                             <div className="col-auto">
-                                <label>Duration</label>
-                                <select id="duration" className="form-control" value={note.note.d} onChange={this.handleDurationChange}>
-                                    {settings.durations.map((d) => (
-                                        <option key={d}>{d}</option>
-                                    ))}
+                                <label>Effect</label>
+                                <select id="effect" className="form-control" value={note.note.effect} onChange={this.handleEffectChange}>
+                                    <option key={0} value=''>none</option>
+                                    <option key={1}>vibrato</option>
+                                    <option key={2}>bend</option>
+                                    <option key={3}>pre-bend</option>
+                                    <option key={4}>slide-up</option>
+                                    <option key={5}>slide-down</option>
+                                    <option key={6}>hammer-on</option>
+                                    <option key={7}>pull-off</option>
+                                    <option key={8}>harmonic</option>
                                 </select>
                             </div>
                             <div className="col-auto">
