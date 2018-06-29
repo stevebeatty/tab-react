@@ -121,11 +121,12 @@ class Measure {
         }
     }
 
-    simplifyNoteTiming(note) {
-        while (note.d % 2 === 0 && note.i % 2 === 0) {
+    static simplifyNoteTiming(note) {
+        while (note.d !== 0 && note.d % 2 === 0 && note.i % 2 === 0) {
             note.d /= 2
             note.i /= 2
         }
+		return note
     }
 
 	doNotesOverlap(a, b) {
@@ -501,7 +502,7 @@ class Song {
 
         for (let i = 0; i < mergedParts.length; i++) {
             let p = mergedParts[i]
-            p.measure.simplifyNoteTiming(p)
+            Measure.simplifyNoteTiming(p)
 
             if (i < mergedParts.length - 1) {
                 p.continuedBy = mergedParts[i + 1].key
@@ -756,22 +757,28 @@ class Song {
         let measure = this.measures[measureIndex],
             mDist = (pos) * distance.i,
             d = (distance.d) * measure.interval(),
-            mSize = measure.duration() * distance.i
+            mSize = measure.duration() * distance.i,
+			nextMeasureIndex = measureIndex
 
         const newDist = mDist + d
         let rem = 0, newPos = 0
         if (newDist > mSize) {
             rem = newDist - mSize
-            newPos = measure.duration()
+			nextMeasureIndex++
         } else if (newDist < 0) {
             rem = -newDist
+			nextMeasureIndex--
         } else {
-            newPos = newDist / measure.interval()
+            newPos = (newDist / measure.interval()) % measure.duration()
         }
 
-        console.log('mdist', mDist, d, newDist, rem, mSize, pos)
+        console.log('mdist', `mDist ${mDist}, d ${d}, newDist ${newDist}, rem ${rem}, mSize ${mSize}, pos ${pos}`)
 
-        return { d: rem, i: measure.interval(), pos: newPos }
+        return Measure.simplifyNoteTiming({ d: rem,
+			i: measure.interval() * (rem === 0 ? 1 : distance.i),
+			pos: newPos,
+			measureIndex: nextMeasureIndex
+		})
     }
 
     noteWithKey(noteKey, measureKey) {

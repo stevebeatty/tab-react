@@ -170,7 +170,7 @@ class MeasureController extends Component {
         const d = this.props.song.findDistance(origin.measure.key, origin.note.p, measure.props.measure.key, stringDist.p)
         console.log('findDistance', d.distance)
         if (d.distance.length > 0) {
-            this.props.song.movePositionList(origin.measure, origin.note.p, { distance: [{ d: 2, i: 4 }] })
+            this.props.song.movePositionList(measure.props.measure, stringDist.p, { distance: [{ d: 2, i: 4 }] })
         }
 
         for (let i = 0; i < value.length; i++) {
