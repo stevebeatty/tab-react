@@ -148,17 +148,15 @@ class Measure {
         const notes = this.strings[string],
             skip = skipKeys === undefined ? [] :
                  Array.isArray(skipKeys) ? skipKeys : [skipKeys]
-        //console.log('skip', skip)
+        //console.log('nextNoteDistance', string, pos, notes, skip)
 
-        //console.log('notes ', notes);
         for (let i = 0; i < notes.length; i++) {
             let n = notes[i]
 
             if (skip.indexOf(n.key) !== -1) {
-            //    console.log('skipping', n.key)
+                //console.log('skipping', n.key)
                 continue
             }
-
             
             const extent = n.p + (n.d / n.i) * this.interval()
 
@@ -276,7 +274,7 @@ class Measure {
 
     removeNoteByKey(noteKey, string) {
         let idx = (string !== undefined) ? this.noteIndexWithKey(noteKey, string) : this.noteIndexWithKey(noteKey)
-        console.log('re', noteKey, string, idx)
+        //console.log('re', noteKey, string, idx)
         return this.removeNoteByIndex(idx.string, idx.note)
     }
 
@@ -424,10 +422,9 @@ class Song {
         return seq
     }
 
-    sequenceSpan(sequence, measureKey, string, position) {
-        const keys = []
-        sequence.forEach(s => { keys.push(s.note.key) })
-
+    sequenceSpan(sequence, measureKey, string, position, skipKeys) {
+        const keys = skipKeys || sequence.map(s => { return s.note.key })
+        //console.log('seqspan', sequence)
         let mKey = measureKey,
             pos = position,
             result = { status: true, sequence: [], original: sequence }
@@ -435,7 +432,9 @@ class Song {
         for (let i = 0; i < sequence.length; i++) {
             let { note } = sequence[i],
                 noteSpan = this.findNoteSpan(mKey, string, pos, note.i, note.d, keys)
-            
+
+            //console.log('notespan', noteSpan)
+
             if (noteSpan.remaining > 0) {
                 result.status = false
                 break
@@ -446,7 +445,7 @@ class Song {
                 span: noteSpan.span
             })
 
-            //console.log('notespan', noteSpan)
+            
 
             mKey = noteSpan.span[noteSpan.span.length - 1].measure.key
             pos = noteSpan.endPos
@@ -487,7 +486,7 @@ class Song {
         for (let i = 1; i < parts.length; i++) {
             let curr = parts[i]
 
-            console.log('can', this.canCombineParts(last, curr), last, curr)
+            //console.log('can', this.canCombineParts(last, curr), last, curr)
 
             if (this.canCombineParts(last, curr)) {
                 last = this.combineParts(last, curr)
@@ -685,17 +684,19 @@ class Song {
             dist = duration * measure.interval() / interval,
             result = []
 
+        //console.log('findNoteSpan', mIndex, dist, skipKeys, this.measures[mIndex].strings[string].length)
+
         while (mIndex < this.measures.length && dist > 0) {
             let measure = this.measures[mIndex],
                 noteDist = measure.nextNoteDistance(string, pos, skipKeys),
                 i = measure.interval() / interval,
                 span = Math.min(noteDist === -1 ? measure.duration() - pos : noteDist, dist)
 
-            if (span <= 0) {
+            //console.log('fns', { m: measure.key, p: pos, span, noteDist, dist })
+
+            if ((noteDist >= 0 && noteDist < dist) || span <= 0) {
                 break
             }
-
-            //console.log('fns', { m: measure.key, p: pos, span, noteDist, dist })
 
             result.push({ measure, distance: span, p: pos })
 
@@ -711,72 +712,98 @@ class Song {
         }
     }
 
+    _addToDistanceResult(result, d, i) {
+        if (d !== 0) {
+            result.push(Measure.simplifyNoteTiming({ d: d * i, i: i * i }))
+        }
+    }
+
     findDistance(startMeasureKey, startPos, endMeasureKey, endPos) {
         let startIndex = this.measureIndexWithKey(startMeasureKey),
             endIndex = this.measureIndexWithKey(endMeasureKey),
             direction = Math.sign(endIndex - startIndex),
             measure = this.measures[startIndex],
             pos = startPos,
-            dist = 0,
             currIndex = startIndex,
             result = []
+
+        //console.log('findDistance', `startMeasureKey ${startMeasureKey}, startPos ${startPos}, endMeasureKey ${endMeasureKey}, endPos ${endPos}, currIndex ${currIndex} endIndex ${endIndex}`)
 
         while (currIndex < this.measures.length && currIndex >= 0) {
             let measure = this.measures[currIndex]
 
+            //console.log('indexes: ', currIndex, endIndex, pos)
+
             if (currIndex > endIndex) {
-                result.push({ d: pos, i: measure.interval() })
+                this._addToDistanceResult(result, -pos, measure.interval())
                 pos = this.measures[currIndex + direction].duration()
             } else if (currIndex < endIndex) {
-                result.push({ d: measure.duration() - pos, i: measure.interval() })
+                this._addToDistanceResult(result, measure.duration() - pos, measure.interval())
                 pos = 0
             } else {
-                result.push({ d: endPos - pos, i: measure.interval() })
+                this._addToDistanceResult(result, endPos - pos, measure.interval())
                 break
             }
 
             currIndex += direction
         }
 
-        return {
-            distance: result
-        }
+        return result
     }
 
-    movePositionList(measure, pos, distanceObj) {
-        console.log('pos', pos)
+    movePositionList(measure, pos, distance) {
         let index = this.measureIndexWithKey(measure.key),
-            result = {}
-        for (const d of distanceObj.distance) {
-            result = this.movePosition(index, pos, d)
-            console.log('mv', result)
+            result = { p: pos, measureIndex: index }
+        //console.log('pos', pos, index)
+        for (const d of distance) {
+            let dist = d
+            while (dist.d !== 0 && index >= 0 && index < this.measures.length) {
+                result = this.movePosition(index, pos, d)
+                //console.log('mv', result)
+                dist = result
+                pos = result.p
+                index = result.measureIndex
+            }
         }
+
+        return result
     }
 
     movePosition(measureIndex, pos, distance) {
         let measure = this.measures[measureIndex],
-            mDist = (pos) * distance.i,
-            d = (distance.d) * measure.interval(),
-            mSize = measure.duration() * distance.i,
+            d = distance.d,
+            i = distance.i,
+            p_i = pos * i,
+            mi_d = d * measure.interval(),
+            md_i = measure.duration() * i,
 			nextMeasureIndex = measureIndex
 
-        const newDist = mDist + d
+        const num = p_i + mi_d
         let rem = 0, newPos = 0
-        if (newDist > mSize) {
-            rem = newDist - mSize
+        if (num > md_i) {
+            rem = num - md_i
 			nextMeasureIndex++
-        } else if (newDist < 0) {
-            rem = -newDist
-			nextMeasureIndex--
+        } else if (num < 0) {
+            rem = -num
+            nextMeasureIndex--
+
+            if (nextMeasureIndex >= 0) {
+                newPos = this.measures[nextMeasureIndex].duration()
+            }
         } else {
-            newPos = (newDist / measure.interval()) % measure.duration()
+            newPos = num / i
+           if (newPos >= measure.duration()) {
+                newPos -= measure.duration()
+                nextMeasureIndex++
+            }
         }
 
-        console.log('mdist', `mDist ${mDist}, d ${d}, newDist ${newDist}, rem ${rem}, mSize ${mSize}, pos ${pos}`)
+        //console.log(`measureIndex ${measureIndex} pos ${pos}/${measure.interval()} + ${distance.d}/${distance.i} => nextMeasureIndex ${nextMeasureIndex} p ${newPos}, mi_d ${mi_d} + p_i ${p_i} = num ${num}, md_i ${md_i}, rem ${rem}`)
 
-        return Measure.simplifyNoteTiming({ d: rem,
+        return Measure.simplifyNoteTiming({
+            d: rem,
 			i: measure.interval() * (rem === 0 ? 1 : distance.i),
-			pos: newPos,
+			p: newPos,
 			measureIndex: nextMeasureIndex
 		})
     }

@@ -13,8 +13,6 @@ import SoundPlayer from './SoundPlayer';
 import SongPlayer from './SongPlayer'
 import testTab from '../songs/test1.json'
 
-console.log(tab1);
-
 /*
  note:
  {

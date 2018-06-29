@@ -139,6 +139,7 @@ class NoteEditor extends Component {
 
         const settings = this.calculateNoteSettings(note)
 
+        console.log('note.key', note.note.key)
 
         return (
             <div ref={this.editorRef} className="card" style={{ zIndex: 50 }} >
