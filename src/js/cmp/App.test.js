@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { App } from './App';
-import Layout from './Layout';
+import { App } from 'js/cmp/App';
+import Layout from 'js/cfg/Layout';
 import Enzyme, { mount, shallow } from "enzyme";
 import Adapter from 'enzyme-adapter-react-16';
 

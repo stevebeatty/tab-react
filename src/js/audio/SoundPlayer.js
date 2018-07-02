@@ -1,4 +1,4 @@
-import { IdGenerator } from './Util';
+import { IdGenerator } from 'js/util/Util';
 
 class SoundPlayer {
 

@@ -1,4 +1,4 @@
-﻿import { IdGenerator, rangeArray, range } from '../Util'
+﻿import { IdGenerator, rangeArray, range } from 'js/util/Util'
 
 export class Measure {
     constructor(cfg, ctx) {

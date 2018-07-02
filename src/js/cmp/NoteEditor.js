@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { rangeArray } from './Util';
+import { rangeArray } from 'js/util/Util';
 
 class NoteEditor extends Component {
 

@@ -1,16 +1,16 @@
 import React, { Component } from 'react';
-import '/css/App.css';
-import Layout from '/cfg/Layout.js';
+import 'css/App.css';
+import Layout from 'js/cfg/Layout';
 import MeasureController from './MeasureController';
 import MeasureDisplay from './MeasureDisplay';
 import NoteEditor from './NoteEditor'
 import MeasureEditor from './MeasureEditor'
-import { Song } from './mdl/Song'
+import { Song } from 'js/mdl/Song'
 import { NavBar, ModalDialog } from './BaseBoot'
 import { FileLoader, SaveDialog, SettingsEditor } from './Dialogs'
-import SoundPlayer from '/SoundPlayer';
-import SongPlayer from '/SongPlayer'
-import testTab from '/songs/test1.json'
+import SoundPlayer from 'js/audio/SoundPlayer';
+import SongPlayer from 'js/audio/SongPlayer'
+import testTab from 'songs/test1.json'
 
 /*
  note:
