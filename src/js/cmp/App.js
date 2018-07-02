@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
-import '../css/App.css';
-import tab1 from '../songs/tab.js';
-import Layout from './Layout.js';
+import '/css/App.css';
+import Layout from '/cfg/Layout.js';
 import MeasureController from './MeasureController';
 import MeasureDisplay from './MeasureDisplay';
 import NoteEditor from './NoteEditor'
@@ -9,9 +8,9 @@ import MeasureEditor from './MeasureEditor'
 import { Song } from './mdl/Song'
 import { NavBar, ModalDialog } from './BaseBoot'
 import { FileLoader, SaveDialog, SettingsEditor } from './Dialogs'
-import SoundPlayer from './SoundPlayer';
-import SongPlayer from './SongPlayer'
-import testTab from '../songs/test1.json'
+import SoundPlayer from '/SoundPlayer';
+import SongPlayer from '/SongPlayer'
+import testTab from '/songs/test1.json'
 
 /*
  note:
