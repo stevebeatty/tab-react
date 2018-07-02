@@ -23,13 +23,6 @@ describe('Measure test', () => {
         measure = new Measure(measureCfg)
     })
 
-    test('doNotesOverlap', () => {
-        expect(measure.doNotesOverlap({ f: 1, d: 1, i: 4, p: 2 }, { f: 1, d: 1, i: 4, p: 2 })).toEqual(true);
-        expect(measure.doNotesOverlap({ f: 1, d: 1, i: 4, p: 2 }, { f: 7, d: 1, i: 4, p: 3 })).toEqual(false);
-        expect(measure.doNotesOverlap({ f: 1, d: 2, i: 4, p: 2 }, { f: 7, d: 1, i: 4, p: 3 })).toEqual(true);
-        expect(measure.doNotesOverlap({ f: 1, d: 2, i: 8, p: 2 }, { f: 7, d: 1, i: 4, p: 3 })).toEqual(false);
-    });
-
     test('nextNoteDistance', () => {
         expect(measure.nextNoteDistance(0, 1)).toEqual(1);
         expect(measure.nextNoteDistance(0, 2)).toEqual(0);

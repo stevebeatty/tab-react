@@ -129,20 +129,6 @@ class Measure {
 		return note
     }
 
-	doNotesOverlap(a, b) {
-        const mi = this.i;
-        //     b~~~~~~
-        //            a~~~~
-        // -----------------------------
-        //     ^      ^
-        //console.log(' | ', b.p + (b.d * mi / b.i), a.p, a.p + (a.d * mi / a.i), b.p);
-
-        if (b.p <= a.p) {
-            return b.p + (b.d * mi / b.i) > a.p
-        } else {
-            return a.p + (a.d * mi / a.i) > b.p;
-        }               
-    }
 
 	nextNoteDistance(string, pos, skipKeys) {
         const notes = this.strings[string],
@@ -593,78 +579,7 @@ class Song {
 				}
             }
 		}
-        /*
-        for (let i = 0; i < parts.length; i++) {
-            let p = parts[i],
-                curr = p.measure.noteTiming(p, startTime)
-
-            curr.f = p.f
-
-            if ('effect' in p) {
-                curr.effect = p.effect
-            }
-
-            if (last) {
-                if (last.f === curr.f) {
-                    if (!last.effect) {
-                        if (!curr.effect) {
-                            last.stop = curr.stop
-                        } else {
-                            if (curr.effect === 'vibrato') {
-                                this.seqPartAddEffect(last, { effect: curr.effect, start: curr.start, stop: curr.stop })
-                                last.stop = curr.stop
-                            }
-                        }
-                        continue
-                    }
-                } else if (['slide-up', 'slide-down', 'bend-up'].includes(last.effect) && !curr.effect) {
-                    const removed = this.seqPartRemoveFirstEffect(last, last.effect)
-                    this.seqPartAddEffect(last, {
-                        effect: last.effect, start: last.start, stop: curr.stop, transistionStop: last.stop, detune: (curr.f - last.f) * 100
-                    })
-                    last.stop = curr.stop
-                    delete last.effect
-                    continue
-                } else if (['pre-bend'].includes(last.effect) && !curr.effect) {
-                    const removed = this.seqPartRemoveFirstEffect(last, last.effect)
-                    this.seqPartAddEffect(last, {
-                        effect: last.effect, start: last.start, stop: last.stop, detune: (last.f - curr.f) * 100
-                    })
-                    last.stop = curr.stop
-                    delete last.effect
-                    continue
-                } else if (['pull-off', 'hammer-on'].includes(last.effect)) {
-                    this.seqPartAddEffect(curr, {
-                        effect: last.effect, start: curr.start, stop: curr.stop
-                    })
-                    delete last.effect
-                }
-            }
-
-            if (curr.effect === 'harmonic') {
-                let detune = curr.f * 100
-                if (curr.f === 12) {
-                    detune = 1200
-                } else if (curr.f === 7 || curr.f === 19) {
-                    detune = 1900
-                } else if (curr.f === 5 || curr.f === 24) {
-                    detune = 2400
-                }
-
-                this.seqPartAddEffect(curr, {
-                    effect: curr.effect, start: curr.start, stop: curr.stop, detune
-                })
-
-                curr.f = 0
-
-                delete curr.effect
-            }
-
-            mergedParts.push(curr)
-            last = curr
-            
-        }
-        */
+        
         console.log('after', mergedParts)
 
         return mergedParts
