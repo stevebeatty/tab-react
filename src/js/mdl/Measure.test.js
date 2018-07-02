@@ -14,24 +14,89 @@ describe('Measure test', () => {
                 [{ f: 7, d: 1, i: 4, p: 3 }],
                 [],
                 [],
-                [{ f: 1, d: 1, i: 4, p: 2 }, { f: 1, d: 1, i: 8, p: 3 }, { f: 1, d: 1, i: 4, p: 4 }]
+                [{ f: 1, d: 1, i: 4, p: 2 }, { f: 1, d: 1, i: 8, p: 3 }, { f: 1, d: 1, i: 8, p: 3.5 }]
             ]
         }
 
         measure = new Measure(measureCfg)
     })
 
-    test('nextNoteDistance', () => {
-        expect(measure.nextNoteDistance(0, 1)).toEqual(1);
-        expect(measure.nextNoteDistance(0, 2)).toEqual(0);
-        expect(measure.nextNoteDistance(0, 2.125)).toEqual(0);
-        expect(measure.nextNoteDistance(0, 2.5)).toEqual(0);
-        expect(measure.nextNoteDistance(0, 3)).toEqual(-1);
+    
 
-        expect(measure.nextNoteDistance(1, 1)).toEqual(-1);
-        expect(measure.nextNoteDistance(1, 2)).toEqual(-1);
-        expect(measure.nextNoteDistance(1, 2.5)).toEqual(-1);
-        expect(measure.nextNoteDistance(1, 3)).toEqual(-1);
+    test('interval', () => {
+        expect(measure.interval()).toEqual(4)
+        expect(new Measure({}).interval()).toBeUndefined()
+    })
+
+    test('duration', () => {
+        expect(measure.duration()).toEqual(4)
+        expect(new Measure({}).duration()).toBeUndefined()
+    })
+
+    test('tempo', () => {
+        expect(measure.tempo()).toEqual(60)
+        expect(new Measure({}).tempo()).toBeUndefined()
+    })
+
+    test('totalTime', () => {
+        expect(measure.totalTime()).toEqual(4)
+    })
+
+
+
+    test('noteWithIndex', () => {
+        expect(measure.noteWithIndex(0, 0)).toBeDefined()
+    })
+
+    test('noteWithKey', () => {
+        expect(measure.noteWithKey(measure.strings[5][1].key)).toEqual(measure.strings[5][1])
+        expect(measure.noteWithKey(measure.strings[0][0].key)).toEqual(measure.strings[0][0])
+        expect(measure.noteWithKey(-1)).toBeNull()
+    })
+
+    test('noteIndexWithKey', () => {
+        expect(measure.noteIndexWithKey(measure.strings[5][1].key)).toEqual(expect.objectContaining({ string: 5, note: 1 }))
+        expect(measure.noteIndexWithKey(measure.strings[0][0].key)).toEqual(expect.objectContaining({ string: 0, note: 0 }))
+        expect(measure.noteIndexWithKey(-1)).toBeNull()
+    })
+
+    test('addNote', () => {
+        let note = { d: 1, i: 4, p: 2, f: 0 },
+            idx = measure.addNote(0, note)
+
+        expect(measure.noteIndexWithKey(note.key).note).toEqual(idx)
+        expect(measure.strings[0].length).toEqual(measureCfg.strings[0].length + 1)
+    })
+
+    test('removeNoteByIndex', () => {
+        expect(measure.removeNoteByIndex(0, 0)).toBeDefined()
+        expect(measure.strings[0].length).toEqual(measureCfg.strings[0].length - 1)
+
+        expect(measure.removeNoteByIndex(5, 0)).toBeDefined()
+        expect(measure.strings[5].length).toEqual(measureCfg.strings[5].length - 1)
+
+        expect(() => measure.removeNoteByIndex(-1)).toThrow()
+    })
+
+    test('removeNoteByKey', () => {
+        expect(measure.removeNoteByKey(measure.strings[5][1].key)).toBeDefined()
+        expect(measure.strings[5].length).toEqual(measureCfg.strings[5].length - 1)
+
+        expect(() => measure.removeNoteByKey(-1)).toThrow()
+    })
+
+
+    test('nextNoteDistance', () => {
+        expect(measure.nextNoteDistance(0, 1)).toEqual(1)
+        expect(measure.nextNoteDistance(0, 2)).toEqual(0)
+        expect(measure.nextNoteDistance(0, 2.125)).toEqual(0)
+        expect(measure.nextNoteDistance(0, 2.5)).toEqual(0)
+        expect(measure.nextNoteDistance(0, 3)).toEqual(-1)
+
+        expect(measure.nextNoteDistance(1, 1)).toEqual(-1)
+        expect(measure.nextNoteDistance(1, 2)).toEqual(-1)
+        expect(measure.nextNoteDistance(1, 2.5)).toEqual(-1)
+        expect(measure.nextNoteDistance(1, 3)).toEqual(-1)
 
         expect(measure.nextNoteDistance(5, 1)).toEqual(1)
         expect(measure.nextNoteDistance(5, 1.5)).toEqual(0.5)
@@ -57,44 +122,31 @@ describe('Measure test', () => {
         expect(measure.prevNoteDistance(1, 3)).toEqual(-1);
     })
 
-    test('validStringsForPosition', () => {
-        expect(measure.validStringsForPosition(3)).toEqual(expect.arrayContaining([0, 1, 3, 4]))
-        expect(measure.validStringsForPosition(2)).toEqual(expect.arrayContaining([1, 2, 3, 4]))
+    test('notesAtPosition', () => {
+        expect(measure.notesAtPosition(0).size).toEqual(0)
+        expect(measure.notesAtPosition(1).size).toEqual(0)
+        expect(measure.notesAtPosition(2).size).toEqual(2)
+        expect(measure.notesAtPosition(2.5).size).toEqual(2)
+        expect(measure.notesAtPosition(3).size).toEqual(2)
+        expect(measure.notesAtPosition(3.5).size).toEqual(2)
     })
 
-    test('interval', () => {
-        expect(measure.interval()).toEqual(4)
-        expect(new Measure({}).interval()).toBeUndefined()
+    test('noteTiming', () => {
+        expect(measure.noteTiming(measure.strings[5][1], 0)).toEqual(expect.objectContaining({ start: 3, stop: 3.5 }))
+        expect(measure.noteTiming(measure.strings[5][1], 2)).toEqual(expect.objectContaining({ start: 5, stop: 5.5 }))
+        expect(measure.noteTiming(measure.strings[0][0], 0)).toEqual(expect.objectContaining({ start: 2, stop: 3 }))
     })
 
-    test('duration', () => {
-        expect(measure.duration()).toEqual(4)
-        expect(new Measure({}).duration()).toBeUndefined()
+    test('simplifyNoteTiming', () => {
+        expect(Measure.simplifyNoteTiming({ d: 4, i: 16 })).toEqual(expect.objectContaining({ d: 1, i: 4 }))
+        expect(Measure.simplifyNoteTiming({ d: 2, i: 16 })).toEqual(expect.objectContaining({ d: 1, i: 8 }))
+        expect(Measure.simplifyNoteTiming({ d: 12, i: 16 })).toEqual(expect.objectContaining({ d: 3, i: 4 }))
     })
 
-    test('tempo', () => {
-        expect(measure.tempo()).toEqual(60)
-        expect(new Measure({}).tempo()).toBeUndefined()
-    })
-
-    test('totalTime', () => {
-        expect(measure.totalTime()).toEqual(4)
-    })
-
-    test('noteWithIndex', () => {
-        expect(measure.noteWithIndex(0, 0)).toBeDefined()
-    })
-
-    test('noteWithKey', () => {
-        expect(measure.noteWithKey(measure.strings[5][1].key)).toEqual(measure.strings[5][1])
-        expect(measure.noteWithKey(measure.strings[0][0].key)).toEqual(measure.strings[0][0])
-        expect(measure.noteWithKey(-1)).toBeNull()
-    })
-
-    test('noteIndexWithKey', () => {
-        expect(measure.noteIndexWithKey(measure.strings[5][1].key)).toEqual(expect.objectContaining({ string: 5, note: 1 }))
-        expect(measure.noteIndexWithKey(measure.strings[0][0].key)).toEqual(expect.objectContaining({ string: 0, note: 0 }))
-        expect(measure.noteIndexWithKey(-1)).toBeNull()
+    test('noteLength', () => {
+        expect(measure.noteLength(measure.strings[0][0])).toEqual(1)
+        expect(measure.noteLength(measure.strings[2][0])).toEqual(1)
+        expect(measure.noteLength(measure.strings[5][1])).toEqual(0.5)
     })
 
     test('noteEndPosition', () => {
@@ -102,6 +154,20 @@ describe('Measure test', () => {
         expect(measure.noteEndPosition(measure.strings[2][0])).toEqual(4)
         expect(measure.noteEndPosition(measure.strings[5][1])).toEqual(3.5)
     })
+
+    test('sortNotesByPosition', () => {
+        const arr = [{ p: 1 }, { p: 1.5 }, { p: 3 }, { p: 2 }]
+
+        Measure.sortNotesByPosition(arr)
+
+        for (let i = 0; i < arr.length - 1; i++) {
+            let first = arr[i],
+                second = arr[i + 1]
+
+            expect(first.p).toBeLessThanOrEqual(second.p)
+        }
+    })
+
 
     test('timeToPosition', () => {
         expect(measure.timeToPosition(1)).toEqual(1)

@@ -68,7 +68,7 @@ export class Measure {
 
         const notes = this.strings[string]
         notes.push(note)
-        this.sortNotes(notes)
+        Measure.sortNotesByPosition(notes)
 
         return notes.indexOf(note)
     }
@@ -78,10 +78,8 @@ export class Measure {
     }
 
     noteWithKey(noteKey) {
-        for (let i = 0; i < this.strings.length; i++) {
-            let string = this.strings[i]
-            for (let j = 0; j < string.length; j++) {
-                let note = string[j]
+        for (const string of this.strings) {
+            for (const note of string) {
                 if (note.key === noteKey) {
                     return note
                 }
@@ -115,7 +113,6 @@ export class Measure {
 
     removeNoteByKey(noteKey, string) {
         let idx = (string !== undefined) ? this.noteIndexWithKey(noteKey, string) : this.noteIndexWithKey(noteKey)
-        //console.log('re', noteKey, string, idx)
         return this.removeNoteByIndex(idx.string, idx.note)
     }
 
@@ -123,25 +120,20 @@ export class Measure {
         const notes = this.strings[string],
             skip = skipKeys === undefined ? [] :
                 Array.isArray(skipKeys) ? skipKeys : [skipKeys]
-        //console.log('nextNoteDistance', string, pos, notes, skip)
 
-        for (let i = 0; i < notes.length; i++) {
-            let n = notes[i]
-
+        for (const n of notes) {
             if (skip.indexOf(n.key) !== -1) {
-                //console.log('skipping', n.key)
                 continue
             }
 
             const extent = n.p + (n.d / n.i) * this.interval()
 
-            //console.log('n ', n, extent, pos, this.interval() );
             if (n.p < pos) {
                 if (extent > pos) {
                     return 0
                 }
             } else {
-                return n.p - pos;
+                return n.p - pos
             }
         }
 
@@ -154,14 +146,12 @@ export class Measure {
     }
 
     prevNoteDistance(string, pos) {
-        const notes = this.strings[string];
+        const notes = this.strings[string]
 
-        //console.log('notes ', notes);
         for (let i = notes.length - 1; i >= 0; i--) {
-            let n = notes[i]
-            //console.log('p ', n, n.p + (n.d / n.i * this.props.interval), pos);
-            let extent = n.p + (n.d / n.i * this.i)
-            //console.log('p ', pos, ' ? ', extent, n)
+            let n = notes[i],
+                extent = n.p + (n.d / n.i * this.i)
+
             if (n.p <= pos) {
                 if (extent >= pos) {
                     return 0;
@@ -171,7 +161,7 @@ export class Measure {
             }
         }
 
-        return -1;
+        return -1
     }
 
     notesAtPosition(pos) {
@@ -218,13 +208,7 @@ export class Measure {
         return note.p + this.noteLength(note)
     }
 
-    
-
-    
-
-    
-
-    sortNotes(arr) {
+    static sortNotesByPosition(arr) {
         arr.sort((a, b) => a.p - b.p)
     }
 
@@ -274,18 +258,6 @@ export class Measure {
         return result
     }
 
-    
-
-    validStringsForPosition(pos) {
-        const valid = []
-        for (let i = 0; i < this.strings.length; i++) {
-            if (this.nextNoteDistance(i, pos) !== 0) {
-                valid.push(i)
-            }
-        }
-
-        return valid
-    }
 
     
 
