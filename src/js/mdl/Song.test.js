@@ -1,5 +1,5 @@
 
-import { Song } from './Model';
+import { Song } from './Song';
 
 
 
