@@ -28,6 +28,10 @@ export class Song {
 		
     }
 
+    /*
+     * Song properties
+     */ 
+
     interval() {
         return this.i
     }
@@ -45,6 +49,153 @@ export class Song {
         this.measures.forEach(m => time += m.totalTime())
         return time
     }
+
+    /*
+     * Measure methods
+     */
+
+    measureAtTime(time) {
+        let currTime = time,
+            index = 0
+
+        while (index < this.measures.length) {
+            let measure = this.measures[index],
+                mTot = measure.totalTime()
+
+            if (mTot > currTime) {
+                return {
+                    measure: measure,
+                    time: currTime
+                }
+            }
+
+            currTime -= mTot
+            index++
+        }
+
+        return {}
+    }
+
+    measuresInTimeRange(startTime, endTime) {
+        let elapsedTime = 0,
+            measureEnd = endTime,
+            measures = [],
+            index = 0
+
+        while (index < this.measures.length) {
+            let measure = this.measures[index],
+                mTot = measure.totalTime(),
+                measureStart = elapsedTime,
+                measureEnd = elapsedTime + mTot
+
+            if (measureStart <= endTime && measureEnd > startTime) {
+                measures.push({
+                    measure: measure,
+                    time: measureStart
+                })
+            }
+
+            if (elapsedTime > endTime) {
+                return measures
+            }
+
+            elapsedTime += mTot
+            index++
+        }
+
+        return measures
+    }
+
+    measureAfter(measureKey, playbackContext) {
+        const index = this.measureIndexWithKey(measureKey)
+        return index < this.measures.length - 1 ? this.measures[index + 1] : null
+    }
+
+    measureBefore(measureKey, playbackContext) {
+        const index = this.measureIndexWithKey(measureKey)
+        return index > 0 ? this.measures[index - 1] : null
+    }
+
+    measureWithKey(measureKey) {
+        return this.measures.find(x => x.key === measureKey)
+    }
+
+    measureIndexWithKey(measureKey) {
+        return this.measures.findIndex(x => x.key === measureKey)
+    }
+
+    newMeasure() {
+        return new Measure({}, this.context)
+    }
+
+    insertMeasureAtIndex(index, measure) {
+        this.measures.splice(index, 0, measure);
+    }
+
+    /*
+     * Note methods
+     */ 
+
+    noteWithKey(noteKey, measureKey) {
+        if (measureKey !== undefined) {
+            let measure = this.measureWithKey(measureKey)
+            return {
+                note: measure.noteWithKey(noteKey),
+                measure
+            }
+        } else {
+            for (let i = 0; i < this.measures.length; i++) {
+                let measure = this.measures[i],
+                    note = measure.noteWithKey(noteKey)
+
+                if (note) {
+                    return {
+                        note,
+                        measure
+                    }
+                }
+
+            }
+        }
+    }
+
+    noteIndexWithKey(noteKey) {
+        for (let i = 0; i < this.measures.length; i++) {
+            let measure = this.measures[i],
+                index = measure.noteIndexWithKey(noteKey)
+
+            if (index) {
+                index.measure = measure.key
+                return index
+            }
+
+        }
+
+        return null
+    }
+
+    removeNoteByIndex(measureIndex, string, noteIndex) {
+        const measure = this.measures[measureIndex],
+            note = measure.removeNoteByIndex(string, noteIndex)
+
+        if (note.continuedBy) {
+            const continuedBy = this.noteWithKey(note.continuedBy)
+            if (continuedBy) {
+                delete continuedBy.continues
+            }
+        }
+
+        if (note.continues) {
+            const continues = this.noteWithKey(note.continues)
+            if (continues) {
+                delete continues.continuedBy
+            }
+        }
+    }
+
+    /*
+     * Note sequence methods
+     */ 
 
 	findNoteSequenceStart(noteIndex, stringIndex, measureIndex) {
 		let measure = this.measures[measureIndex],
@@ -444,140 +595,9 @@ export class Song {
 		})
     }
 
-    noteWithKey(noteKey, measureKey) {
-        if (measureKey !== undefined) {
-            let measure = this.measureWithKey(measureKey)
-            return {
-                note: measure.noteWithKey(noteKey),
-                measure
-            }
-        } else {
-            for (let i = 0; i < this.measures.length; i++) {
-                let measure = this.measures[i],
-                    note = measure.noteWithKey(noteKey)
+    
 
-                if (note) {
-                    return {
-                        note,
-                        measure
-                    }
-                }
-
-            }  
-        }
-    }
-
-    noteIndexWithKey(noteKey) {
-        for (let i = 0; i < this.measures.length; i++) {
-            let measure = this.measures[i],
-                index = measure.noteIndexWithKey(noteKey)
-
-            if (index) {
-                index.measure = measure.key
-                return index
-            }
-
-        }
-
-        return null
-    }
-
-	removeNoteByIndex(measureIndex, string, noteIndex) {
-		const measure = this.measures[measureIndex],
-			note = measure.removeNoteByIndex(string, noteIndex)
-
-		if (note.continuedBy) {
-			const continuedBy = this.noteWithKey(note.continuedBy)
-			if (continuedBy) {
-				delete continuedBy.continues
-			}
-		}
-
-		if (note.continues) {
-			const continues = this.noteWithKey(note.continues)
-			if (continues) {
-				delete continues.continuedBy
-			}
-		}
-	}
-
-    measureAtTime(time) {
-        let currTime = time,
-            index = 0
-
-        while (index < this.measures.length) {
-            let measure = this.measures[index],
-                mTot = measure.totalTime()
-
-            if (mTot > currTime) {
-                return {
-                    measure: measure,
-                    time: currTime
-                }
-            }
-
-            currTime -= mTot
-            index++
-        }
-
-        return {}
-    }
-
-    measuresInTimeRange(startTime, endTime) {
-        let elapsedTime = 0,
-            measureEnd = endTime,
-            measures = [],
-            index = 0
-
-        while (index < this.measures.length) {
-            let measure = this.measures[index],
-                mTot = measure.totalTime(),
-                measureStart = elapsedTime,
-                measureEnd = elapsedTime + mTot
-
-            if (measureStart <= endTime && measureEnd > startTime) {
-                measures.push({
-                    measure: measure,
-                    time: measureStart
-                })
-            }
-
-            if (elapsedTime > endTime) {
-                return measures
-            }
-
-            elapsedTime += mTot
-            index++
-        }
-
-        return measures
-    }
-
-    measureAfter(measureKey, playbackContext) {
-        const index = this.measureIndexWithKey(measureKey)
-        return index < this.measures.length - 1 ? this.measures[index + 1] : null
-    }
-
-    measureBefore(measureKey, playbackContext) {
-        const index = this.measureIndexWithKey(measureKey)
-        return index > 0 ? this.measures[index - 1] : null
-    }
-
-    measureWithKey(measureKey) {
-        return this.measures.find( x => x.key === measureKey )
-    }
-
-    measureIndexWithKey(measureKey) {
-        return this.measures.findIndex( x => x.key === measureKey )
-    }
-
-    newMeasure() {
-        return new Measure({}, this.context)
-    }
-
-    insertMeasureAtIndex(index, measure) {
-        this.measures.splice(index, 0, measure);
-    }
+    
 
 	export() {
 		const obj = {

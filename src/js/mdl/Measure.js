@@ -34,6 +34,10 @@ export class Measure {
 
     }
 
+    /*
+     * Properties
+     */
+
     interval() {
         return this.i || this.context && this.context.song && this.context.song.interval()
     }
@@ -50,84 +54,70 @@ export class Measure {
         return this.duration() / (this.tempo() / 60)
     }
 
-    timeToPosition(time) {
-        const total = this.totalTime()
-        if (time > total || time < 0) {
-            return -1
+
+    /*
+     * Note methods
+     */ 
+
+    addNote(string, note) {
+        if (!note.i) {
+            note.i = this.interval()
         }
 
-        return this.duration() * (time / total);
+        note.key = this.context.idGen.nextOrValue(note.key)
+
+        const notes = this.strings[string]
+        notes.push(note)
+        this.sortNotes(notes)
+
+        return notes.indexOf(note)
     }
 
-    stringNotesInTimeRange(string, startTime, endTime) {
-        let notes = this.strings[string],
-            totalT = this.totalTime(),
-            startBound = Math.min(Math.max(0, startTime), totalT),
-            endBound = Math.min(Math.max(0, endTime), totalT),
-            startPos = this.timeToPosition(startBound),
-            endPos = this.timeToPosition(endBound),
-            result = []
-
-        //console.log('timerange', startPos, endPos)
-        notes.forEach(note => {
-            //    console.log('note', note)
-            if (note.p >= startPos && note.p <= endPos) {
-                result.push(note)
-            }
-        })
-
-        return result
+    noteWithIndex(stringIndex, noteIndex) {
+        return this.strings[stringIndex][noteIndex]
     }
 
-    notesInTimeRange(startTime, endTime) {
-        const result = {}
-
-        rangeArray(0, this.strings.length).forEach(string => {
-            const notes = this.stringNotesInTimeRange(string, startTime, endTime)
-            if (notes.length > 0) {
-                result[string] = notes
-            }
-        })
-
-        return result
-    }
-
-    notesAtPosition(pos) {
-        const result = new Map()
-
-        for (const string of range(0, this.strings.length)) {
-            let notes = this.strings[string]
-            for (const [noteIndex, note] of notes.entries()) {
-                if (note.p <= pos && this.noteEndPosition(note) > pos) {
-                    result.set(string, { note, noteIndex })
-                    break
+    noteWithKey(noteKey) {
+        for (let i = 0; i < this.strings.length; i++) {
+            let string = this.strings[i]
+            for (let j = 0; j < string.length; j++) {
+                let note = string[j]
+                if (note.key === noteKey) {
+                    return note
                 }
             }
         }
 
-        return result
+        return null
     }
 
-    noteTiming(note, startTime) {
-        const beatDelay = 60 / this.tempo(),
-            start = note.p * beatDelay + startTime,
-            dur = (note.d / (note.i / this.interval())) * beatDelay,
-            stop = start + dur
-
-        return {
-            start,
-            stop
+    noteIndexWithKey(noteKey, string = 0) {
+        for (let i = string; i < this.strings.length; i++) {
+            let string = this.strings[i]
+            for (let j = 0; j < string.length; j++) {
+                let note = string[j]
+                if (note.key === noteKey) {
+                    return {
+                        string: i,
+                        note: j
+                    }
+                }
+            }
         }
+
+        return null
     }
 
-    static simplifyNoteTiming(note) {
-        while (note.d !== 0 && note.d % 2 === 0 && note.i % 2 === 0) {
-            note.d /= 2
-            note.i /= 2
-        }
-        return note
+    removeNoteByIndex(string, noteIndex) {
+        const notes = this.strings[string]
+        return notes.splice(noteIndex, 1)[0]
     }
 
+    removeNoteByKey(noteKey, string) {
+        let idx = (string !== undefined) ? this.noteIndexWithKey(noteKey, string) : this.noteIndexWithKey(noteKey)
+        //console.log('re', noteKey, string, idx)
+        return this.removeNoteByIndex(idx.string, idx.note)
+    }
 
     nextNoteDistance(string, pos, skipKeys) {
         const notes = this.strings[string],
@@ -184,6 +174,108 @@ export class Measure {
         return -1;
     }
 
+    notesAtPosition(pos) {
+        const result = new Map()
+
+        for (const string of range(0, this.strings.length)) {
+            let notes = this.strings[string]
+            for (const [noteIndex, note] of notes.entries()) {
+                if (note.p <= pos && this.noteEndPosition(note) > pos) {
+                    result.set(string, { note, noteIndex })
+                    break
+                }
+            }
+        }
+
+        return result
+    }
+
+    noteTiming(note, startTime) {
+        const beatDelay = 60 / this.tempo(),
+            start = note.p * beatDelay + startTime,
+            dur = (note.d / (note.i / this.interval())) * beatDelay,
+            stop = start + dur
+
+        return {
+            start,
+            stop
+        }
+    }
+
+    static simplifyNoteTiming(note) {
+        while (note.d !== 0 && note.d % 2 === 0 && note.i % 2 === 0) {
+            note.d /= 2
+            note.i /= 2
+        }
+        return note
+    }
+
+    noteLength(note) {
+        return (note.d / note.i) * this.interval()
+    }
+
+    noteEndPosition(note) {
+        return note.p + this.noteLength(note)
+    }
+
+    
+
+    
+
+    
+
+    sortNotes(arr) {
+        arr.sort((a, b) => a.p - b.p)
+    }
+
+    /*
+     *  Time methods
+     */ 
+
+    timeToPosition(time) {
+        const total = this.totalTime()
+        if (time > total || time < 0) {
+            return -1
+        }
+
+        return this.duration() * (time / total);
+    }
+
+    stringNotesInTimeRange(string, startTime, endTime) {
+        let notes = this.strings[string],
+            totalT = this.totalTime(),
+            startBound = Math.min(Math.max(0, startTime), totalT),
+            endBound = Math.min(Math.max(0, endTime), totalT),
+            startPos = this.timeToPosition(startBound),
+            endPos = this.timeToPosition(endBound),
+            result = []
+
+        //console.log('timerange', startPos, endPos)
+        notes.forEach(note => {
+            //    console.log('note', note)
+            if (note.p >= startPos && note.p <= endPos) {
+                result.push(note)
+            }
+        })
+
+        return result
+    }
+
+    notesInTimeRange(startTime, endTime) {
+        const result = {}
+
+        rangeArray(0, this.strings.length).forEach(string => {
+            const notes = this.stringNotesInTimeRange(string, startTime, endTime)
+            if (notes.length > 0) {
+                result[string] = notes
+            }
+        })
+
+        return result
+    }
+
+    
+
     validStringsForPosition(pos) {
         const valid = []
         for (let i = 0; i < this.strings.length; i++) {
@@ -195,77 +287,7 @@ export class Measure {
         return valid
     }
 
-    noteLength(note) {
-        return (note.d / note.i) * this.interval()
-    }
-
-    noteEndPosition(note) {
-        return note.p + this.noteLength(note)
-    }
-
-    noteWithIndex(stringIndex, noteIndex) {
-        return this.strings[stringIndex][noteIndex]
-    }
-
-    noteWithKey(noteKey) {
-        for (let i = 0; i < this.strings.length; i++) {
-            let string = this.strings[i]
-            for (let j = 0; j < string.length; j++) {
-                let note = string[j]
-                if (note.key === noteKey) {
-                    return note
-                }
-            }
-        }
-
-        return null
-    }
-
-    noteIndexWithKey(noteKey, string = 0) {
-        for (let i = string; i < this.strings.length; i++) {
-            let string = this.strings[i]
-            for (let j = 0; j < string.length; j++) {
-                let note = string[j]
-                if (note.key === noteKey) {
-                    return {
-                        string: i,
-                        note: j
-                    }
-                }
-            }
-        }
-
-        return null
-    }
-
-    addNote(string, note) {
-        if (!note.i) {
-            note.i = this.interval()
-        }
-
-        note.key = this.context.idGen.nextOrValue(note.key)
-
-        const notes = this.strings[string]
-        notes.push(note)
-        this.sortNotes(notes)
-
-        return notes.indexOf(note)
-    }
-
-    removeNoteByIndex(string, noteIndex) {
-        const notes = this.strings[string]
-        return notes.splice(noteIndex, 1)[0]
-    }
-
-    removeNoteByKey(noteKey, string) {
-        let idx = (string !== undefined) ? this.noteIndexWithKey(noteKey, string) : this.noteIndexWithKey(noteKey)
-        //console.log('re', noteKey, string, idx)
-        return this.removeNoteByIndex(idx.string, idx.note)
-    }
-
-    sortNotes(arr) {
-        arr.sort((a, b) => a.p - b.p)
-    }
+    
 
     export() {
         const obj = {
