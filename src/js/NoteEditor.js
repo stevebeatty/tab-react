@@ -43,7 +43,7 @@ class NoteEditor extends Component {
     }
 
     selectedNoteModified(change) {
-        const selNote = this.props.selection.value;
+        const selNote = this.props.selection.value
         console.log('selectedNoteModified ', selNote)
         Object.keys(change).forEach(k => selNote.note[k] = change[k])
 
@@ -71,7 +71,16 @@ class NoteEditor extends Component {
     }
 
     handleEffectChange(evt) {
-        //this.selectedNoteModified({ f: this.parseValue(evt) })
+		const value = evt.target.value,
+			selNote = this.props.selection.value
+
+		if (value === 'none') {
+			delete selNote.note.effect
+		} else {
+			selNote.note.effect = value
+		}
+
+        this.props.controller.handleSongUpdated()
     }
 
     handleContinuedByChange(evt, continuedNote) {
@@ -88,9 +97,10 @@ class NoteEditor extends Component {
 
     handleDeleteNote() {
         const note = this.props.selection.value,
-            measure = note.measure
+			song = this.props.song,
+			measureIndex = song.measureIndexWithKey(note.measure.key)
 
-        measure.removeNoteByIndex(note.string, note.noteIndex)
+        song.removeNoteByIndex(measureIndex, note.string, note.noteIndex)
         this.props.controller.clearSelectedNote()
         this.props.controller.handleSongUpdated()
     }
@@ -184,7 +194,7 @@ class NoteEditor extends Component {
                             <div className="col-auto">
                                 <label>Effect</label>
                                 <select id="effect" className="form-control" value={note.note.effect} onChange={this.handleEffectChange}>
-                                    <option key={0} value=''>none</option>
+                                    <option key={0}>none</option>
                                     <option key={1}>vibrato</option>
                                     <option key={2}>bend</option>
                                     <option key={3}>pre-bend</option>
@@ -201,7 +211,7 @@ class NoteEditor extends Component {
                                     <label className="form-check-label" htmlFor="customCheck1">Continue Note?</label>
                                 </div>
                             </div>
-                            <button type="button" className="btn btn-primary my-2" onClick={this.handleDeleteNote}>Delete</button>
+                            <button type="button" className="btn btn-secondary my-2" onClick={this.handleDeleteNote}>Delete</button>
                         </div>
                     </form>
                 </div>

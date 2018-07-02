@@ -269,7 +269,7 @@ class Measure {
 
     removeNoteByIndex(string, noteIndex) {
         const notes = this.strings[string]
-        return notes.splice(noteIndex, 1)
+        return notes.splice(noteIndex, 1)[0]
     }
 
     removeNoteByKey(noteKey, string) {
@@ -583,6 +583,16 @@ class Song {
                 last = curr
             }
         }
+
+		if (last) {
+			let lastEff = effectForName(last.effect)
+
+            if (lastEff.canApplyEffect(last, undefined)) {
+                if(lastEff.applyEffect(last, undefined)) {
+					mergedParts.push(last)
+				}
+            }
+		}
         /*
         for (let i = 0; i < parts.length; i++) {
             let p = parts[i],
@@ -831,7 +841,6 @@ class Song {
         }
     }
 
-
     noteIndexWithKey(noteKey) {
         for (let i = 0; i < this.measures.length; i++) {
             let measure = this.measures[i],
@@ -846,6 +855,25 @@ class Song {
 
         return null
     }
+
+	removeNoteByIndex(measureIndex, string, noteIndex) {
+		const measure = this.measures[measureIndex],
+			note = measure.removeNoteByIndex(string, noteIndex)
+
+		if (note.continuedBy) {
+			const continuedBy = this.noteWithKey(note.continuedBy)
+			if (continuedBy) {
+				delete continuedBy.continues
+			}
+		}
+
+		if (note.continues) {
+			const continues = this.noteWithKey(note.continues)
+			if (continues) {
+				delete continues.continuedBy
+			}
+		}
+	}
 
     measureAtTime(time) {
         let currTime = time,
@@ -986,7 +1014,7 @@ class BaseSlideEffect extends Effect {
     }
 
     canApplyEffect(last, curr) {
-        return last && last.effect === this.name
+        return last && curr && last.effect === this.name
     }
 
     applyEffect(last, curr) {
@@ -1007,7 +1035,7 @@ class VibratoEffect extends Effect {
     }
 
     canApplyEffect(last, curr) {
-        return curr.effect === this.name
+        return curr && curr.effect === this.name
     }
 
     applyEffect(last, curr) {
@@ -1023,7 +1051,7 @@ class BasePullEffect extends Effect {
     }
 
     canApplyEffect(last, curr) {
-        return last && last.effect === this.name
+        return last && curr && last.effect === this.name
     }
 
     applyEffect(last, curr) {
@@ -1042,15 +1070,16 @@ class PreBendEffect extends Effect {
     }
 
     canApplyEffect(last, curr) {
-        return last && last.effect === this.name
+        return last && curr && last.effect === this.name
     }
 
     applyEffect(last, curr) {
-        const removed = Song.seqPartRemoveFirstEffect(last, last.effect)
+        const removed = Song.seqPartRemoveFirstEffect(last, last.effect),
+			detuneEnd = curr ? curr.f : last.f - 2
         Song.seqPartAddEffect(last, {
-            effect: last.effect, start: last.start, stop: last.stop, detune: (last.f - curr.f) * 100
+            effect: last.effect, start: last.start, stop: last.stop, detune: (last.f - detuneEnd) * 100
         })
-        last.stop = curr.stop
+        last.stop = curr ? curr.stop : last.stop
         delete last.effect
 
         return false
@@ -1063,7 +1092,7 @@ class HarmonicEffect extends Effect {
     }
 
     canApplyEffect(last, curr) {
-        return curr.effect === this.name
+        return curr && curr.effect === this.name
     }
 
     applyEffect(last, curr) {
