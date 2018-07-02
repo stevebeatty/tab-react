@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import MeasureDisplay from './MeasureDisplay'
-import { Measure } from './Model'
+import { Measure } from './mdl/Measure'
 
 //
 // <MeasureController song={} selectedMeasure={} selecteNote={} onNoteSelect={} onMeasureSelect={} onSongUpdate={} 

@@ -6,7 +6,7 @@ import MeasureController from './MeasureController';
 import MeasureDisplay from './MeasureDisplay';
 import NoteEditor from './NoteEditor'
 import MeasureEditor from './MeasureEditor'
-import { Song, Measure } from './Model'
+import { Song } from './mdl/Model'
 import { NavBar, ModalDialog } from './BaseBoot'
 import { FileLoader, SaveDialog, SettingsEditor } from './Dialogs'
 import SoundPlayer from './SoundPlayer';
