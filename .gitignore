@@ -22,3 +22,6 @@ yarn-error.log*
 /.vs
 /src/.vs
 /src/js/.vs
+/obj
+/bin
+*.njsproj
