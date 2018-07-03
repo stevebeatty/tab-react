@@ -1,8 +1,4 @@
-
 import { Song } from './Song';
-
-
-
 
 
 describe('Song Class test', () => {
@@ -33,7 +29,7 @@ describe('Song Class test', () => {
                         [],
                         [{ f: 4, d: 1, i: 4, p: 0 }],
                         [],
-                        [{ key: 25, f: 4, d: 1, i: 4, p: 0, continuedBy: 26 }, { key: 26, f: 4, d: 1, i: 4, p: 1, continuedBy: 27 }, { key: 27, f: 4, d: 1, i: 4, p: 2 }]
+                        [{ key: 25, f: 4, d: 1, i: 4, p: 0, continuedBy: 26 }, { key: 26, f: 4, d: 1, i: 4, p: 1, continues: 25, continuedBy: 27 }, { key: 27, f: 4, d: 1, i: 4, p: 2, continues: 26 }]
                     ]
                 },
                 {
@@ -55,10 +51,7 @@ describe('Song Class test', () => {
     test('constructor', () => {
         expect(song.measures.length).toEqual(songCfg.measures.length)
         expect(song.i).toEqual(songCfg.i)
-        expect(song.interval()).toEqual(songCfg.i)
-
         expect(song.d).toEqual(songCfg.d)
-        expect(song.duration()).toEqual(songCfg.d)
 
         expect(song.measures[0].strings.length).toEqual(6)
         expect(song.key).toBeDefined()
@@ -68,9 +61,19 @@ describe('Song Class test', () => {
             expect(song.measureWithKey(m.key)).toEqual(m)
         })
 
-        expect(song.measureIndexWithKey(song.measures[0].key)).toEqual(0)
-        expect(song.measureIndexWithKey(song.measures[1].key)).toEqual(1)
-    });
+    })
+
+
+
+    test('interval', () => {
+        expect(song.interval()).toEqual(songCfg.i)
+        expect(new Song({}).interval()).toBeUndefined()
+    })
+
+    test('duration', () => {
+        expect(song.duration()).toEqual(songCfg.d)
+        expect(new Song({}).duration()).toBeUndefined()
+    })
 
     test('tempo', () => {
         expect(song.tempo()).toEqual(60)
@@ -80,6 +83,8 @@ describe('Song Class test', () => {
     test('totalTime', () => {
         expect(song.totalTime()).toEqual(4 * 3)
     })
+
+
 
     test('insertMeasureAtIndex', () => {
         song.insertMeasureAtIndex(1, song.newMeasure())
@@ -115,7 +120,6 @@ describe('Song Class test', () => {
         expect(song.measuresInTimeRange(0, 120000).length).toEqual(3)
     })
 
-
     test('measureAfter', () => {
         for (let i = 0; i < song.measures.length - 1; i++) {
             expect(song.measureAfter(song.measures[i].key).key).toEqual(song.measures[i + 1].key)
@@ -132,21 +136,107 @@ describe('Song Class test', () => {
         expect(song.measureBefore(song.measures[0].key)).toBeNull()
     })
 
+    test('measureWithKey', () => {
+        for (const measure of song.measures) {
+            expect(song.measureWithKey(measure.key)).toBe(measure)
+        }
+    })
+
+    test('measureIndexWithKey', () => {
+        for (const [index, measure] of song.measures.entries()) {
+            expect(song.measureIndexWithKey(measure.key)).toBe(index)
+        }
+    })
+
+    test('newMeasure', () => {
+        const m = song.newMeasure()
+        expect(m).toBeDefined()
+        expect(song.measures.length).toEqual(songCfg.measures.length)
+        expect(m.strings.length).toEqual(song.context.stringCount)
+        expect(m.interval()).toEqual(song.interval())
+    })
+
+
+
+    test('noteWithKey', () => {
+        for (const measure of song.measures) {
+            for (const string of measure.strings) {
+                for (const note of string) {
+                    let result = song.noteWithKey(note.key)
+                    expect(result.note).toBe(note)
+                    expect(result.measure).toBe(measure)
+                }
+            }
+        }
+
+        expect(song.noteWithKey(-1)).toBeNull()
+    })
+
     test('noteIndexWithKey', () => {
-        expect(song.noteIndexWithKey(song.measures[2].strings[5][0].key)).toEqual(expect.objectContaining({ string: 5, note: 0, measure: song.measures[2].key }))
-        expect(song.noteIndexWithKey(song.measures[1].strings[1][0].key)).toEqual(expect.objectContaining({ string: 1, note: 0, measure: song.measures[1].key }))
+        for (const [measureIndex, measure] of song.measures.entries()) {
+            for (const [string, stringNotes] of measure.strings.entries()) {
+                for (const [noteIndex, note] of stringNotes.entries()) {
+                    expect(song.noteIndexWithKey(note.key)).toEqual(expect.objectContaining({
+                        string: string,
+                        noteIndex: noteIndex,
+                        measureIndex: measureIndex
+                    }))
+                }
+            }
+        }
+
         expect(song.noteIndexWithKey(-1)).toBeNull()
     })
 
+    test('removeNoteByIndex', () => {
+        song.removeNoteByIndex(0, 0, 0)
+        expect(song.measures[0].strings[0].length).toEqual(songCfg.measures[0].strings[0].length - 1)
+
+        song.removeNoteByIndex(1, 5, 1)
+        expect(song.measures[1].strings[5].length).toEqual(songCfg.measures[1].strings[5].length - 1)
+    })
+
+
+
 	test('getNoteSequence', () => {
 		expect(song.getNoteSequence(song.measures[1].strings[5][0].key, song.measures[1].key).length).toEqual(3)
-		expect(song.getNoteSequence(song.measures[1].strings[5][1].key, song.measures[1].key).length).toEqual(2)
-		expect(song.getNoteSequence(song.measures[1].strings[5][2].key, song.measures[1].key).length).toEqual(1)
+		expect(song.getNoteSequence(song.measures[1].strings[5][1].key, song.measures[1].key).length).toEqual(3)
+		expect(song.getNoteSequence(song.measures[1].strings[5][2].key, song.measures[1].key).length).toEqual(3)
 
 		expect(song.getNoteSequence(song.measures[1].strings[0][0].key, song.measures[1].key).length).toEqual(2)
 
 		expect(song.getNoteSequence(song.measures[2].strings[3][0].key, song.measures[2].key).length).toEqual(1)
-	})
+    })
+
+    test('findNoteSequenceStart', () => {
+        expect(song.findNoteSequenceStart(0, 5, 1)).toEqual(
+            expect.objectContaining({
+                measureIndex: 1,
+                noteIndex: 0,
+            })
+        )
+
+        expect(song.findNoteSequenceStart(1, 5, 1)).toEqual(
+            expect.objectContaining({
+                measureIndex: 1,
+                noteIndex: 0,
+            })
+        )
+
+        expect(song.findNoteSequenceStart(2, 5, 1)).toEqual(
+            expect.objectContaining({
+                measureIndex: 1,
+                noteIndex: 0,
+            })
+        )
+
+        expect(song.findNoteSequenceStart(0, 0, 1)).toEqual(
+            expect.objectContaining({
+                measureIndex: 1,
+                noteIndex: 0,
+            })
+        )
+    })
 
     test('findNoteSpan', () => {
         expect(song.findNoteSpan(song.measures[1].key, 1, 2, 4, 1).span.length).toEqual(1)
@@ -154,32 +244,46 @@ describe('Song Class test', () => {
         expect(song.findNoteSpan(song.measures[1].key, 1, 3, 4, 3).span.length).toEqual(1)
         expect(song.findNoteSpan(song.measures[1].key, 3, 3, 4, 3).span.length).toEqual(1)
         expect(song.findNoteSpan(song.measures[1].key, 3, 3, 4, 3, song.measures[2].strings[3][0].key).span.length).toEqual(2)
-
-    //    console.log(song.findNoteSpan(song.measures[1].key, 3, 3, 4, 3, song.measures[2].strings[3][0].key))
-    //   console.log(song.findNoteSpan(song.measures[1].key, 1, 1, 4, 1))
-    //    console.log(song.findNoteSpan(song.measures[1].key, 1, 2, 4, 1))
     })
 
     test('sequenceSpan', () => {
-        console.log(song.sequenceSpan(
-            song.getNoteSequence(song.measures[1].strings[5][0].key, song.measures[1].key),
-            song.measures[1].key,
-            1,
-            1)
+        // moving sequence from the last string
+        const sequence = song.getNoteSequence(song.measures[1].strings[5][0].key, song.measures[1].key),
+            measureKey = song.measures[1].key
+
+        // theres a note at pos 1 on 2nd string
+        const span1 = song.sequenceSpan(sequence, measureKey, 1, 1)
+        expect(span1.status).toEqual(false)
+
+        // theres nothing on 3rd string
+        const span2 = song.sequenceSpan(sequence, measureKey, 2, 1)
+        expect(span2.status).toEqual(true)
+
+        // moving the sequence over itself, which should cause the method to skip those notes
+        const span3 = song.sequenceSpan(sequence, measureKey, 5, 1)
+        expect(span3.status).toEqual(true)
+    })
+
+    test('distanceToDurationAndInterval', () => {
+        expect(song.distanceToDurationAndInterval(1, song.measures[1])).toEqual(
+            expect.objectContaining({
+                d: 1,
+                i: 4,
+            })
         )
 
-        console.log(song.sequenceSpan(
-            song.getNoteSequence(song.measures[1].strings[5][0].key, song.measures[1].key),
-            song.measures[1].key,
-            2,
-            1)
+        expect(song.distanceToDurationAndInterval(0.5, song.measures[1])).toEqual(
+            expect.objectContaining({
+                d: 1,
+                i: 8,
+            })
         )
 
-        console.log(song.sequenceSpan(
-            song.getNoteSequence(song.measures[1].strings[5][0].key, song.measures[1].key),
-            song.measures[1].key,
-            5,
-            1)
+        expect(song.distanceToDurationAndInterval(0.25, song.measures[1])).toEqual(
+            expect.objectContaining({
+                d: 1,
+                i: 16,
+            })
         )
     })
 

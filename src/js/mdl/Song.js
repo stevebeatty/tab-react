@@ -19,9 +19,23 @@ export class Song {
 
 		this.measures = []
 
+        
+
         if (cfg.measures) {
-            for (let i = 0; i < cfg.measures.length; i++) {
-                let m = new Measure(cfg.measures[i], this.context)
+            // preprocess the whole list of measures to set
+            // key values appropriately
+            const idGen = this.context.idGen
+            for (const measure of cfg.measures) {
+                idGen.accommodateIndex(measure.key)
+                for (const string of measure.strings) {
+                    for (const note of string) {
+                        idGen.accommodateIndex(note.key)
+                    }
+                }
+            }
+
+            for (const measure of cfg.measures) {
+                let m = new Measure(measure, this.context)
                 this.measures.push(m)
             }
         }
@@ -53,6 +67,10 @@ export class Song {
     /*
      * Measure methods
      */
+
+    insertMeasureAtIndex(index, measure) {
+        this.measures.splice(index, 0, measure);
+    }
 
     measureAtTime(time) {
         let currTime = time,
@@ -128,9 +146,7 @@ export class Song {
         return new Measure({}, this.context)
     }
 
-    insertMeasureAtIndex(index, measure) {
-        this.measures.splice(index, 0, measure);
-    }
+    
 
     /*
      * Note methods
@@ -157,6 +173,8 @@ export class Song {
 
             }
         }
+
+        return null
     }
 
     noteIndexWithKey(noteKey) {
@@ -165,7 +183,7 @@ export class Song {
                 index = measure.noteIndexWithKey(noteKey)
 
             if (index) {
-                index.measure = measure.key
+                index.measureIndex = i
                 return index
             }
 
@@ -196,6 +214,40 @@ export class Song {
     /*
      * Note sequence methods
      */ 
+
+    getNoteSequence(noteKey, measureKey) {
+        let mIndex = this.measureIndexWithKey(measureKey),
+            measure = this.measures[mIndex],
+            index = measure.noteIndexWithKey(noteKey),
+            start = this.findNoteSequenceStart(index.noteIndex, index.string, mIndex),
+            nextNoteIndex = start.noteIndex + 1,
+            note = this.measures[start.measureIndex].strings[index.string][start.noteIndex],
+            seq = []
+
+        seq.push({ note, measure, string: index.string })
+
+        while (mIndex < this.measures.length) {
+            let measure = this.measures[mIndex],
+                string = measure.strings[index.string]
+
+            for (let i = nextNoteIndex; i < string.length; i++) {
+                let nextNote = string[i]
+
+                if (note.continuedBy !== nextNote.key) {
+                    return seq
+                }
+
+                seq.push({ note: nextNote, measure, string: index.string })
+
+                note = nextNote
+            }
+
+            mIndex++
+            nextNoteIndex = 0
+        }
+
+        return seq
+    }
 
 	findNoteSequenceStart(noteIndex, stringIndex, measureIndex) {
 		let measure = this.measures[measureIndex],
@@ -236,38 +288,39 @@ export class Song {
 		}
 	}
 
-    getNoteSequence(noteKey, measureKey) {
+    findNoteSpan(measureKey, string, position, interval, duration, skipKeys) {
         let mIndex = this.measureIndexWithKey(measureKey),
-			measure = this.measures[mIndex],
-			index = measure.noteIndexWithKey(noteKey),
-			start = this.findNoteSequenceStart(index.note, index.string, mIndex),
-			nextNoteIndex = start.noteIndex + 1,
-            note = this.measures[start.measureIndex].strings[index.string][start.noteIndex],
-            seq = []
+            measure = this.measures[mIndex],
+            pos = position,
+            dist = duration * measure.interval() / interval,
+            result = []
 
-        seq.push({ note, measure, string: index.string })
+        //console.log('findNoteSpan', mIndex, dist, skipKeys, this.measures[mIndex].strings[string].length)
 
-		while (mIndex < this.measures.length) {
+        while (mIndex < this.measures.length && dist > 0) {
             let measure = this.measures[mIndex],
-				string = measure.strings[index.string]
+                noteDist = measure.nextNoteDistance(string, pos, skipKeys),
+                i = measure.interval() / interval,
+                span = Math.min(noteDist === -1 ? measure.duration() - pos : noteDist, dist)
 
-			for (let i = nextNoteIndex; i < string.length; i++) {
-				let nextNote = string[i]
+            //console.log('fns', { m: measure.key, p: pos, span, noteDist, dist })
 
-				if (note.continuedBy !== nextNote.key) {
-					return seq
-				}
+            if ((noteDist >= 0 && noteDist < dist) || span <= 0) {
+                break
+            }
 
-                seq.push({ note: nextNote, measure, string: index.string })
+            result.push({ measure, distance: span, p: pos })
 
-				note = nextNote
-			}
+            dist -= span
+            pos = 0
+            mIndex++
+        }
 
-			mIndex++
-			nextNoteIndex = 0
-		}
-      
-        return seq
+        return {
+            span: result,
+            remaining: dist,
+            endPos: result.length > 0 ? result[result.length - 1].distance + result[result.length - 1].p : undefined
+        }
     }
 
     sequenceSpan(sequence, measureKey, string, position, skipKeys) {
@@ -292,8 +345,6 @@ export class Song {
                 note,
                 span: noteSpan.span
             })
-
-            
 
             mKey = noteSpan.span[noteSpan.span.length - 1].measure.key
             pos = noteSpan.endPos
@@ -464,40 +515,7 @@ export class Song {
         }
     }
 
-    findNoteSpan(measureKey, string, position, interval, duration, skipKeys) {
-        let mIndex = this.measureIndexWithKey(measureKey),
-            measure = this.measures[mIndex],
-            pos = position,
-            dist = duration * measure.interval() / interval,
-            result = []
-
-        //console.log('findNoteSpan', mIndex, dist, skipKeys, this.measures[mIndex].strings[string].length)
-
-        while (mIndex < this.measures.length && dist > 0) {
-            let measure = this.measures[mIndex],
-                noteDist = measure.nextNoteDistance(string, pos, skipKeys),
-                i = measure.interval() / interval,
-                span = Math.min(noteDist === -1 ? measure.duration() - pos : noteDist, dist)
-
-            //console.log('fns', { m: measure.key, p: pos, span, noteDist, dist })
-
-            if ((noteDist >= 0 && noteDist < dist) || span <= 0) {
-                break
-            }
-
-            result.push({ measure, distance: span, p: pos })
-
-            dist -= span
-            pos = 0
-            mIndex++
-        }
-
-        return {
-            span: result,
-            remaining: dist,
-            endPos: result.length > 0 ? result[result.length - 1].distance + result[result.length - 1].p : undefined
-        }
-    }
+    
 
     _addToDistanceResult(result, d, i) {
         if (d !== 0) {
