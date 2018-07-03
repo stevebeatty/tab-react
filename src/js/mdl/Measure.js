@@ -97,7 +97,7 @@ export class Measure {
                 if (note.key === noteKey) {
                     return {
                         string: i,
-                        note: j
+                        noteIndex: j
                     }
                 }
             }
@@ -113,7 +113,7 @@ export class Measure {
 
     removeNoteByKey(noteKey, string) {
         let idx = (string !== undefined) ? this.noteIndexWithKey(noteKey, string) : this.noteIndexWithKey(noteKey)
-        return this.removeNoteByIndex(idx.string, idx.note)
+        return this.removeNoteByIndex(idx.string, idx.noteIndex)
     }
 
     nextNoteDistance(string, pos, skipKeys) {

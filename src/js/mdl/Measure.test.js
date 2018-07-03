@@ -55,8 +55,8 @@ describe('Measure test', () => {
     })
 
     test('noteIndexWithKey', () => {
-        expect(measure.noteIndexWithKey(measure.strings[5][1].key)).toEqual(expect.objectContaining({ string: 5, note: 1 }))
-        expect(measure.noteIndexWithKey(measure.strings[0][0].key)).toEqual(expect.objectContaining({ string: 0, note: 0 }))
+        expect(measure.noteIndexWithKey(measure.strings[5][1].key)).toEqual(expect.objectContaining({ string: 5, noteIndex: 1 }))
+        expect(measure.noteIndexWithKey(measure.strings[0][0].key)).toEqual(expect.objectContaining({ string: 0, noteIndex: 0 }))
         expect(measure.noteIndexWithKey(-1)).toBeNull()
     })
 
@@ -64,7 +64,7 @@ describe('Measure test', () => {
         let note = { d: 1, i: 4, p: 2, f: 0 },
             idx = measure.addNote(0, note)
 
-        expect(measure.noteIndexWithKey(note.key).note).toEqual(idx)
+        expect(measure.noteIndexWithKey(note.key).noteIndex).toEqual(idx)
         expect(measure.strings[0].length).toEqual(measureCfg.strings[0].length + 1)
     })
 
