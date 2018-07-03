@@ -25,3 +25,4 @@ yarn-error.log*
 /obj
 /bin
 *.njsproj
+*.sln
