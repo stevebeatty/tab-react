@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import 'css/App.css';
 import Layout from 'js/cfg/Layout';
 import MeasureController from './MeasureController';
-import MeasureDisplay from './MeasureDisplay';
 import NoteEditor from './NoteEditor'
 import MeasureEditor from './MeasureEditor'
 import { Song } from 'js/mdl/Song'
