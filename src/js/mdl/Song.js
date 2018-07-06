@@ -452,7 +452,7 @@ export class Song {
     analyzeSequence(sequence, startTime) {
         let parts = this.flattenSequenceSpans(sequence)
 
-        console.log('parts', parts)
+        //console.log('parts', parts)
 
         let last = null, mergedParts = []
         for (const part of parts) {
@@ -493,7 +493,7 @@ export class Song {
             }
 		}
         
-        console.log('after', mergedParts)
+        //console.log('after', mergedParts)
 
         return mergedParts
     }
@@ -562,8 +562,9 @@ export class Song {
         //console.log('pos', pos, index)
         for (const d of distance) {
             let dist = d
+            //console.log('dist', d)
             while (dist.d !== 0 && index >= 0 && index < this.measures.length) {
-                result = this.movePosition(index, pos, d)
+                result = this.movePosition(index, pos, dist)
                 //console.log('mv', result)
                 dist = result
                 pos = result.p
@@ -603,7 +604,7 @@ export class Song {
             }
         }
 
-        //console.log(`measureIndex ${measureIndex} pos ${pos}/${measure.interval()} + ${distance.d}/${distance.i} => nextMeasureIndex ${nextMeasureIndex} p ${newPos}, mi_d ${mi_d} + p_i ${p_i} = num ${num}, md_i ${md_i}, rem ${rem}`)
+        //console.log(`measureIndex ${measureIndex} pos ${pos}/${measure.interval()} + ${distance.d}/${distance.i} => nextMeasureIndex ${nextMeasureIndex} p ${newPos}, d ${rem}  mi_d ${mi_d} + p_i ${p_i} = num ${num}, md_i ${md_i}, rem ${rem}`)
 
         return Measure.simplifyNoteTiming({
             d: rem,

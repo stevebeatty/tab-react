@@ -29,7 +29,7 @@ describe('Song Class test', () => {
                         [],
                         [{ f: 4, d: 1, i: 4, p: 0 }],
                         [],
-                        [{ key: 25, f: 4, d: 1, i: 4, p: 0, continuedBy: 26 }, { key: 26, f: 4, d: 1, i: 4, p: 1, continues: 25, continuedBy: 27 }, { key: 27, f: 4, d: 1, i: 4, p: 2, continues: 26 }]
+                        [{ key: 25, f: 4, d: 1, i: 4, p: 0, continuedBy: 26 }, { key: 26, f: 4, d: 1, i: 4, p: 1, continues: 25, continuedBy: 27 }, { key: 27, f: 4, d: 1, i: 8, p: 2, continues: 26 }]
                     ]
                 },
                 {
@@ -264,6 +264,117 @@ describe('Song Class test', () => {
         expect(span3.status).toEqual(true)
     })
 
+    test('flattenSequenceSpans', () => {
+        const sequence = song.getNoteSequence(song.measures[1].strings[5][0].key, song.measures[1].key),
+            measureKey = song.measures[1].key,
+            span = song.sequenceSpan(sequence, measureKey, 5, 1),
+            flattened = song.flattenSequenceSpans(span.sequence)
+
+        expect(flattened[0]).toEqual(
+            expect.objectContaining({
+                p: 1,
+                d: 1,
+                i: 4,
+                f: 4
+            })
+        )
+
+        expect(flattened[1]).toEqual(
+            expect.objectContaining({
+                p: 2,
+                d: 1,
+                i: 4,
+                f: 4
+            })
+        )
+
+        expect(flattened[2]).toEqual(
+            expect.objectContaining({
+                p: 3,
+                d: 1,
+                i: 8,
+                f: 4
+            })
+        )
+    })
+
+    test('updateSequence', () => {
+        const sequence = song.getNoteSequence(song.measures[1].strings[5][0].key, song.measures[1].key),
+            measureKey = song.measures[1].key
+
+
+        const span1 = song.sequenceSpan(sequence, measureKey, 5, 1),
+            updated1 = song.updateSequence(span1)
+
+        
+        expect(updated1[0]).toEqual(
+            expect.objectContaining({
+                p: 1,
+                d: 5,
+                i: 8,
+                f: 4
+            })
+        )
+
+        const span2 = song.sequenceSpan(sequence, measureKey, 5, 2.5),
+            updated2 = song.updateSequence(span2)
+
+        expect(updated2[0]).toEqual(
+            expect.objectContaining({
+                p: 2.5,
+                d: 3,
+                i: 8,
+                f: 4
+            })
+        )
+
+        expect(updated2[1]).toEqual(
+            expect.objectContaining({
+                p: 0,
+                d: 1,
+                i: 4,
+                f: 4
+            })
+        )
+    })
+
+
+    test('analyzeSequence', () => {
+        const sequence = song.getNoteSequence(song.measures[1].strings[5][0].key, song.measures[1].key),
+            measureKey = song.measures[1].key
+
+        const span1 = song.sequenceSpan(sequence, measureKey, 5, 0),
+            a1 = song.analyzeSequence(span1.sequence, 0)
+
+        expect(a1[0]).toEqual(
+            expect.objectContaining({
+                start: 0,
+                stop: 2.5,
+                f: 4
+            })
+        )
+
+        const span2 = song.sequenceSpan(sequence, measureKey, 1, 1.5),
+            a2 = song.analyzeSequence(span2.sequence, 2)
+
+        expect(a2[0]).toEqual(
+            expect.objectContaining({
+                start: 3.5,
+                stop: 6,
+                f: 4
+            })
+        )
+
+        const a3 = song.analyzeSequence(span2.sequence, 6)
+        expect(a3[0]).toEqual(
+            expect.objectContaining({
+                start: 7.5,
+                stop: 10,
+                f: 4
+            })
+        )
+    })
+
     test('distanceToDurationAndInterval', () => {
         expect(song.distanceToDurationAndInterval(1, song.measures[1])).toEqual(
             expect.objectContaining({
@@ -389,4 +500,37 @@ describe('Song Class test', () => {
         )
     })
 
+
+    test('movePositionList', () => {
+        const distance = song.findDistance(song.measures[0].key, 1, song.measures[1].key, 1)
+
+        expect(song.movePositionList(song.measures[0], 2, distance)).toEqual(
+            expect.objectContaining({
+                d: 0,
+                i: 4,
+                p: 2,
+                measureIndex: 1
+            })
+        )
+
+        expect(song.movePositionList(song.measures[1], 3.5, distance)).toEqual(
+            expect.objectContaining({
+                d: 0,
+                i: 4,
+                p: 3.5,
+                measureIndex: 2
+            })
+        )
+
+        const distance2 = song.findDistance(song.measures[0].key, 0.5, song.measures[2].key, 1)
+
+        expect(song.movePositionList(song.measures[0], 1, distance2)).toEqual(
+            expect.objectContaining({
+                d: 0,
+                i: 4,
+                p: 1.5,
+                measureIndex: 2
+            })
+        )
+    })
 })
