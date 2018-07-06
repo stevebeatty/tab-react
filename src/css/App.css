@@ -63,6 +63,9 @@ nav {
   fill-opacity: 0;
 }
 
+.string {
+    background-color: black;
+}
 
 .string-1 {
   fill: #FF0000; 
@@ -113,12 +116,12 @@ nav {
 }
 
 .selected-note {
-    fill: #70FFB5;
-    stroke: #70FFB5;
+    fill: #72e8ff;
+    stroke: #72e8ff;
 }
 
 .selected-measure {
-    background-color: #70FFB5;
+    background-color: #72e8ff;
     opacity: 0.5;
 }
 
@@ -175,7 +178,7 @@ nav {
 }
 
 
-.editable .clickable {
+.clickable {
     cursor: pointer;
 }
 
@@ -202,4 +205,16 @@ nav {
     border: 1px solid black;
 }
 
+.note {
+    user-select: none;
+}
 
+
+div.note[draggable=true] {
+    cursor: grab;
+}
+
+
+div.note[draggable=false] {
+
+}

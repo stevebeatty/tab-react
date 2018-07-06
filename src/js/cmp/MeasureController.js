@@ -327,9 +327,9 @@ class MeasureController extends Component {
     render() {
 
         return (
-            <React.Fragment>
+            <div className={'measures ' + (this.props.canDragNote ? 'drag-enabled click-enabled' : 'drag-disabled click-disabled')}>
                 {this.props.song.measures.map((measure, idx) => this.createMeasureTag(measure))}
-            </React.Fragment>
+            </div>
         )
     }
 }

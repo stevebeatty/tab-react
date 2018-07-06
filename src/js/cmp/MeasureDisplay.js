@@ -297,7 +297,7 @@ class MeasureDisplay extends Component {
 		      <div className="strings">
                       {this.props.measure.strings.map((str, idx) =>
                           <String key={idx} index={idx} offset={this.stringYOffset(idx + 1)} boxHeight={clickBoxHeight} onClick={this.handleStringClick}
-								onDrop={this.handleStringDrop} onDragOver={this.handleStringDragOver} />
+                              locked={!this.props.canDragNote} onDrop={this.handleStringDrop} onDragOver={this.handleStringDragOver} />
 			    )}
 		      </div>
 		  
@@ -369,8 +369,8 @@ class String extends Component {
 	  
         return (
             <div style={{ position: 'relative' }}  >
-                <div className="string clickable" style={{ height: '1px', width: '100%', backgroundColor: 'black', position: 'absolute', top: offset }} onClick={this.handleClick} />
-                <div className="clickable" onClick={this.handleClick} onMouseUp={this.handleMouseUp} onDragOver={this.handleDragOver}
+                <div className={'string ' + (this.props.locked ? '' : 'clickable')} style={{ height: '1px', width: '100%', position: 'absolute', top: offset }} onClick={this.handleClick} />
+                <div className={(this.props.locked ? '' : 'clickable')} onClick={this.handleClick} onMouseUp={this.handleMouseUp} onDragOver={this.handleDragOver}
 					onDrop={this.handleDrop}
                     style={{ zIndex: 10,
                         height: 2 * this.props.boxHeight + 'em', position: 'absolute', top: this.props.offset - this.props.boxHeight  + 'em', width: '100%'  }} 
@@ -510,7 +510,7 @@ class Ruler extends Component {
                                 y1={this.tickHeight(idx, i) + 'em'}
                                 y2={bottom + 'em'}
                             />
-                            <rect className="" x={this.tickXPostition(idx) - 0.5 * tickClickWidth + 'em'} y={0} width={tickClickWidth + 'em'} height={this.props.height + 'em'}
+                            <rect className="clickable" x={this.tickXPostition(idx) - 0.5 * tickClickWidth + 'em'} y={0} width={tickClickWidth + 'em'} height={this.props.height + 'em'}
                                 onClick={this.rulerMarkClick} style={{ zIndex: 20 }} fill="transparent" data-position={idx / this.props.subdivisions}/>
                       </g>
 					))}
@@ -554,7 +554,7 @@ class Note extends Component {
     }
 
     handleDragStart(evt) {
-        //console.log('note dragstart')
+        console.log('note dragstart')
 
         this.props.onDragStart({
             measure: this.props.measure,
@@ -604,7 +604,7 @@ class Note extends Component {
         return (
             <div draggable={this.props.canDrag} onDragStart={this.handleDragStart} onDragEnd={this.handleDragEnd}
                 onDragOver={this.handleDragOver} onDrop={this.handleDrop}
-                className={this.state.isDragging ? 'note-dragging' : 'note-default-state'}
+                className={'note ' + (this.state.isDragging ? 'note-dragging' : 'note-default-state')}
                 style={{
                     position: 'absolute',
                     width: this.props.d + imgLeft + 'em',
@@ -620,7 +620,8 @@ class Note extends Component {
 							x={imgLeft + 'em'}
 							y={imgMiddle - rectHeight/2 + 'em'}
 							width={this.props.d + 'em'} 
-							height="0.2em" />
+                        height="0.2em"
+                        onClick={this.handleClick}/>
 
                     {this.props.note.effect === 'vibrato' && <SvgWavePath width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} cyclesPerEm={1}
                         amplitude={0.6} pathClass={"string-" + this.props.string + '-stroke'}/>}

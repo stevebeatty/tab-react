@@ -368,7 +368,7 @@ class App extends Component {
                     isPaused={this.state.isPaused} />
 
                 {hasSelectedMeasure && <MeasureEditor measureRef={this.measureRef} selection={this.state.selection} controller={this} song={this.state.song} />}
-                {hasSelectedNote && <NoteEditor measureRef={this.measureRef} selection={this.state.selection} controller={this} frets={this.frets} song={this.state.song} />}
+                {hasSelectedNote && <NoteEditor measureRef={this.measureRef} selection={this.state.selection} controller={this} frets={this.frets} song={this.state.song} locked={this.state.locked} />}
 
             </div>
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import MeasureDisplay from './MeasureDisplay';
-import { Measure } from './Model'
-import Layout from './Layout';
+import { Measure } from '../mdl/Measure'
+import Layout from '../cfg/Layout';
 import Enzyme, { mount, shallow } from "enzyme";
 import Adapter from 'enzyme-adapter-react-16';
 
