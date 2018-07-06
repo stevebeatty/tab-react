@@ -74,7 +74,7 @@ class NoteEditor extends Component {
 		const value = evt.target.value,
 			selNote = this.props.selection.value
 
-		if (value === 'none') {
+		if (value === 'none' || !value) {
 			delete selNote.note.effect
 		} else {
 			selNote.note.effect = value
@@ -145,11 +145,31 @@ class NoteEditor extends Component {
             isContinuation
         }
     }
-    
+
+    getNoteSelectionFields(fieldName) {
+        const value = this.props.selection.value
+        if (Array.isArray(value)) {
+            return value.map(v => v.note[fieldName])
+        } else {
+            return [value.note[fieldName]]
+        }
+    }
+
+    getNoteFieldDisplay(fieldName) {
+        const values = this.getNoteSelectionFields(fieldName),
+            first = values[0]
+
+        if (values.every(v => v === first)) {
+            return first
+        } else {
+            return 'Mixed'
+        }
+    }
 
     render() {
         const value = this.props.selection.value,
             hasMultipleSelections = Array.isArray(value),
+            canModify = !hasMultipleSelections && !this.props.locked,
             note = hasMultipleSelections ? value[0] : value
 
         const settings = this.calculateNoteSettings(note)
@@ -169,32 +189,35 @@ class NoteEditor extends Component {
                         <div className="form-row align-items-center">
                             <div className="col-auto">
                                 <label>Duration</label>
-                                <select id="duration" className="form-control" value={note.note.d} onChange={this.handleDurationChange}>
+                                {canModify && <select id="duration" className="form-control" value={note.note.d} onChange={this.handleDurationChange}>
                                     {settings.durations.map((d) => (
                                         <option key={d}>{d}</option>
                                     ))}
-                                </select>
+                                </select>}
+                                {!canModify && <div className="form-control-plaintext">{this.getNoteFieldDisplay('d')}</div>}
                             </div>
                             <div className="col-auto">
                                 <label>Interval</label>
-                                <select id="interval" className="form-control" value={note.note.i} onChange={this.handleIntervalChange}>
+                                {canModify && <select id="interval" className="form-control" value={note.note.i} onChange={this.handleIntervalChange}>
                                     {settings.intervals.map((i) => (
                                         <option key={i}>{i}</option>
                                     ))}
-                                </select>
+                                </select>}
+                                {!canModify && <div className="form-control-plaintext">{this.getNoteFieldDisplay('i')}</div>}
                             </div>
                             <div className="col-auto">
                                 <label>Fret</label>
-                                <select id="fret" className="form-control" value={note.note.f} onChange={this.handleFretChange}>
+                                {canModify && <select id="fret" className="form-control" value={note.note.f} onChange={this.handleFretChange}>
                                     {this.props.frets.map((fret) => (
                                         <option key={fret}>{fret}</option>
                                     ))}
-                                </select>
+                                </select>}
+                                {!canModify && <div className="form-control-plaintext">{this.getNoteFieldDisplay('f')}</div>}
                             </div>
                             <div className="col-auto">
                                 <label>Effect</label>
-                                <select id="effect" className="form-control" value={note.note.effect} onChange={this.handleEffectChange}>
-                                    <option key={0}>none</option>
+                                {canModify && <select id="effect" className="form-control" value={note.note.effect || ''} onChange={this.handleEffectChange}>
+                                    <option key={0} value="">none</option>
                                     <option key={1}>vibrato</option>
                                     <option key={2}>bend</option>
                                     <option key={3}>pre-bend</option>
@@ -203,15 +226,16 @@ class NoteEditor extends Component {
                                     <option key={6}>hammer-on</option>
                                     <option key={7}>pull-off</option>
                                     <option key={8}>harmonic</option>
-                                </select>
+                                </select>}
+                                {!canModify && <div className="form-control-plaintext">{this.getNoteFieldDisplay('effect') || 'none'}</div>}
                             </div>
                             <div className="col-auto">
                                 <div className="form-check">
-                                    <input type="checkbox" checked={settings.isContinuation} disabled={!settings.canContinue} onChange={(e) => this.handleContinuedByChange(e, settings.continuedNote)} className="form-check-input" id="customCheck1" />
+                                    <input type="checkbox" checked={settings.isContinuation} disabled={!canModify || !settings.canContinue} onChange={(e) => this.handleContinuedByChange(e, settings.continuedNote)} className="form-check-input" id="customCheck1" />
                                     <label className="form-check-label" htmlFor="customCheck1">Continue Note?</label>
                                 </div>
                             </div>
-                            <button type="button" className="btn btn-secondary my-2" onClick={this.handleDeleteNote}>Delete</button>
+                            {canModify && <button type="button" className="btn btn-secondary my-2" onClick={this.handleDeleteNote}>Delete</button>}
                         </div>
                     </form>
                 </div>
