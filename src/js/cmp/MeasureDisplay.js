@@ -30,19 +30,9 @@ export default class MeasureDisplay extends Component {
 	static getDerivedStateFromProps(props, state) {
 		//console.log('getDerivedStateFromProps')
 
-		const intervals = [props.measure.interval()];
-		const strings = props.measure.strings;
-		for (var i=0; i < strings.length; i++) {
-			var str = strings[i];
-			for (var j=0; j < str.length; j++) {
-				var o = str[j];
-				if (o.i) {
-					intervals.push(o.i);
-				}
-			}
-		}
-		const maxI = Math.max(...intervals);
-        const subdivisions = maxI / props.measure.interval();
+		const intervals = props.measure.distinctIntervals(),
+		     maxI = Math.max(...intervals),
+             subdivisions = maxI / props.measure.interval()
 
 		const diff = {}
 

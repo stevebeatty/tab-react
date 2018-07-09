@@ -259,7 +259,20 @@ export class Measure {
     }
 
 
-    
+    distinctIntervals() {
+        const intervals = new Set()
+        intervals.add(this.interval())
+
+        for (const string of this.strings) {
+            for (const note of string) {
+                if (note.i) {
+                    intervals.add(note.i)
+                }
+            }
+        }
+
+        return intervals
+    }
 
     export() {
         const obj = {

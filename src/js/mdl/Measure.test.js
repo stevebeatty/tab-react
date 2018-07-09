@@ -218,5 +218,9 @@ describe('Measure test', () => {
     })
 
 
+    test('distinctIntervals', () => {
+        expect(measure.distinctIntervals()).toEqual(new Set([4, 8]))
 
-});
+        expect((new Measure({ i: 4 })).distinctIntervals()).toEqual(new Set([4]))
+    })
+})
