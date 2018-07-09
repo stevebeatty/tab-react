@@ -21,9 +21,17 @@ export class StringWriter {
         this.buffer.push(STRING_LINE)
     }
 
-
+    writePadded(value, maxSize, padString) {
+        const padded = (value + '').padStart(maxSize, padString)
+        //console.log('padded', padded, maxSize)
+        this.buffer.push(padded)
+    }
 
     output() {
-        return this.buffer.join()
+        return this.buffer.join('')
+    }
+
+    clear() {
+        this.buffer = new Array()
     }
 }
