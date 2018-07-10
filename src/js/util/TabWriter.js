@@ -83,7 +83,7 @@ export class TabWriter {
                 }
             }
 
-            let sizes = noteList.filter(n => n).map(n => (n.f + '').length + (n.effect ? 1 : 0) )
+            let sizes = noteList.filter(n => n).map(n => (n.f + '').length + this.spaceForEffect(n.effect))
             console.log(`notes ${noteList} sizes`, sizes)
 
             if (sizes.length === 0) {
@@ -95,7 +95,8 @@ export class TabWriter {
                 console.log('max', max)
                 for (const [index, note] of noteList.entries()) {
                     let stringWriter = this.stringWriters[index],
-                        value = ''
+                        value = '',
+                        lineCount = 1
 
                     if (note) {
                         value = note.f
@@ -107,11 +108,13 @@ export class TabWriter {
                             } else {
                                 value = symbol + value
                             }
+
+                            lineCount = this.spaceForEffect(note.effect)
                         }
                     }
 
                     stringWriter.writePadded(value, max, '-')
-                    stringWriter.writeStringLine()
+                    stringWriter.writeStringLine(lineCount)
                 }
             }
             
@@ -140,6 +143,15 @@ export class TabWriter {
                 return 1
             default:
                 return 1
+        }
+    }
+
+    spaceForEffect(effect) {
+        switch (effect) {
+            case 'vibrato':
+                return 1
+            default:
+                return 0
         }
     }
 

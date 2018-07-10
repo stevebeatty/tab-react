@@ -174,7 +174,7 @@ test('writeMeasure with effect', () => {
                     [{ f: 4, d: 1, i: 4, p: 3 }],
                     [{ f: 6, d: 1, i: 4, p: 0, effect: 'vibrato' }, { f: 3, d: 1, i: 4, p: 1 }],
                     [{ f: 5, d: 1, i: 4, p: 2, effect: 'slide-up' }, { f: 12, d: 1, i: 4, p: 3 }],
-                    [],
+                    [{ f: 3, d: 1, i: 4, p: 1, effect: 'slide-down' }, { f: 5, d: 1, i: 4, p: 2}, { f: 9, d: 1, i: 4, p: 3 }],
                     [{ f: 3, d: 1, i: 4, p: 1 }],
                     []
                 ]
@@ -187,7 +187,7 @@ test('writeMeasure with effect', () => {
     const result = tw.output()
 
     console.log(result)
-
+     
     expect(result).toEqual(
         "|-0--------\n" +
         "|----------\n" +

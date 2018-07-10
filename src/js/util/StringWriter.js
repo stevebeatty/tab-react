@@ -17,8 +17,11 @@ export class StringWriter {
         this.buffer.push(MEASURE_LINE)
     }
 
-    writeStringLine() {
-        this.buffer.push(STRING_LINE)
+    writeStringLine(count = 1) {
+        while (count > 0) {
+            this.buffer.push(STRING_LINE)
+            count--
+        }
     }
 
     writePadded(value, maxSize, padString) {
