@@ -25,7 +25,7 @@
             "d": 1,
             "p": 1,
             "f": 2,
-            "effect": "pre-bend",
+            "effects": [ { "effect": "pre-bend" } ],
             "continuedBy": 101
           },
           {

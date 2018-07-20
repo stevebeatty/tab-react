@@ -75,9 +75,9 @@ class NoteEditor extends Component {
 			selNote = this.props.selection.value
 
 		if (value === 'none' || !value) {
-			delete selNote.note.effect
+			delete selNote.note.effects
 		} else {
-			selNote.note.effect = value
+            selNote.note.effects = [{ effect: value }]
 		}
 
         this.props.controller.handleSongUpdated()
@@ -170,7 +170,8 @@ class NoteEditor extends Component {
         const value = this.props.selection.value,
             hasMultipleSelections = Array.isArray(value),
             canModify = !hasMultipleSelections && !this.props.locked,
-            note = hasMultipleSelections ? value[0] : value
+            note = hasMultipleSelections ? value[0] : value,
+            effectObj = Array.isArray(note.note.effects) ? note.note.effects[0] : {}
 
         const settings = this.calculateNoteSettings(note)
 
@@ -216,7 +217,7 @@ class NoteEditor extends Component {
                             </div>
                             <div className="col-auto">
                                 <label>Effect</label>
-                                {canModify && <select id="effect" className="form-control" value={note.note.effect || ''} onChange={this.handleEffectChange}>
+                                {canModify && <select id="effect" className="form-control" value={effectObj.effect || ''} onChange={this.handleEffectChange}>
                                     <option key={0} value="">none</option>
                                     <option key={1}>vibrato</option>
                                     <option key={2}>bend</option>

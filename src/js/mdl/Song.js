@@ -364,8 +364,8 @@ export class Song {
                 const dur = this.distanceToDurationAndInterval(segSpan.distance, segSpan.measure),
                     p = { measure: segSpan.measure, p: segSpan.p, d: dur.d, i: dur.i, f: segment.note.f, note: segment.note }
 
-                if (segment.note.effect) {
-                    p.effect = segment.note.effect
+                if (segment.note.effects) {
+                    p.effects = segment.note.effects
                 }
 
                 parts.push(p)
@@ -416,7 +416,68 @@ export class Song {
 
     canCombineParts(first, second) {
         return first.measure.key === second.measure.key && first.f === second.f &&
-            effectForName(first.effect).canCombine(effectForName(second.effect))
+            this.effectsCanCombine(first.effects, second.effects)
+    }
+
+    sortEffects(effects) {
+        effects.sort((a, b) => {
+            if (a.effect < b.effect) {
+                return -1;
+            } else if (a.effect > b.effect) {
+                return 1;
+            }
+
+            return 0;
+        });
+    }
+
+    effectsCanCombine(firstEffects, secondEffects) {
+        const firstIsNotArray = !Array.isArray(firstEffects),
+            secondIsNotArray = !Array.isArray(secondEffects)
+
+        if (firstIsNotArray && secondIsNotArray) {
+            return true // no effects
+        }
+
+        if (firstIsNotArray || secondIsNotArray || firstEffects.length !== secondEffects.length) {
+            return false // mismatches
+        }
+
+        this.sortEffects(firstEffects)
+        this.sortEffects(secondEffects)
+
+        for (let i = 0; i < firstEffects.length; i++) {
+            let first = firstEffects[i],
+                second = secondEffects[i]
+
+            if (!effectForName(first.effect).canCombine(effectForName(second.effect))) {
+                return false
+            }
+        }
+
+        return true
+    }
+
+    effectsCanApply(effects, last, curr) {
+        if (!Array.isArray(effects)) {
+            return effectForName('none').canApplyEffect(last, curr)
+        }
+
+        return effects.every(effObj => {
+            const eff = effectForName(effObj.effect)
+            return eff.canApplyEffect(last, curr)
+        })
+    }
+
+    applyEffects(effects, last, curr) {
+        if (!Array.isArray(effects)) {
+            return effectForName('none').applyEffect(last, curr)
+        }
+
+        return effects.every(effObj => {
+            const eff = effectForName(effObj.effect)
+            return eff.applyEffect(last, curr)
+        })
     }
 
     combineParts(first, second) {
@@ -425,8 +486,8 @@ export class Song {
             firstMult = baseInt / first.i,
             combined = { measure: first.measure, p: first.p, d: secondMult * second.d + firstMult * first.d, i: baseInt, f: first.f }
 
-        if (first.effect) {
-            combined.effect = first.effect
+        if (first.effects) {
+            combined.effects = first.effects
         }
 
         return combined
@@ -459,22 +520,20 @@ export class Song {
             let curr = part.measure.noteTiming(part, startTime)
             curr.f = part.f
 
-            if ('effect' in part) {
-                curr.effect = part.effect
+            if ('effects' in part) {
+                curr.effects = part.effects
             }
 
             let addToMerged = true
 
             if (last) {
-                let lastEff = effectForName(last.effect)
-                if (lastEff.canApplyEffect(last, curr)) {
-                    addToMerged = addToMerged && lastEff.applyEffect(last, curr)
+                if (this.effectsCanApply(last.effects, last, curr)) {
+                    addToMerged = addToMerged && this.applyEffects(last.effects, last, curr)
                 }
             }
 
-            let currEff = effectForName(curr.effect)
-            if (currEff.canApplyEffect(last, curr)) {
-                addToMerged = addToMerged && currEff.applyEffect(last, curr)
+            if (this.effectsCanApply(curr.effects, last, curr)) {
+                addToMerged = addToMerged && this.applyEffects(curr.effects, last, curr)
             }
 
             if (addToMerged) {
@@ -484,10 +543,8 @@ export class Song {
         }
 
 		if (last) {
-			let lastEff = effectForName(last.effect)
-
-            if (lastEff.canApplyEffect(last, undefined)) {
-                if(lastEff.applyEffect(last, undefined)) {
+            if (this.effectsCanApply(last.effects, last, undefined)) {
+                if (this.applyEffects(last.effects, last, undefined)) {
 					mergedParts.push(last)
 				}
             }

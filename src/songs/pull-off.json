@@ -25,7 +25,7 @@
             "d": 1,
             "p": 1,
             "f": 2,
-            "effect": "pull-off",
+            "effects": [ { "effect": "pull-off" } ],
             "continuedBy": 101
           },
           {

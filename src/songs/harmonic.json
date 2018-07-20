@@ -25,7 +25,7 @@
             "d": 1,
             "p": 1,
             "f": 5,
-            "effect": "harmonic"
+            "effects": [ { "effect": "harmonic" } ]
           }
         ],
         [

@@ -22,7 +22,7 @@
             "d": 2,
             "p": 1,
             "f": 0,
-            "effect": "vibrato"
+            "effects": [ { "effect": "vibrato" } ]
           }
         ],
         [
@@ -53,7 +53,7 @@
             "d": 3,
             "p": 2,
             "f": 3,
-            "effect":  "slide-up"
+            "effects": [ { "effect": "slide-up" } ]
           }
         ],
         [
@@ -117,7 +117,7 @@
             "d": 4,
             "p": 0.5,
             "f": 3,
-			"effect": "slide-down"
+            "effects": [ { "effect": "slide-down" } ]
           },
           {
             "i": 4,

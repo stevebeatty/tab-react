@@ -25,7 +25,7 @@
             "d": 1,
             "p": 1,
             "f": 0,
-            "effect": "hammer-on",
+            "effects": [ { "effect": "hammer-on" } ],
             "continuedBy": 101
           },
           {

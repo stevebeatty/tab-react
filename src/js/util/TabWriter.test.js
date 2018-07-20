@@ -158,7 +158,7 @@ test('writeMeasure with effect', () => {
         "|--------5-")
 })
 */
-
+/*
 test('writeMeasure with effect', () => {
     var tw = new TabWriter()
 
@@ -196,7 +196,7 @@ test('writeMeasure with effect', () => {
         "|----------\n" +
         "|--------5-")
 })
-
+*/
 /*
 test('writeSong', () => {
     var tw = new TabWriter()

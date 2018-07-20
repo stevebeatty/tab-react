@@ -95,30 +95,27 @@ class SongPlayer {
             note = Object.assign(note, sourceNote)
         }
 
-        if (note.effect) {
-            const eff = {
-                effect: note.effect,
-                start: note.start,
-                stop: note.stop
-            }
+        if (Array.isArray(note.effects)) {
+            for (const eff of note.effects) {
 
-            if (note.effect === 'harmonic') {
-                let detune = note.f * 100
-                if (note.f === 12) {
-                    detune = 1200
-                } else if (note.f === 7 || note.f === 19) {
-                    detune = 1900
-                } else if (note.f === 5 || note.f === 24) {
-                    detune = 2400
+                eff.start = note.start
+                eff.stop = note.stop
+
+                if (eff.effect === 'harmonic') {
+                    let detune = note.f * 100
+                    if (note.f === 12) {
+                        detune = 1200
+                    } else if (note.f === 7 || note.f === 19) {
+                        detune = 1900
+                    } else if (note.f === 5 || note.f === 24) {
+                        detune = 2400
+                    }
+
+                    eff.detune = detune
+
+                    note.f = 0
                 }
-
-                eff.detune = detune
-
-                note.f = 0
             }
-            note.effects = [eff]
-
-            delete note.effect
         }
 
         return note

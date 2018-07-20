@@ -34,7 +34,7 @@
             "p": 2,
             "f": 0,
             "continues": 100,
-            "effect": "vibrato"
+            "effects": [ { "effect": "vibrato" } ]
           }
         ],
         [

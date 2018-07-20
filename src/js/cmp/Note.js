@@ -57,12 +57,24 @@ export class Note extends Component {
         this.props.onDrop(this.props.string, evt)
     }
 
+    hasEffect(effectName) {
+        if (Array.isArray(this.props.note.effects)) {
+            for (const eff of this.props.note.effects) {
+                if (eff.effect === effectName) {
+                    return true
+                }
+            }
+        }
+
+        return false
+    }
+
     render() {
         const rectHeight = 0.2,
             imgHeight = 1.5,
             imgLeft = .75,
             imgMiddle = imgHeight / 2,
-            hasEffect = 'effect' in this.props.note,
+            hasEffects = 'effects' in this.props.note,
             isContinued = 'continues' in this.props.note
 
 
@@ -83,7 +95,7 @@ export class Note extends Component {
                     height: imgHeight + 'em',
                     pointerEvents: 'auto'
                 }}>
-                <svg className={(hasEffect ? 'note-with-effect' : '')}
+                <svg className={(hasEffects ? 'note-with-effect' : '')}
                     style={{ width: this.props.d + imgLeft + 'em', height: imgHeight + 'em' }}>
 
                     <rect className={"note-extent string-" + this.props.string}
@@ -93,20 +105,20 @@ export class Note extends Component {
                         height="0.2em"
                         onClick={this.handleClick} />
 
-                    {this.props.note.effect === 'vibrato' && <SvgWavePath width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} cyclesPerEm={1}
+                    {this.hasEffect('vibrato') && <SvgWavePath width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} cyclesPerEm={1}
                         amplitude={0.6} pathClass={"string-" + this.props.string + '-stroke'} />}
 
-                    {this.props.note.effect === 'slide-up' && <line x1={imgLeft + 'em'} x2={imgLeft + this.props.d + 'em'} y1={imgMiddle + slideHeight + 'em'} y2={imgMiddle - slideHeight + 'em'}
+                    {this.hasEffect('slide-up') && <line x1={imgLeft + 'em'} x2={imgLeft + this.props.d + 'em'} y1={imgMiddle + slideHeight + 'em'} y2={imgMiddle - slideHeight + 'em'}
                         className={"string-" + this.props.string + '-stroke'} strokeWidth="1.5" stroke="black" vectorEffect="non-scaling-stroke" />}
 
-                    {this.props.note.effect === 'slide-down' && <line x1={imgLeft + 'em'} x2={imgLeft + this.props.d + 'em'} y1={imgMiddle - slideHeight + 'em'} y2={imgMiddle + slideHeight + 'em'}
+                    {this.hasEffect('slide-down') && <line x1={imgLeft + 'em'} x2={imgLeft + this.props.d + 'em'} y1={imgMiddle - slideHeight + 'em'} y2={imgMiddle + slideHeight + 'em'}
                         className={"string-" + this.props.string + '-stroke'} strokeWidth="1.5" stroke="black" vectorEffect="non-scaling-stroke" />}
 
-                    {this.props.note.effect === 'bend-up' && <SvgBend width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} pathClass={"string-" + this.props.string} />}
+                    {this.hasEffect('bend-up') && <SvgBend width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} pathClass={"string-" + this.props.string} />}
 
-                    {this.props.note.effect === 'pre-bend' && <SvgBend width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} pathClass={"string-" + this.props.string} direction={-1} offset={- 0.45 * imgHeight} />}
+                    {this.hasEffect('pre-bend') && <SvgBend width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} pathClass={"string-" + this.props.string} direction={-1} offset={- 0.45 * imgHeight} />}
 
-                    {(this.props.note.effect === 'pull-off' || this.props.note.effect === 'hammer-on') && <SvgArc width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} pathClass={"string-" + this.props.string} />}
+                    {(this.hasEffect('pull-off') || this.hasEffect('hammer-on')) && <SvgArc width={this.props.d + imgLeft} height={imgHeight} x={imgLeft} pathClass={"string-" + this.props.string} />}
 
                     {this.props.selected &&
                         <circle className="selected-note" cx={imgLeft + 'em'}
