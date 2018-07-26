@@ -493,10 +493,6 @@ export class Song {
         return combined
     }
 
-    static seqPartAddEffect(part, effectObj) {
-        part.effects = part.effects || []
-        part.effects.push(effectObj)
-    }
 
     static seqPartRemoveFirstEffect(part, effect) {
         if (Array.isArray(part.effects)) {
@@ -513,7 +509,7 @@ export class Song {
     analyzeSequence(sequence, startTime) {
         let parts = this.flattenSequenceSpans(sequence)
 
-        //console.log('parts', parts)
+        console.log('parts', parts)
 
         let last = null, mergedParts = []
         for (const part of parts) {
@@ -550,7 +546,7 @@ export class Song {
             }
 		}
         
-        //console.log('after', mergedParts)
+        console.log('after', mergedParts)
 
         return mergedParts
     }
@@ -713,6 +709,21 @@ class Effect {
     applyEffect(last, curr) {
         return false
     }
+
+    isEffectIn(iterable) {
+        for (const obj of iterable) {
+            if (obj.effect === this.name) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    static seqPartAddEffect(part, effectObj) {
+        part.effects = part.effects || []
+        part.effects.push(effectObj)
+    }
 }
 
 class NoEffect extends Effect {
@@ -741,7 +752,7 @@ class BaseSlideEffect extends Effect {
 
     applyEffect(last, curr) {
         const removed = Song.seqPartRemoveFirstEffect(last, last.effect)
-        Song.seqPartAddEffect(last, {
+        Effect.seqPartAddEffect(last, {
             effect: last.effect, start: last.start, stop: curr.stop, transistionStop: last.stop, detune: (curr.f - last.f) * 100
         })
         last.stop = curr.stop
@@ -761,7 +772,7 @@ class VibratoEffect extends Effect {
     }
 
     applyEffect(last, curr) {
-        Song.seqPartAddEffect(last, { effect: curr.effect, start: curr.start, stop: curr.stop })
+        Effect.seqPartAddEffect(last, { effect: curr.effect, start: curr.start, stop: curr.stop })
         last.stop = curr.stop
         return false
     }
@@ -777,7 +788,7 @@ class BasePullEffect extends Effect {
     }
 
     applyEffect(last, curr) {
-        Song.seqPartAddEffect(curr, {
+        Effect.seqPartAddEffect(curr, {
             effect: last.effect, start: curr.start, stop: curr.stop
         })
         delete last.effect
@@ -792,16 +803,19 @@ class PreBendEffect extends Effect {
     }
 
     canApplyEffect(last, curr) {
+        console.log('can apply effect', last, curr)
         return last && curr && last.effect === this.name
     }
 
     applyEffect(last, curr) {
         const removed = Song.seqPartRemoveFirstEffect(last, last.effect),
 			detuneEnd = curr ? curr.f : last.f - 2
-        Song.seqPartAddEffect(last, {
+        Effect.seqPartAddEffect(last, {
             effect: last.effect, start: last.start, stop: last.stop, detune: (last.f - detuneEnd) * 100
         })
         last.stop = curr ? curr.stop : last.stop
+        console.log('effobj', last)
+
         delete last.effect
 
         return false
@@ -827,7 +841,7 @@ class HarmonicEffect extends Effect {
             detune = 2400
         }
 
-        Song.seqPartAddEffect(curr, {
+        Effect.seqPartAddEffect(curr, {
             effect: curr.effect, start: curr.start, stop: curr.stop, detune
         })
 
