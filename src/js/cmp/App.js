@@ -146,10 +146,13 @@ class App extends Component {
     }
 
     loadSong(json) {
+        const song = new Song(json)
         this.setState({
-            song: new Song(json),
+            song,
             showLoadFile: false
         })
+
+        this.songPlayer.loadSong(song)
     }
 
     scheduleNext() {

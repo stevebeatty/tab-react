@@ -175,6 +175,8 @@ class SoundPlayer {
 
         const [actualStart, actualStop] = this.getActualTimes(start, stop)
 
+        console.log('prebend', start, stop)
+
         let src = this.audioContext.createConstantSource()
         src.offset.setValueAtTime(detune, 0.0001)
         src.offset.setTargetAtTime(0, actualStart + 0.01, 0.5)

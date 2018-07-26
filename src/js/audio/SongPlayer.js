@@ -71,6 +71,8 @@ class SongPlayer {
         const result = this.soundPlayer.playNote(string, note.f, note.start, note.stop)
         this.soundPlayer.addNoteFade(result.gain, note.stop)
 
+        console.log('note', note)
+
         if (note.effects) {
             for (const eff of note.effects) {
                 this.addSoundEffect(result, eff)
@@ -94,6 +96,8 @@ class SongPlayer {
         if (sourceNote) {
             note = Object.assign(note, sourceNote)
         }
+
+        console.log('processNote', note)
 
         if (Array.isArray(note.effects)) {
             for (const eff of note.effects) {
