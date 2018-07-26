@@ -495,22 +495,12 @@ export class Song {
     }
 
 
-    static seqPartRemoveFirstEffect(part, effect) {
-        if (Array.isArray(part.effects)) {
-            const idx = part.effects.findIndex(e => e.effect === effect)
-            if (idx >= 0) {
-                const removed = part.effects.splice(idx, 1)
-                return removed.length > 0 ? removed[0] : null
-            }
-        }
-
-        return null
-    }
+    
 
     analyzeSequence(sequence, startTime) {
         let parts = this.flattenSequenceSpans(sequence)
 
-        console.log('parts', parts)
+        //console.log('parts', parts)
 
         let last = null, mergedParts = []
         for (const part of parts) {
@@ -525,12 +515,12 @@ export class Song {
 
             if (last) {
                 if (this.effectsCanApply(last.effects, last, curr)) {
-                    addToMerged = addToMerged && this.applyEffects(last.effects, last, curr)
+                    addToMerged = addToMerged && !this.applyEffects(last.effects, last, curr)
                 }
             }
 
             if (this.effectsCanApply(curr.effects, last, curr)) {
-                addToMerged = addToMerged && this.applyEffects(curr.effects, last, curr)
+                addToMerged = addToMerged && !this.applyEffects(curr.effects, last, curr)
             }
 
             if (addToMerged) {
@@ -541,13 +531,13 @@ export class Song {
 
 		if (last) {
             if (this.effectsCanApply(last.effects, last, undefined)) {
-                if (this.applyEffects(last.effects, last, undefined)) {
+                if (!this.applyEffects(last.effects, last, undefined)) {
 					mergedParts.push(last)
 				}
             }
 		}
         
-        console.log('after', mergedParts)
+        //console.log('after', mergedParts)
 
         return mergedParts
     }

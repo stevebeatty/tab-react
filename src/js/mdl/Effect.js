@@ -13,30 +13,53 @@ export class Effect {
         return false
     }
 
+    /**
+     * Applies the effect and returns true if the effect from curr
+     * has been merged into last
+     * 
+     * @param {any} last
+     * @param {any} curr
+     */
     applyEffect(last, curr) {
         return false
     }
 
-    isEffectIn(iterable) {
+    effectObjIn(iterable) {
+        if (!iterable) return false
+
         for (const obj of iterable) {
             if (obj.effect === this.name) {
-                return true
+                return obj
             }
         }
 
         return false
     }
 
-    static seqPartAddEffect(part, effectObj) {
+    unappliedEffectObjIn(iterable) {
+        const eff = this.effectObjIn(iterable)
+        return eff && !eff.applied ? eff : null
+    }
+
+    applyEffectObj(effectObj, obj) {
+        Object.assign(effectObj, obj)
+        effectObj.applied = true
+    }
+
+    static addEffectObjToPart(effectObj, part) {
         part.effects = part.effects || []
         part.effects.push(effectObj)
     }
 
-    static seqPartRemoveFirstEffect(part, effect) {
+    removeFirstEffectObjFromPart(part) {
         if (Array.isArray(part.effects)) {
-            const idx = part.effects.findIndex(e => e.effect === effect)
+            const idx = part.effects.findIndex(e => e.effect === this.name)
             if (idx >= 0) {
                 const removed = part.effects.splice(idx, 1)
+                if (part.effects.length === 0) {
+                    delete part.effects
+                }
+
                 return removed.length > 0 ? removed[0] : null
             }
         }
@@ -56,7 +79,8 @@ export class NoEffect extends Effect {
 
     applyEffect(last, curr) {
         last.stop = curr.stop
-        return false
+
+        return true
     }
 }
 
@@ -66,18 +90,18 @@ export class BaseSlideEffect extends Effect {
     }
 
     canApplyEffect(last, curr) {
-        return last && curr && last.effect === this.name
+        return last && curr && this.unappliedEffectObjIn(last.effects)
     }
 
     applyEffect(last, curr) {
-        const removed = Effect.seqPartRemoveFirstEffect(last, last.effect)
-        Effect.seqPartAddEffect(last, {
-            effect: last.effect, start: last.start, stop: curr.stop, transistionStop: last.stop, detune: (curr.f - last.f) * 100
+        const eff = this.unappliedEffectObjIn(last.effects)
+        this.applyEffectObj(eff, {
+            start: last.start, stop: curr.stop, transistionStop: last.stop, detune: (curr.f - last.f) * 100
         })
-        last.stop = curr.stop
-        delete last.effect
 
-        return false
+        last.stop = curr.stop
+
+        return true
     }
 }
 
@@ -87,12 +111,13 @@ export class VibratoEffect extends Effect {
     }
 
     canApplyEffect(last, curr) {
-        return curr && curr.effect === this.name
+        return curr && this.unappliedEffectObjIn(curr.effects)
     }
 
     applyEffect(last, curr) {
-        Effect.seqPartAddEffect(last, { effect: curr.effect, start: curr.start, stop: curr.stop })
-        last.stop = curr.stop
+        const eff = this.unappliedEffectObjIn(curr.effects)
+        this.applyEffectObj(eff, { start: curr.start, stop: curr.stop } )
+
         return false
     }
 }
@@ -103,16 +128,17 @@ export class BasePullEffect extends Effect {
     }
 
     canApplyEffect(last, curr) {
-        return last && curr && last.effect === this.name
+        return last && curr && this.unappliedEffectObjIn(last.effects)
     }
 
     applyEffect(last, curr) {
-        Effect.seqPartAddEffect(curr, {
-            effect: last.effect, start: curr.start, stop: curr.stop
-        })
-        delete last.effect
+        const eff = this.unappliedEffectObjIn(last.effects)
+        this.applyEffectObj(eff, { start: curr.start, stop: curr.stop })
+        Effect.addEffectObjToPart(eff, curr)
 
-        return true
+        this.removeFirstEffectObjFromPart(last)
+
+        return false
     }
 }
 
@@ -122,22 +148,18 @@ export class PreBendEffect extends Effect {
     }
 
     canApplyEffect(last, curr) {
-        console.log('can apply effect', last, curr)
-        return last && curr && last.effect === this.name
+        return last && curr && this.unappliedEffectObjIn(last.effects)
     }
 
     applyEffect(last, curr) {
-        const removed = Effect.seqPartRemoveFirstEffect(last, last.effect),
+        const eff = this.unappliedEffectObjIn(last.effects),
             detuneEnd = curr ? curr.f : last.f - 2
-        Effect.seqPartAddEffect(last, {
-            effect: last.effect, start: last.start, stop: last.stop, detune: (last.f - detuneEnd) * 100
-        })
+
+        this.applyEffectObj(eff, { start: last.start, stop: last.stop, detune: (last.f - detuneEnd) * 100 })
+
         last.stop = curr ? curr.stop : last.stop
-        console.log('effobj', last)
 
-        delete last.effect
-
-        return false
+        return true
     }
 }
 
@@ -147,7 +169,7 @@ export class HarmonicEffect extends Effect {
     }
 
     canApplyEffect(last, curr) {
-        return curr && curr.effect === this.name
+        return curr && this.unappliedEffectObjIn(curr.effects)
     }
 
     applyEffect(last, curr) {
@@ -160,15 +182,12 @@ export class HarmonicEffect extends Effect {
             detune = 2400
         }
 
-        Effect.seqPartAddEffect(curr, {
-            effect: curr.effect, start: curr.start, stop: curr.stop, detune
-        })
+        const eff = this.unappliedEffectObjIn(curr.effects)
+        this.applyEffectObj(eff, { start: curr.start, stop: curr.stop, detune } )
 
         curr.f = 0
 
-        delete curr.effect
-
-        return true
+        return false
     }
 
 }
