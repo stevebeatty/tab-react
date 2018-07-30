@@ -12,7 +12,6 @@ class MeasureEditor extends Component {
     }
 
     componentDidMount() {
-        console.log('mounted:', this.props);
         this.updatePosition();
         window.addEventListener("resize", this.updatePosition);
     }
@@ -22,8 +21,6 @@ class MeasureEditor extends Component {
     }
 
     componentDidUpdate(prevProps) {
-        console.log('did update, old props:', prevProps);
-        console.log('new props:', this.props);
         this.updatePosition();
     }
 

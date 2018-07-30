@@ -25,7 +25,6 @@ function getRuler(intervals, subdivisions) {
                 arr[2 * i] = r[i]
                 arr[2 * i + 1] = subdivisions
             }
-            //arr[newSize - 1] = r[r.length - 1];
         }
 
         rulers[idx] = arr;
@@ -63,8 +62,6 @@ export class Ruler extends Component {
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        //console.log('componentDidUpdate', this.props.isPaused, prevProps !== undefined && !prevProps.isPaused)
-
         if (this.state.startAnimation) {
             const dist = this.props.subdivisionSpacing * this.props.subdivisions * this.props.d
             console.log('animate', this.props.measure.key, this.props.currentTime, this.props.totalTime, prevState)
@@ -138,14 +135,12 @@ export class Ruler extends Component {
     }
 
     rulerMarkClick(evt) {
-        console.log('rulerclick', evt.target.dataset)
         const pos = parseFloat(evt.target.dataset.position, 10)
 
         this.props.onRulerClick(pos)
     }
 
     render() {
-        //console.log('render')
         const ticks = getRuler(this.props.d, this.props.subdivisions);
         const bottom = this.props.subdivisionSpacing - 0.1,
             tickClickWidth = 0.6 * this.props.subdivisionSpacing

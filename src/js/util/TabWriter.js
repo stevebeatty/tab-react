@@ -39,7 +39,6 @@ export class TabWriter {
             let nextIndex = startIndex
             while (nextIndex < notes.length) {
                 const note = notes[nextIndex]
-                //console.log('nextIndex', nextIndex, note.p, startPos, endPos)
                 if (note.p >= endPos) {
                     return { nextIndex }
                 }

@@ -26,7 +26,6 @@ export class StringWriter {
 
     writePadded(value, maxSize, padString) {
         const padded = (value + '').padStart(maxSize, padString)
-        //console.log('padded', padded, maxSize)
         this.buffer.push(padded)
     }
 

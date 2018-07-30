@@ -16,8 +16,6 @@ export class String extends Component {
     }
 
     handleDragOver(evt) {
-        //evt.preventDefault()
-        //evt.dataTransfer.dropEffect = 'move'
         this.props.onDragOver(this.props.index, evt)
     }
 

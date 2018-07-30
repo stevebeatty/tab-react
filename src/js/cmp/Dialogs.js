@@ -14,18 +14,14 @@ class SettingsEditor extends Component {
 
     componentDidMount() {
         console.log('mounted:', this.props);
-        //this.updatePosition();
-        // window.addEventListener("resize", this.updatePosition);
     }
 
     componentWillUnmount() {
-        //window.removeEventListener("resize", this.updatePosition);
     }
 
     componentDidUpdate(prevProps) {
         console.log('did update, old props:', prevProps);
         console.log('new props:', this.props);
-        //this.updatePosition();
     }
 
     updatePosition() {
@@ -72,13 +68,10 @@ class FileLoader extends Component {
 
     componentDidMount() {
         console.log('mounted:', this.props);
-        // $(this.editorRef.current).modal('show')
-        //document.body.classList.add('modal-open')
     }
 
     componentWillUnmount() {
         console.log('unmounting')
-        //document.body.classList.remove('modal-open')
     }
 
     componentDidUpdate(prevProps) {

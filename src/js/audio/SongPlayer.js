@@ -71,8 +71,6 @@ class SongPlayer {
         const result = this.soundPlayer.playNote(string, note.f, note.start, note.stop)
         this.soundPlayer.addNoteFade(result.gain, note.stop)
 
-        console.log('note', note)
-
         if (note.effects) {
             for (const eff of note.effects) {
                 this.addSoundEffect(result, eff)
@@ -96,8 +94,6 @@ class SongPlayer {
         if (sourceNote) {
             note = Object.assign(note, sourceNote)
         }
-
-        console.log('processNote', note)
 
         if (Array.isArray(note.effects)) {
             for (const eff of note.effects) {
@@ -133,7 +129,6 @@ class SongPlayer {
                 beatDelay = 60 / measure.tempo(),
                 stringMap = measure.notesInTimeRange(startTime - m.time, endTime - m.time)
 
-            //console.log('measure', measure.key, startTime - m.time, endTime - m.time)
 
             Object.keys(stringMap).forEach(string => {
                 console.log('string', string)
@@ -148,7 +143,6 @@ class SongPlayer {
                         let notes = null
 
                         if (isContinued) { // start of sequence
-                            console.log('sequence start', note.key, measure.key, start)
                             const seq = this.song.getNoteSequence(note.key, measure.key),
                                 result = this.song.sequenceSpan(seq, measure.key, string, start)
                             notes = this.song.analyzeSequence(result.sequence, measureStart)
@@ -156,7 +150,6 @@ class SongPlayer {
                             notes = this.processNote(string, { start, stop }, note)
                         }
 
-                        console.log('notes', notes)
                         this.playNotes(string, notes)
                     }
                     

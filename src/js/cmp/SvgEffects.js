@@ -74,7 +74,6 @@ export class SvgBend extends Component {
             widthExtent = 0.9 * width,
             direction = this.props.direction || 1,
             offset = this.props.offset || 0,
-            //pathD = `M 0 ${.5 * height} l ${width * .5} 0 c ${width * .05} ${.5 * -height} ${width * .05} ${.5 * -height} ${width * .05} ${.5 * -height} l 0 ${0.4 * -height}`
             pathD = `M 0 ${.5 * height + offset} l ${width * .25} 0 c ${width * .25} 0 ${width * .25} 0 ${width * .25} ${-0.4 * direction * height}`
 
         return (

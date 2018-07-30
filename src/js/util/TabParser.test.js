@@ -1,12 +1,10 @@
 import TabParser from './TabParser.js';
-import tab1 from './tab.js';
+import tab1 from '../../songs/tab.js';
 
 test('new should work', () => {
 	var tp = new TabParser();
 	tp.setTabToParse(tab1);
 	console.log(tp.lines);
-	//console.log(JSON.stringify(tp.parseNextLine()));
-	//console.log(JSON.stringify(tp.parseNextLine()));
 	
 	tp.parseNextLine();
 	console.log(JSON.stringify(tp.song));

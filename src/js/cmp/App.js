@@ -91,9 +91,6 @@ class App extends Component {
         this.songPlayer.loadSounds().then(resp => {
             console.log('sounds loaded')
             this.songPlayer.loadSong(this.state.song)
-            //const sound = this.soundPlayer.findSound(3, 3)
-            //this.soundPlayer.createSoundNodes(sound, 1, 2, 0)
-            //this.playSong()
         })
  
     }
@@ -128,8 +125,6 @@ class App extends Component {
 			nextTime = this.state.lastScheduleTime + interval,
 			elapsed = (new Date().getTime() - this.state.lastTime) / 1000,
 			currentTime = this.state.currentTime + elapsed
-
-        //console.log('tick', this.state.lastScheduleTime, nextTime)
 
 		this.songPlayer.scheduleNotesInTimeRange(this.state.lastScheduleTime, nextTime)
 
@@ -167,7 +162,6 @@ class App extends Component {
             isPlayingSong: true,
             isPaused: false
         })
-        //this.songPlayer.scheduleNotesInTimeRange(0, 12)
     }
 
     pauseSong() {
@@ -331,8 +325,6 @@ class App extends Component {
             }
 
 
-    //    console.log('selnote: ', this.state.selectedNote);
-     //   console.log('layout2 ', this.state.layout);
     return (
         <React.Fragment>
 
@@ -356,10 +348,8 @@ class App extends Component {
  
             </NavBar>
             <div className="container" style={{ "marginTop": "1em" }}>
-				<div>{this.state.currentTime}</div>
 				<h4>{this.state.song.title}</h4>
 				<h6>{this.state.song.artist}</h6>
-
 
                 <MeasureController song={this.state.song} onSongUpdate={this.handleSongUpdated}
                     selection={this.state.selection} onMeasureSelect={this.setSelectedMeasure}

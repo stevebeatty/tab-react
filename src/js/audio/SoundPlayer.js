@@ -18,7 +18,6 @@ class SoundPlayer {
 
         this.masterGain = this.audioContext.createGain()
         this.masterGain.gain.setValueAtTime(1, this.audioContext.currentTime)
-        //this.masterGain.connect(this.audioContext.destination)
 
         this.analyser = this.audioContext.createAnalyser()
 
@@ -155,7 +154,6 @@ class SoundPlayer {
         let src = this.audioContext.createConstantSource()
         src.offset.setValueAtTime(0.001, actualStart)
         src.offset.setTargetAtTime(detune, actualStart + 0.1, 0.5)
-        //src.offset.exponentialRampToValueAtTime(detune, actualStart + dur / 8)
 
         src.connect(node.detune)
 
@@ -180,7 +178,6 @@ class SoundPlayer {
         let src = this.audioContext.createConstantSource()
         src.offset.setValueAtTime(detune, 0.0001)
         src.offset.setTargetAtTime(0, actualStart + 0.01, 0.5)
-        //src.offset.exponentialRampToValueAtTime(detune, actualStart + dur / 8)
 
         src.connect(node.detune)
 
@@ -252,31 +249,14 @@ class SoundPlayer {
         gainNode.disconnect(this.masterGain)
 
         gainNode.connect(filter).connect(this.masterGain)
-        
-        /*
-        const gainDampen = this.audioContext.createGain()
-        gainDampen.gain.value = 0.7
-        //gainDampen.gain.setTargetAtTime(0.85, actualStart, 0.5)
-
-        gainNode.disconnect(this.masterGain)
-
-        gainNode.connect(gainDampen).connect(this.masterGain)*/
     }
 
     addPullOff(sourceNode, gainNode, effect) {
         const { start, stop } = effect
         const [actualStart, actualStop] = this.getActualTimes(start, stop)
-        /*const filter = this.audioContext.createBiquadFilter()
-        filter.type = 'lowpass'
-        filter.frequency.value = 800
-
-        gainNode.disconnect(this.masterGain)
-
-        gainNode.connect(filter).connect(this.masterGain)
-        */
+        
         const gainDampen = this.audioContext.createGain()
         gainDampen.gain.value = 0.7
-        //gainDampen.gain.setTargetAtTime(0.85, actualStart, 0.5)
 
         gainNode.disconnect(this.masterGain)
 

@@ -194,12 +194,10 @@ class StringParser {
 	
 	onActiveEffect(type) {
 		this.activeEffect = type;
-		//this.content.push({p: this.position, e: type, d: 1});
 		this.onEffect(type);
 	}
 	
 	onEffect(type) {
-		//this.content.push({p: this.position, e: type, d: 1});
 	}
 	
 	onNote(fret) {

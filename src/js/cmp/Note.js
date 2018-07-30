@@ -19,7 +19,6 @@ export class Note extends Component {
 
     handleClick(e) {
         const bound = e.target.getBoundingClientRect()
-        console.log('click', e.pageX, bound.left, e.target)
         this.props.onClick(this.props.string, this.props.index, this.props.note, e)
     }
 

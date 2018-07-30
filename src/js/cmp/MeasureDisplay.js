@@ -8,8 +8,6 @@ export default class MeasureDisplay extends Component {
 	constructor(props) {
 		super(props);
         
-        //console.log(' & ', maxI, subdivisions)
-
         this.state = {
             localRef: React.createRef()
 		};
@@ -28,8 +26,6 @@ export default class MeasureDisplay extends Component {
 	}
 	
 	static getDerivedStateFromProps(props, state) {
-		//console.log('getDerivedStateFromProps')
-
 		const intervals = props.measure.distinctIntervals(),
 		     maxI = Math.max(...intervals),
              subdivisions = maxI / props.measure.interval()
@@ -111,7 +107,6 @@ export default class MeasureDisplay extends Component {
     }
 
     handleNoteClick(string, noteIndex, note, e) {
-       // this.props.onStringClick(this, index, e);
         const bound = this.state.ref.current.getBoundingClientRect(),
             x = e.pageX - bound.left,
             w = x / bound.width
@@ -169,8 +164,6 @@ export default class MeasureDisplay extends Component {
             rnd = Math.floor(pos) + remainSubs * subSize + fr * subSize,
             closestInMeasure = Math.min(this.props.measure.duration() + 1 - subSize, rnd);
 
-        //console.log('closestPosition: ', xNormalized, widEm, xPos, pos, closestInMeasure);
-
         return closestInMeasure;
     }
 
@@ -187,7 +180,6 @@ export default class MeasureDisplay extends Component {
     }
 
     handleDragStart(info, evt, isSelected) {
-        //console.log('dragstart measuredisplay', evt.clientX, evt.clientY, evt.pageX, evt.pageY)
         if (isSelected) {
             const el = this.selectionRef.current,
                 bound = el.getBoundingClientRect(),
@@ -214,7 +206,6 @@ export default class MeasureDisplay extends Component {
     }
 
     handleSelectionDragStart(evt) {
-        console.log('select drag start', this.selectionRef.current)
         evt.dataTransfer.setDragImage(this.selectionRef.current, 0, 0)
     }
 
@@ -225,14 +216,10 @@ export default class MeasureDisplay extends Component {
         const clickBoxHeight = this.props.layout.stringClickBoxHeight(),
             bottomStringHeight = this.stringYOffset(this.props.measure.strings.length) - this.stringYOffset(1)
 
-        //console.log('sel note ', this.props.measure.key, ' ', this.props.selectedNote);
-
         const refAtt = {};
         if (this.props.forwardedRef) {
             refAtt.ref = this.props.forwardedRef;
-            // console.log('measure ref: ', this.props.measure.key, ' :', refAtt);
         } else {
-            // console.log('no ref')
         }
 
         const selectedNotes = [], unselectedNotes = []
@@ -246,8 +233,6 @@ export default class MeasureDisplay extends Component {
             })
         })
 
-        //console.log(selectedNotes, unselectedNotes)
-      
       return (
           <div key={this.props.measure.key} className="measure" ref={this.state.ref}
                style={{ width: this.measureWidth() + 'em', height: this.measureHeight() + 'em' }}>

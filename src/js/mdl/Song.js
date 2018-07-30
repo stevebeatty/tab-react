@@ -296,15 +296,11 @@ export class Song {
             dist = duration * measure.interval() / interval,
             result = []
 
-        //console.log('findNoteSpan', mIndex, dist, skipKeys, this.measures[mIndex].strings[string].length)
-
         while (mIndex < this.measures.length && dist > 0) {
             let measure = this.measures[mIndex],
                 noteDist = measure.nextNoteDistance(string, pos, skipKeys),
                 i = measure.interval() / interval,
                 span = Math.min(noteDist === -1 ? measure.duration() - pos : noteDist, dist)
-
-            //console.log('fns', { m: measure.key, p: pos, span, noteDist, dist })
 
             if ((noteDist >= 0 && noteDist < dist) || span <= 0) {
                 break
@@ -326,7 +322,6 @@ export class Song {
 
     sequenceSpan(sequence, measureKey, string, position, skipKeys) {
         const keys = skipKeys || sequence.map(s => { return s.note.key })
-        //console.log('seqspan', sequence)
         let mKey = measureKey,
             pos = position,
             result = { status: true, sequence: [], original: sequence }
@@ -334,8 +329,6 @@ export class Song {
         for (let i = 0; i < sequence.length; i++) {
             let { note } = sequence[i],
                 noteSpan = this.findNoteSpan(mKey, string, pos, note.i, note.d, keys)
-
-            //console.log('notespan', noteSpan)
 
             if (noteSpan.remaining > 0) {
                 result.status = false
@@ -358,7 +351,6 @@ export class Song {
         let parts = []
 
         sequence.forEach(segment => {
-            //console.log('flattenSequenceSpans', segment.note, segment.span.length, ' => ')
 
             segment.span.forEach(segSpan => {
 
@@ -370,7 +362,6 @@ export class Song {
                 }
 
                 parts.push(p)
-                //console.log('    ', p)
             })
         })
 
@@ -380,13 +371,9 @@ export class Song {
     updateSequence(sequenceStatus) {
         let parts = this.flattenSequenceSpans(sequenceStatus.sequence)
 
-        //console.log('parts', parts)
-
         let last = parts[0], mergedParts = []
         for (let i = 1; i < parts.length; i++) {
             let curr = parts[i]
-
-            //console.log('can', this.canCombineParts(last, curr), last, curr)
 
             if (this.canCombineParts(last, curr)) {
                 last = this.combineParts(last, curr)
@@ -500,8 +487,6 @@ export class Song {
     analyzeSequence(sequence, startTime) {
         let parts = this.flattenSequenceSpans(sequence)
 
-        //console.log('parts', parts)
-
         let last = null, mergedParts = []
         for (const part of parts) {
             let curr = part.measure.noteTiming(part, startTime)
@@ -537,8 +522,6 @@ export class Song {
             }
 		}
         
-        //console.log('after', mergedParts)
-
         return mergedParts
     }
 
@@ -576,12 +559,8 @@ export class Song {
             currIndex = startIndex,
             result = []
 
-        //console.log('findDistance', `startMeasureKey ${startMeasureKey}, startPos ${startPos}, endMeasureKey ${endMeasureKey}, endPos ${endPos}, currIndex ${currIndex} endIndex ${endIndex}`)
-
         while (currIndex < this.measures.length && currIndex >= 0) {
             let measure = this.measures[currIndex]
-
-            //console.log('indexes: ', currIndex, endIndex, pos)
 
             if (currIndex > endIndex) {
                 this._addToDistanceResult(result, -pos, measure.interval())
@@ -603,13 +582,11 @@ export class Song {
     movePositionList(measure, pos, distance) {
         let index = this.measureIndexWithKey(measure.key),
             result = { p: pos, measureIndex: index }
-        //console.log('pos', pos, index)
+
         for (const d of distance) {
             let dist = d
-            //console.log('dist', d)
             while (dist.d !== 0 && index >= 0 && index < this.measures.length) {
                 result = this.movePosition(index, pos, dist)
-                //console.log('mv', result)
                 dist = result
                 pos = result.p
                 index = result.measureIndex
@@ -648,8 +625,6 @@ export class Song {
             }
         }
 
-        //console.log(`measureIndex ${measureIndex} pos ${pos}/${measure.interval()} + ${distance.d}/${distance.i} => nextMeasureIndex ${nextMeasureIndex} p ${newPos}, d ${rem}  mi_d ${mi_d} + p_i ${p_i} = num ${num}, md_i ${md_i}, rem ${rem}`)
-
         return Measure.simplifyNoteTiming({
             d: rem,
 			i: measure.interval() * (rem === 0 ? 1 : distance.i),
@@ -658,9 +633,6 @@ export class Song {
 		})
     }
 
-    
-
-    
 
 	export() {
 		const obj = {

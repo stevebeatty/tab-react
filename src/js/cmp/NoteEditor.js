@@ -44,7 +44,6 @@ class NoteEditor extends Component {
 
     selectedNoteModified(change) {
         const selNote = this.props.selection.value
-        console.log('selectedNoteModified ', selNote)
         Object.keys(change).forEach(k => selNote.note[k] = change[k])
 
         this.props.controller.handleSongUpdated()
@@ -84,8 +83,6 @@ class NoteEditor extends Component {
     }
 
     handleContinuedByChange(evt, continuedNote) {
-        //const continuedBy = this.parseValue(val)
-        console.log('evt', evt.target.value, continuedNote)
         if (continuedNote) {
             const note = this.props.selection.value.note
             note.continuedBy = continuedNote.key
@@ -123,7 +120,6 @@ class NoteEditor extends Component {
         if (nextNoteDist - noteLen === 0) {
             canContinue = true
             continuedNote = measure.strings[note.string][note.noteIndex + 1]
-            console.log('can continue')
         } else if (measureDur - note.note.p - noteLen === 0) {
             const next = this.props.song.measureAfter(measure.key),
                 nextMeasNoteDist = next ? next.nextNoteDistance(note.string, 0) : -1
@@ -132,7 +128,6 @@ class NoteEditor extends Component {
             if (canContinue) {
                 continuedNote = next.strings[note.string][0]
             }
-            console.log('check next', nextMeasNoteDist)
         }
 
         const isContinuation = 'continuedBy' in note.note 
@@ -174,8 +169,6 @@ class NoteEditor extends Component {
             effectObj = Array.isArray(note.note.effects) ? note.note.effects[0] : {}
 
         const settings = this.calculateNoteSettings(note)
-
-        console.log('note.key', note.note.key)
 
         return (
             <div ref={this.editorRef} className="card" style={{ zIndex: 50 }} >

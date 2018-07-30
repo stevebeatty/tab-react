@@ -44,7 +44,6 @@ class ModalDialog extends Component {
 
     componentDidMount() {
         console.log('mounted:', this.props);
-        //$(this.dialogRef.current).modal('show')
         document.body.classList.add('modal-open')
     }
 

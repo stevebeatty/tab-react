@@ -190,6 +190,4 @@ test('skip should advance the position', () => {
 	sp.parseAll();
 	
 	expect(sp.measures[0].content[0]).toEqual({p:0, f:1, d: 1});
-	
-	//console.log(JSON.stringify(sp.measures, null, 2));
 });

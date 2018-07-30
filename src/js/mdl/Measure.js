@@ -234,9 +234,7 @@ export class Measure {
             endPos = this.timeToPosition(endBound),
             result = []
 
-        //console.log('timerange', startPos, endPos)
         notes.forEach(note => {
-            //    console.log('note', note)
             if (note.p >= startPos && note.p <= endPos) {
                 result.push(note)
             }
