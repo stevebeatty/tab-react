@@ -1,8 +1,11 @@
 import { Measure } from './Measure'
 import { Effect, NoEffect, BaseSlideEffect, VibratoEffect, BasePullEffect, PreBendEffect, HarmonicEffect } from './Effect'
-import { IdGenerator, rangeArray, range } from 'js/util/Util';
+import { IdGenerator, range } from 'js/util/Util';
 
-
+/**
+ * Encapsulates properties of a song such as tempo and meter and internally
+ * stores measures with notes
+ **/
 export class Song {
     constructor(cfg) {
         this.context = {
@@ -19,8 +22,6 @@ export class Song {
         this.t = cfg.tempo
 
 		this.measures = []
-
-        
 
         if (cfg.measures) {
             // preprocess the whole list of measures to set
@@ -47,18 +48,30 @@ export class Song {
      * Song properties
      */ 
 
+    /**
+     * The musical note type that is represented by one beat - bottom number in a song's musical meter
+     */
     interval() {
         return this.i
     }
 
+    /**
+     * The number of beats in a measure - the top number in a song's musical meter
+     */
     duration() {
         return this.d
     }
 
+    /**
+     * Number of beats per minute
+     */
     tempo() {
         return this.t
     }
 
+    /**
+     *  Total time of the song in seconds 
+     */
     totalTime() {
         let time = 0
         this.measures.forEach(m => time += m.totalTime())
@@ -69,10 +82,21 @@ export class Song {
      * Measure methods
      */
 
+    /**
+     * Inserts a measure at the index
+     * 
+     * @param {number} index
+     * @param {any} measure
+     */
     insertMeasureAtIndex(index, measure) {
         this.measures.splice(index, 0, measure);
     }
 
+    /**
+     * Finds the measure that would be playing at a given time
+     * 
+     * @param {number} time
+     */
     measureAtTime(time) {
         let currTime = time,
             index = 0
@@ -95,6 +119,12 @@ export class Song {
         return {}
     }
 
+    /**
+     * Finds measures that would be playing during the interval (startTime, endTime]
+     * 
+     * @param {any} startTime
+     * @param {any} endTime
+     */
     measuresInTimeRange(startTime, endTime) {
         let elapsedTime = 0,
             measureEnd = endTime,
@@ -125,24 +155,49 @@ export class Song {
         return measures
     }
 
+    /**
+     * The measure after another measure idenified by measureKey
+     * 
+     * @param {any} measureKey
+     * @param {any} playbackContext
+     */
     measureAfter(measureKey, playbackContext) {
         const index = this.measureIndexWithKey(measureKey)
         return index < this.measures.length - 1 ? this.measures[index + 1] : null
     }
 
+    /**
+     * The measure before another measure idenified by measureKey
+     * 
+     * @param {any} measureKey
+     * @param {any} playbackContext
+     */
     measureBefore(measureKey, playbackContext) {
         const index = this.measureIndexWithKey(measureKey)
         return index > 0 ? this.measures[index - 1] : null
     }
 
+    /**
+     * Finds a measure by key
+     * 
+     * @param {any} measureKey
+     */
     measureWithKey(measureKey) {
         return this.measures.find(x => x.key === measureKey)
     }
 
+    /**
+     * Finds the index of a measure by measure key
+     * 
+     * @param {any} measureKey
+     */
     measureIndexWithKey(measureKey) {
         return this.measures.findIndex(x => x.key === measureKey)
     }
 
+    /**
+     * Create a new measure using the song's context
+     */
     newMeasure() {
         return new Measure({}, this.context)
     }
@@ -153,6 +208,13 @@ export class Song {
      * Note methods
      */ 
 
+    /**
+     * Finds a note by key, optionally using a specific measure as the search bounds.  If
+     * no measure key is passed then searches all measures.
+     * 
+     * @param {any} noteKey
+     * @param {any} measureKey
+     */
     noteWithKey(noteKey, measureKey) {
         if (measureKey !== undefined) {
             let measure = this.measureWithKey(measureKey)
@@ -178,6 +240,11 @@ export class Song {
         return null
     }
 
+    /**
+     * Finds the index of a note in a measure using the note key
+     * 
+     * @param {any} noteKey
+     */
     noteIndexWithKey(noteKey) {
         for (let i = 0; i < this.measures.length; i++) {
             let measure = this.measures[i],
@@ -193,6 +260,13 @@ export class Song {
         return null
     }
 
+    /**
+     * Removes a note from a measure and string using the note's index
+     * 
+     * @param {any} measureIndex
+     * @param {any} string
+     * @param {any} noteIndex
+     */
     removeNoteByIndex(measureIndex, string, noteIndex) {
         const measure = this.measures[measureIndex],
             note = measure.removeNoteByIndex(string, noteIndex)
@@ -213,9 +287,16 @@ export class Song {
     }
 
     /*
-     * Note sequence methods
+     * Note sequence methods - note sequences are series of notes that continue each other
      */ 
 
+    /**
+     * Gets the note sequence as an array of notes by finding the note by key and
+     * then finding the beginning of the sequence that note is in.
+     * 
+     * @param {any} noteKey
+     * @param {any} measureKey
+     */
     getNoteSequence(noteKey, measureKey) {
         let mIndex = this.measureIndexWithKey(measureKey),
             measure = this.measures[mIndex],
@@ -250,6 +331,14 @@ export class Song {
         return seq
     }
 
+    /**
+     * Finds the beginning of note sequences by using the start point identifed
+     * by the arguments and traversing backwards
+     * 
+     * @param {any} noteIndex
+     * @param {any} stringIndex
+     * @param {any} measureIndex
+     */
 	findNoteSequenceStart(noteIndex, stringIndex, measureIndex) {
 		let measure = this.measures[measureIndex],
 			note = measure.noteWithIndex(stringIndex, noteIndex)
@@ -289,6 +378,17 @@ export class Song {
 		}
 	}
 
+    /**
+     * Finds the series of measures that a note would traverse if started in the measure
+     * using the position, iterval and duration specified.
+     * 
+     * @param {any} measureKey
+     * @param {any} string
+     * @param {any} position
+     * @param {any} interval
+     * @param {any} duration
+     * @param {any} skipKeys
+     */
     findNoteSpan(measureKey, string, position, interval, duration, skipKeys) {
         let mIndex = this.measureIndexWithKey(measureKey),
             measure = this.measures[mIndex],
@@ -320,6 +420,15 @@ export class Song {
         }
     }
 
+    /**
+     * Finds the measures traversed by a sequence of notes.  Calls findNoteSpan
+     * 
+     * @param {any} sequence
+     * @param {any} measureKey
+     * @param {any} string
+     * @param {any} position
+     * @param {any} skipKeys
+     */
     sequenceSpan(sequence, measureKey, string, position, skipKeys) {
         const keys = skipKeys || sequence.map(s => { return s.note.key })
         let mKey = measureKey,
@@ -347,6 +456,11 @@ export class Song {
         return result
     }
 
+    /**
+     * Flattens the spans of each piece of a sequence into an array of parts
+     * 
+     * @param {any} sequence
+     */
     flattenSequenceSpans(sequence) {
         let parts = []
 
@@ -368,6 +482,12 @@ export class Song {
         return parts
     }
 
+    /**
+     * Converts a sequence result into an array of parts that are combined 
+     * according to canCombineParts
+     * 
+     * @param {any} sequenceStatus
+     */
     updateSequence(sequenceStatus) {
         let parts = this.flattenSequenceSpans(sequenceStatus.sequence)
 
@@ -402,6 +522,12 @@ export class Song {
         return mergedParts
     }
 
+    /**
+     * Whether parts can be combined because of their measure, note and effects
+     * 
+     * @param {any} first
+     * @param {any} second
+     */
     canCombineParts(first, second) {
         return first.measure.key === second.measure.key && first.f === second.f &&
             this.effectsCanCombine(first.effects, second.effects)
@@ -419,6 +545,12 @@ export class Song {
         });
     }
 
+    /**
+     * Determines if effects arrays can combine by checking the individual effects
+     * 
+     * @param {any} firstEffects
+     * @param {any} secondEffects
+     */
     effectsCanCombine(firstEffects, secondEffects) {
         const firstIsNotArray = !Array.isArray(firstEffects),
             secondIsNotArray = !Array.isArray(secondEffects)
@@ -446,6 +578,14 @@ export class Song {
         return true
     }
 
+    /**
+     * Whether effects can be applied to two parts by calling canApplyEffect
+     * on each effect in the list
+     * 
+     * @param {any} effects
+     * @param {any} last
+     * @param {any} curr
+     */
     effectsCanApply(effects, last, curr) {
         if (!Array.isArray(effects)) {
             return effectForName('none').canApplyEffect(last, curr)
@@ -457,6 +597,14 @@ export class Song {
         })
     }
 
+    /**
+     * Applies the array of effects to the last and curr parts.  Empty effect arrays 
+     * will use the 'none' effect
+     * 
+     * @param {any} effects
+     * @param {any} last
+     * @param {any} curr
+     */
     applyEffects(effects, last, curr) {
         if (!Array.isArray(effects)) {
             return effectForName('none').applyEffect(last, curr)
@@ -468,6 +616,13 @@ export class Song {
         })
     }
 
+    /**
+     * Combines two combinable parts by finding a common interval and returning a
+     * new part
+     * 
+     * @param {any} first
+     * @param {any} second
+     */
     combineParts(first, second) {
         const baseInt = Math.max(first.i, second.i),
             secondMult = baseInt / second.i,
