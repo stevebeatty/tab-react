@@ -1,4 +1,4 @@
-﻿import { IdGenerator, rangeArray, range } from 'js/util/Util'
+﻿import { IdGenerator, range } from 'js/util/Util'
 
 export class Measure {
     constructor(cfg, ctx) {
@@ -246,12 +246,12 @@ export class Measure {
     notesInTimeRange(startTime, endTime) {
         const result = {}
 
-        rangeArray(0, this.strings.length).forEach(string => {
+        for (const string of range(0, this.strings.length)) {
             const notes = this.stringNotesInTimeRange(string, startTime, endTime)
             if (notes.length > 0) {
                 result[string] = notes
             }
-        })
+        }
 
         return result
     }

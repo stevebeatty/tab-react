@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { rangeArray } from 'js/util/Util';
+import { range, iteratorToArray } from 'js/util/Util';
 
 class NoteEditor extends Component {
 
@@ -109,7 +109,7 @@ class NoteEditor extends Component {
             nextNoteDist = measure.nextNoteDistance(note.string, note.note.p, note.note.key),
             availableSpace = nextNoteDist === -1 ? measureDur - note.note.p : nextNoteDist,
             nextInts = availableSpace * note.note.i / measure.interval(),
-            durations = rangeArray(1, Math.floor(nextInts) + 1, 1),
+            durations = iteratorToArray(range(1, Math.floor(nextInts) + 1, 1)),
             intervals = [1, 2, 4, 8, 16].filter(i => availableSpace >= note.note.d * measure.interval() / i)
 
         if (durations.length === 0) {

@@ -1,20 +1,34 @@
-function rangeArray(start, end, step=1) {
-    let a = []
-    while (start < end) {
-        a.push(start)
-        start += step
+/**
+ * Converts a iterator or generator to an array by traversing all entries in the iterator
+ * 
+ * @param {any} iterator
+ */
+export function iteratorToArray(iterator) {
+    const arr = []
+    for (let i of iterator) {
+        arr.push(i)
     }
-    return a
+    return arr
 }
 
-function* range(start, end, step = 1) {
+/**
+ * A generator function that produces a range of numbers between start and end
+ * 
+ * @param {Number} start
+ * @param {Number} end
+ * @param {Number} step
+ */
+export function* range(start, end, step = 1) {
     while (start < end) {
         yield start
         start += step
     }
 }
 
-class IdGenerator {
+/**
+ * A class that produces a sequence of id numbers
+*/
+export class IdGenerator {
     constructor(start = 1) {
         this.index = start
     }
@@ -38,6 +52,3 @@ class IdGenerator {
         }
     }
 }
-
-
-export { rangeArray, IdGenerator, range }
