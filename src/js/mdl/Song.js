@@ -523,6 +523,55 @@ export class Song {
     }
 
     /**
+     * Analyzes a sequence of notes to produce a scheduled set of parts
+     * 
+     * @param {any} sequence
+     * @param {any} startTime
+     */
+    analyzeSequence(sequence, startTime) {
+        let parts = this.flattenSequenceSpans(sequence)
+
+        let last = null, mergedParts = []
+        for (const part of parts) {
+            let curr = part.measure.noteTiming(part, startTime)
+            curr.f = part.f
+
+            if ('effects' in part) {
+                curr.effects = part.effects
+            }
+
+            let addToMerged = true
+
+            if (last) {
+                if (this.effectsCanApply(last.effects, last, curr)) {
+                    addToMerged = addToMerged && !this.applyEffects(last.effects, last, curr)
+                }
+            }
+
+            if (this.effectsCanApply(curr.effects, last, curr)) {
+                addToMerged = addToMerged && !this.applyEffects(curr.effects, last, curr)
+            }
+
+            if (addToMerged) {
+                mergedParts.push(curr)
+                last = curr
+            }
+        }
+
+        if (last) {
+            if (this.effectsCanApply(last.effects, last, undefined)) {
+                if (!this.applyEffects(last.effects, last, undefined)) {
+                    mergedParts.push(last)
+                }
+            }
+        }
+
+        return mergedParts
+    }
+
+
+
+    /**
      * Whether parts can be combined because of their measure, note and effects
      * 
      * @param {any} first
@@ -637,51 +686,13 @@ export class Song {
     }
 
 
-    
-
-    analyzeSequence(sequence, startTime) {
-        let parts = this.flattenSequenceSpans(sequence)
-
-        let last = null, mergedParts = []
-        for (const part of parts) {
-            let curr = part.measure.noteTiming(part, startTime)
-            curr.f = part.f
-
-            if ('effects' in part) {
-                curr.effects = part.effects
-            }
-
-            let addToMerged = true
-
-            if (last) {
-                if (this.effectsCanApply(last.effects, last, curr)) {
-                    addToMerged = addToMerged && !this.applyEffects(last.effects, last, curr)
-                }
-            }
-
-            if (this.effectsCanApply(curr.effects, last, curr)) {
-                addToMerged = addToMerged && !this.applyEffects(curr.effects, last, curr)
-            }
-
-            if (addToMerged) {
-                mergedParts.push(curr)
-                last = curr
-            }
-        }
-
-		if (last) {
-            if (this.effectsCanApply(last.effects, last, undefined)) {
-                if (!this.applyEffects(last.effects, last, undefined)) {
-					mergedParts.push(last)
-				}
-            }
-		}
-        
-        return mergedParts
-    }
-
-
-
+    /**
+     * Converts an abstract distance in a given measure to an object containing duration and
+     * interval
+     * 
+     * @param {any} distance
+     * @param {any} measure
+     */
     distanceToDurationAndInterval(distance, measure) {
         const baseInterval = measure.interval(),
             intDist = 1 / baseInterval,
@@ -697,14 +708,14 @@ export class Song {
         }
     }
 
-    
-
-    _addToDistanceResult(result, d, i) {
-        if (d !== 0) {
-            result.push(Measure.simplifyNoteTiming({ d: d * i, i: i * i }))
-        }
-    }
-
+    /**
+     * Finds the distance (beats) between two positions in arbitrary measures
+     * 
+     * @param {any} startMeasureKey
+     * @param {any} startPos
+     * @param {any} endMeasureKey
+     * @param {any} endPos
+     */
     findDistance(startMeasureKey, startPos, endMeasureKey, endPos) {
         let startIndex = this.measureIndexWithKey(startMeasureKey),
             endIndex = this.measureIndexWithKey(endMeasureKey),
@@ -734,12 +745,70 @@ export class Song {
         return result
     }
 
+    _addToDistanceResult(result, d, i) {
+        if (d !== 0) {
+            result.push(Measure.simplifyNoteTiming({ d: d * i, i: i * i }))
+        }
+    }
+
+    /**
+     * Moves a position on a given measure by an amount specified by the 
+     * distance parameter.  Returns an object containing the end measureIndex and position
+     * as well as any remaining duration
+     * 
+     * @param {any} measureIndex
+     * @param {any} pos
+     * @param {any} distance
+     */
+    movePosition(measureIndex, pos, distance) {
+        let measure = this.measures[measureIndex],
+            d = distance.d,
+            i = distance.i,
+            p_i = pos * i,
+            mi_d = d * measure.interval(),
+            md_i = measure.duration() * i,
+            nextMeasureIndex = measureIndex
+
+        const num = p_i + mi_d
+        let rem = 0, newPos = 0
+        if (num > md_i) {
+            rem = num - md_i
+            nextMeasureIndex++
+        } else if (num < 0) {
+            rem = -num
+            nextMeasureIndex--
+
+            if (nextMeasureIndex >= 0) {
+                newPos = this.measures[nextMeasureIndex].duration()
+            }
+        } else {
+            newPos = num / i
+            if (newPos >= measure.duration()) {
+                newPos -= measure.duration()
+                nextMeasureIndex++
+            }
+        }
+
+        return Measure.simplifyNoteTiming({
+            d: rem,
+            i: measure.interval() * (rem === 0 ? 1 : distance.i),
+            p: newPos,
+            measureIndex: nextMeasureIndex
+        })
+    }
+
+    /**
+     * Moves a position on a given measure by an array of distances
+     * 
+     * @param {any} measure
+     * @param {any} pos
+     * @param {any} distance
+     */
     movePositionList(measure, pos, distance) {
         let index = this.measureIndexWithKey(measure.key),
             result = { p: pos, measureIndex: index }
 
-        for (const d of distance) {
-            let dist = d
+        for (let dist of distance) {
             while (dist.d !== 0 && index >= 0 && index < this.measures.length) {
                 result = this.movePosition(index, pos, dist)
                 dist = result
@@ -751,44 +820,9 @@ export class Song {
         return result
     }
 
-    movePosition(measureIndex, pos, distance) {
-        let measure = this.measures[measureIndex],
-            d = distance.d,
-            i = distance.i,
-            p_i = pos * i,
-            mi_d = d * measure.interval(),
-            md_i = measure.duration() * i,
-			nextMeasureIndex = measureIndex
-
-        const num = p_i + mi_d
-        let rem = 0, newPos = 0
-        if (num > md_i) {
-            rem = num - md_i
-			nextMeasureIndex++
-        } else if (num < 0) {
-            rem = -num
-            nextMeasureIndex--
-
-            if (nextMeasureIndex >= 0) {
-                newPos = this.measures[nextMeasureIndex].duration()
-            }
-        } else {
-            newPos = num / i
-           if (newPos >= measure.duration()) {
-                newPos -= measure.duration()
-                nextMeasureIndex++
-            }
-        }
-
-        return Measure.simplifyNoteTiming({
-            d: rem,
-			i: measure.interval() * (rem === 0 ? 1 : distance.i),
-			p: newPos,
-			measureIndex: nextMeasureIndex
-		})
-    }
-
-
+    /**
+     * Exports the song as an object suitable for JSON
+     **/
 	export() {
 		const obj = {
 			title: this.title,
@@ -801,7 +835,6 @@ export class Song {
 
 		for (let i = 0; i < this.measures.length; i++) {
 			let measure = this.measures[i].export()
-			
 			obj.measures.push(measure)
 		}
 

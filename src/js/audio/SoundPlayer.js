@@ -1,7 +1,16 @@
 import { IdGenerator } from 'js/util/Util';
 
+/**
+ * Provides an interface to the underlying browser AudioContext that is used to play
+ * sounds as well as methods to load sounds.
+ */
 class SoundPlayer {
 
+    /**
+     * Constructs using a configuration object which contains soundPath and soundMap
+     * 
+     * @param {any} cfg
+     */
     constructor(cfg) {
         this.soundPath = cfg.soundPath
         this.soundMap = cfg.soundMap
@@ -13,6 +22,9 @@ class SoundPlayer {
 		this.startTime = 0
     }
 
+    /**
+     * Initializes the audio context and master gain
+     */
     initialize() {
         this.audioContext = new AudioContext()
 
@@ -25,6 +37,10 @@ class SoundPlayer {
         this.analyser.connect(this.audioContext.destination)
     }
 
+    /**
+     * Loads sounds from the soundMap configuration parameter.  Returns a promise
+     * for all sounds loading.
+     */
     loadSounds() {
         const promises = []
 
@@ -51,6 +67,12 @@ class SoundPlayer {
         return Promise.all(promises)
     }
 
+    /**
+     * Finds the correct sound for a string and fret combination
+     * 
+     * @param {any} string
+     * @param {any} fret
+     */
     findSound(string, fret) {
         const intervals = this.soundMap[string] || []
         for (let i = 0; i < intervals.length; i++) {
@@ -61,6 +83,15 @@ class SoundPlayer {
         }
     }
 
+    /**
+     * Creates sound nodes in the audio context that are scheduled to occur from startTime to stopTime
+     * Returns the bufferSource and gain nodes
+     * 
+     * @param {any} sound
+     * @param {any} startTime
+     * @param {any} stopTime
+     * @param {any} detune
+     */
     createSoundNodes(sound, startTime, stopTime, detune) {
         const bufferSource = this.audioContext.createBufferSource()
         bufferSource.buffer = sound.data
@@ -89,6 +120,12 @@ class SoundPlayer {
         }
     }
 
+    /**
+     * Adds a vibrato effect to an audio node using the effect object
+     * 
+     * @param {any} node
+     * @param {any} effect
+     */
     addVibrato(node, effect) {
         const { start, stop } = effect,
             detune = this.numberOrDefault(effect.detune, 50),
@@ -116,15 +153,26 @@ class SoundPlayer {
         osc.stop(actualStop)
     }
 
+    /**
+     * If value is a number type then value is returned, otherwise defaultValue
+     * 
+     * @param {any} value
+     * @param {any} defaultValue
+     */
     numberOrDefault(value, defaultValue) {
         return typeof value === 'number' ? value : defaultValue
     }
 
+    /**
+     * Adds a slide effect to an audio node using the effect object
+     * 
+     * @param {any} node
+     * @param {any} effect
+     */
     addSlide(node, effect) {
         const { start, stop } = effect,
             detune = this.numberOrDefault(effect.detune, effect.effect === 'slide-up' ? 200 : -200),
             transistionStop = this.numberOrDefault(effect.transistionStop, stop)
-
 
         const [actualStart, actualStop, actualTransitionStop] = this.getActualTimes(start, stop, transistionStop)
 
@@ -144,6 +192,12 @@ class SoundPlayer {
         src.stop(actualStop)
     }
 
+    /**
+     * Adds a bend effect to the audio node using the effect object
+     * 
+     * @param {any} node
+     * @param {any} effect
+     */
     addBend(node, effect) {
         const { start, stop } = effect,
             detune = this.numberOrDefault(effect.detune, 200),
@@ -167,6 +221,12 @@ class SoundPlayer {
         src.stop(actualStop)
     }
 
+    /**
+     * Adds a pre-bend effect to the audio node using the effect object
+     * 
+     * @param {any} node
+     * @param {any} effect
+     */
     addPreBend(node, effect) {
         const { start, stop } = effect,
             detune = this.numberOrDefault(effect.detune, 200)
@@ -191,12 +251,24 @@ class SoundPlayer {
         src.stop(actualStop)
     }
 
+    /**
+     * Adds a note fade effect to prevent sharp changes at the end of notes
+     * 
+     * @param {any} gainNode
+     * @param {any} noteStopTime
+     * @param {any} timeConstant
+     */
     addNoteFade(gainNode, noteStopTime, timeConstant = 0.015) {
         const [actualStop] = this.getActualTimes(noteStopTime - 2 * timeConstant)
         gainNode.gain.setTargetAtTime(0, actualStop, timeConstant)
     }
 
-
+    /**
+     * Adds a timed detune effect to an audio node using the effect object
+     * 
+     * @param {any} node
+     * @param {any} effect
+     */
     addDetune(node, effect) {
         const { start, stop } = effect,
             detune = this.numberOrDefault(effect.detune, 200)
@@ -218,6 +290,13 @@ class SoundPlayer {
         src.stop(actualStop)
     }
 
+    /**
+     * Adds a filter to nodes
+     * 
+     * @param {any} sourceNode
+     * @param {any} gainNode
+     * @param {any} effect
+     */
     addFilter(sourceNode, gainNode, effect) {
         const { start, stop } = effect
         const [actualStart, actualStop] = this.getActualTimes(start, stop)
@@ -251,6 +330,13 @@ class SoundPlayer {
         gainNode.connect(filter).connect(this.masterGain)
     }
 
+    /**
+     * Adds a pull off effect to audio nodes based on the effect object
+     * 
+     * @param {any} sourceNode
+     * @param {any} gainNode
+     * @param {any} effect
+     */
     addPullOff(sourceNode, gainNode, effect) {
         const { start, stop } = effect
         const [actualStart, actualStop] = this.getActualTimes(start, stop)
@@ -263,10 +349,17 @@ class SoundPlayer {
         gainNode.connect(gainDampen).connect(this.masterGain)
     }
 
+    /**
+     * Gets the actual time for all arguments by adding the start time 
+     * of the context
+     */
     getActualTimes() {
         return Array.from(arguments).map(a => this.startTime + a)
     }
 
+    /**
+     * Sets the start time and unpauses the audio context
+     */
 	start() {
 		if (this.audioContext.state === 'suspended') {
 			console.log('resuming', this.audioContext.currentTime)
@@ -276,6 +369,9 @@ class SoundPlayer {
 		}
 	}
 
+    /**
+     * Cancels any currently playing sound
+     */
 	stop() {
 		Object.keys(this.currentSounds).forEach(id=> {
 			const sound = this.currentSounds[id]
@@ -285,6 +381,15 @@ class SoundPlayer {
 		})
 	}
 
+    /**
+     * Plays a note for a string and fret combination between startTime and endTime.  Returns
+     * the audio nodes that were created
+     * 
+     * @param {any} string
+     * @param {any} fret
+     * @param {any} startTime
+     * @param {any} endTime
+     */
     playNote(string, fret, startTime, endTime) {
         const sound = this.findSound(string, fret),
 			refTime = this.startTime
@@ -292,10 +397,16 @@ class SoundPlayer {
         return this.createSoundNodes(sound, refTime + startTime, refTime + endTime, fret * 100)
     }
 
+    /**
+     * Pauses the audio context 
+     **/
     pause() {
         this.audioContext.suspend()
     }
 
+    /**
+     * Resumes a paused audio context
+     */
     resume() {
         this.audioContext.resume()
     }

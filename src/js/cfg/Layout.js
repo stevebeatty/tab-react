@@ -1,3 +1,6 @@
+/**
+ * Defines sizes that are used for laying out the display.  In 'em's
+ */
 class Layout {
     topStringOffset() {
         return 0.75;

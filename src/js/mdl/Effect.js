@@ -1,14 +1,32 @@
+/**
+ * A base class for different types of effects that is used to apply effects
+ * or to determine if effects can be combined
+ */
 export class Effect {
     constructor(name) {
         this._name = name
     }
 
+    /**
+     * The name of the effect
+     */
     get name() { return this._name }
 
+    /**
+     * Whether this effect can combine with another
+     * 
+     * @param {any} effect
+     */
     canCombine(effect) {
         return effect.name === this.name
     }
 
+    /**
+     * Whether this effect can be applied given the argument parts
+     * 
+     * @param {any} lastPart
+     * @param {any} currPart
+     */
     canApplyEffect(lastPart, currPart) {
         return false
     }
@@ -24,6 +42,12 @@ export class Effect {
         return false
     }
 
+    /**
+     * Whether an iterable contains an effect object with this effect's name.  Returns
+     * the effect object or false if not found
+     * 
+     * @param {any} iterable
+     */
     effectObjIn(iterable) {
         if (!iterable) return false
 
@@ -36,21 +60,44 @@ export class Effect {
         return false
     }
 
+    /**
+     * Returns an effect object that has not been applied yet from the iterable or null
+     * if none found
+     * 
+     * @param {any} iterable
+     */
     unappliedEffectObjIn(iterable) {
         const eff = this.effectObjIn(iterable)
         return eff && !eff.applied ? eff : null
     }
 
+    /**
+     * Assigns the fields from obj to effectObj and sets the applied field to true
+     * 
+     * @param {any} effectObj
+     * @param {any} obj
+     */
     applyEffectObj(effectObj, obj) {
         Object.assign(effectObj, obj)
         effectObj.applied = true
     }
 
+    /**
+     * Adds an effect object to a part
+     * 
+     * @param {any} effectObj
+     * @param {any} part
+     */
     static addEffectObjToPart(effectObj, part) {
         part.effects = part.effects || []
         part.effects.push(effectObj)
     }
 
+    /**
+     * Removes the first effect object from part that has the same name as this effect
+     * 
+     * @param {any} part
+     */
     removeFirstEffectObjFromPart(part) {
         if (Array.isArray(part.effects)) {
             const idx = part.effects.findIndex(e => e.effect === this.name)
@@ -68,6 +115,9 @@ export class Effect {
     }
 }
 
+/**
+ * Used for notes that have no assigned effect
+ */
 export class NoEffect extends Effect {
     constructor() {
         super(undefined)
@@ -84,6 +134,9 @@ export class NoEffect extends Effect {
     }
 }
 
+/**
+ * Used for effects that are slides or for bending
+ */
 export class BaseSlideEffect extends Effect {
     constructor(name) {
         super(name)
@@ -105,6 +158,9 @@ export class BaseSlideEffect extends Effect {
     }
 }
 
+/**
+ * A vibratro effect
+ */
 export class VibratoEffect extends Effect {
     constructor() {
         super('vibrato')
@@ -122,6 +178,9 @@ export class VibratoEffect extends Effect {
     }
 }
 
+/**
+ * Used for pull-off or hammer-on effects
+ */
 export class BasePullEffect extends Effect {
     constructor(name) {
         super(name)
@@ -142,6 +201,9 @@ export class BasePullEffect extends Effect {
     }
 }
 
+/**
+ * An effect where a note is bent before playing and then released
+ */
 export class PreBendEffect extends Effect {
     constructor() {
         super('pre-bend')
@@ -163,6 +225,9 @@ export class PreBendEffect extends Effect {
     }
 }
 
+/**
+ * Simulates a harmonic effect on a string and is only defined for certain frets
+ */
 export class HarmonicEffect extends Effect {
     constructor() {
         super('harmonic')

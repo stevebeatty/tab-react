@@ -1,36 +1,67 @@
 import SoundPlayer from './SoundPlayer'
 
+/**
+ * Plays songs using SoundPlayer to schedule playback
+ */
 class SongPlayer {
 
+    /**
+     * Constructs using the configuration, which is also passed to the SoundPlayer
+     * 
+     * @param {any} cfg
+     */
     constructor(cfg) {
         this.soundPlayer = new SoundPlayer(cfg)
         this.song = cfg.song
     }
 
+    /**
+     * Initialize the player
+     */
     initialize() {
         this.soundPlayer.initialize()
     }
 
+    /**
+     * Loads the sounds into the SoundPlayer
+     */
     loadSounds() {
         return this.soundPlayer.loadSounds()
     }
 
+    /**
+     *  Pauses playback
+     */
     pause() {
         this.soundPlayer.pause()
     }
 
+    /**
+     * Resumes playback
+     */
     resume() {
         this.soundPlayer.resume()
     }
 
+    /**
+     * Sets the current song
+     * 
+     * @param {any} song
+     */
     loadSong(song) {
         this.song = song
     }
 
+    /**
+     * Starts playback
+     */
 	play() {
 		this.soundPlayer.start()
 	}
 
+    /**
+     * Stops playback
+     */
 	stop() {
 		this.soundPlayer.stop()
 	}
@@ -39,6 +70,12 @@ class SongPlayer {
         return this.soundPlayer.analyser
     }
 
+    /**
+     * Adds an effect to audio nodes from playResult
+     * 
+     * @param {any} playResult
+     * @param {any} effectObj
+     */
     addSoundEffect(playResult, effectObj) {
         const { start, stop, effect } = effectObj,
             node = playResult.bufferSource,
@@ -67,6 +104,12 @@ class SongPlayer {
         }
     }
 
+    /**
+     * Plays a single note on a string plus any effects
+     * 
+     * @param {any} string
+     * @param {any} note
+     */
     playNote(string, note) {
         const result = this.soundPlayer.playNote(string, note.f, note.start, note.stop)
         this.soundPlayer.addNoteFade(result.gain, note.stop)
@@ -80,6 +123,12 @@ class SongPlayer {
         return result
     }
 
+    /**
+     * Plays an iterable of notes on a string plus effects
+     * 
+     * @param {any} string
+     * @param {any} notes
+     */
     playNotes(string, notes) {
         if (Array.isArray(notes)) {
             for (const n of notes) {
@@ -90,6 +139,13 @@ class SongPlayer {
         }
     }
 
+    /**
+     * Copies sourceNote into note and performs preprocessing
+     * 
+     * @param {any} string
+     * @param {any} note
+     * @param {any} sourceNote
+     */
     processNote(string, note, sourceNote) {
         if (sourceNote) {
             note = Object.assign(note, sourceNote)
@@ -121,6 +177,12 @@ class SongPlayer {
         return note
     }
 
+    /**
+     * Schedules all notes in the song for playback that occur between startTime and endTime
+     * 
+     * @param {any} startTime
+     * @param {any} endTime
+     */
     scheduleNotesInTimeRange(startTime, endTime) {
         this.song.measuresInTimeRange(startTime, endTime).forEach(m => {
             const measure = m.measure,
