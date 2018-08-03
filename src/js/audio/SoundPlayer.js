@@ -200,10 +200,9 @@ class SoundPlayer {
      */
     addBend(node, effect) {
         const { start, stop } = effect,
-            detune = this.numberOrDefault(effect.detune, 200),
-            transistionStop = this.numberOrDefault(effect.transistionStop, stop)
+            detune = this.numberOrDefault(effect.detune, 200)
 
-        const [actualStart, actualStop, actualTransitionStop] = this.getActualTimes(start, stop, transistionStop)
+        const [actualStart, actualStop] = this.getActualTimes(start, stop)
 
         let src = this.audioContext.createConstantSource()
         src.offset.setValueAtTime(0.001, actualStart)
@@ -298,8 +297,6 @@ class SoundPlayer {
      * @param {any} effect
      */
     addFilter(sourceNode, gainNode, effect) {
-        const { start, stop } = effect
-        const [actualStart, actualStop] = this.getActualTimes(start, stop)
         const filter = this.audioContext.createBiquadFilter()
         filter.type = 'highpass'
         filter.frequency.value = 7000
@@ -338,9 +335,6 @@ class SoundPlayer {
      * @param {any} effect
      */
     addPullOff(sourceNode, gainNode, effect) {
-        const { start, stop } = effect
-        const [actualStart, actualStop] = this.getActualTimes(start, stop)
-        
         const gainDampen = this.audioContext.createGain()
         gainDampen.gain.value = 0.7
 

@@ -3,7 +3,9 @@ import { String } from './String'
 import { Ruler } from './Ruler'
 import { Note } from './Note'
 
-
+/**
+ * Renders one measure and including strings, notes and ruler
+ */
 export default class MeasureDisplay extends Component {
 	constructor(props) {
 		super(props);
@@ -50,6 +52,8 @@ export default class MeasureDisplay extends Component {
 		return diff
 	}
 
+    // Size methods
+
 	stringYOffset(stringNum) {
 		const layout = this.props.layout;
 		return layout.topStringOffset() + (stringNum - 1) * layout.stringSpacing();
@@ -80,13 +84,16 @@ export default class MeasureDisplay extends Component {
 		
         return note.d * subDivSize * this.state.subdivisions * this.props.measure.interval() / note.i;
 	}
-	
-	handleClick() {
-		this.props.onMeasureSelect(this);
-    }
 
     getMeasureBoundary() {
         return this.state.ref.current.getBoundingClientRect()
+    }
+
+
+    // Event handlers
+
+	handleClick() {
+		this.props.onMeasureSelect(this);
     }
 
     handleStringClick(index, e) {
@@ -123,6 +130,32 @@ export default class MeasureDisplay extends Component {
 
         console.log('pos ', pos, e.clientX, e.clientY, e.target.getBoundingClientRect())
     }
+
+    handleDragStart(info, evt, isSelected) {
+        if (isSelected) {
+            const el = this.selectionRef.current,
+                bound = el.getBoundingClientRect(),
+                x = window.devicePixelRatio * (evt.clientX - bound.left),
+                y = window.devicePixelRatio * (evt.clientY - bound.top)
+
+            evt.dataTransfer.setDragImage(el, x, y)
+            this.props.onNoteDragStart({ value: this.props.selection.value, dragOrigin: info }, evt)
+        } else {
+            this.props.onNoteDragStart({ value: info, dragOrigin: info }, evt)
+        }
+    }
+
+    handleRulerClick(pos) {
+        this.props.onRulerClick(this, pos)
+    }
+
+    handleSelectionDragStart(evt) {
+        evt.dataTransfer.setDragImage(this.selectionRef.current, 0, 0)
+    }
+
+
+    // Note methods
+
 
     isObjectSameNote(value, string, noteIndex) {
         return value.noteIndex === noteIndex &&
@@ -179,24 +212,6 @@ export default class MeasureDisplay extends Component {
         return this.props.measure.removeNoteByIndex(string, noteIndex)
     }
 
-    handleDragStart(info, evt, isSelected) {
-        if (isSelected) {
-            const el = this.selectionRef.current,
-                bound = el.getBoundingClientRect(),
-                x = window.devicePixelRatio * (evt.clientX - bound.left),
-                y = window.devicePixelRatio * (evt.clientY - bound.top)
-
-            evt.dataTransfer.setDragImage(el, x, y)
-            this.props.onNoteDragStart({ value: this.props.selection.value, dragOrigin: info }, evt)
-        } else {
-            this.props.onNoteDragStart({ value: info, dragOrigin: info }, evt)
-        }
-    }
-
-    handleRulerClick(pos) {
-        this.props.onRulerClick(this, pos)
-    }
-
     generateNoteCmp(note, noteIndex, string, isSelected) {
         return <Note key={note.key} x={this.noteXPosition(note)} y={this.stringYOffset(string + 1)} note={note} string={string} dy={this.props.layout.noteTextOffset()} measure={this.props.measure}
             d={this.noteDurationSize(note)} index={noteIndex} onClick={this.handleNoteClick} selected={isSelected}
@@ -205,18 +220,13 @@ export default class MeasureDisplay extends Component {
             layout={this.props.layout} />
     }
 
-    handleSelectionDragStart(evt) {
-        evt.dataTransfer.setDragImage(this.selectionRef.current, 0, 0)
-    }
-
     render() {
-        const noteTextOffset = this.props.layout.noteTextOffset();
-        const beginningOffset = this.props.layout.measureSideOffset();
-        const subDivSize = this.props.layout.subdivisionOffset();
-        const clickBoxHeight = this.props.layout.stringClickBoxHeight(),
-            bottomStringHeight = this.stringYOffset(this.props.measure.strings.length) - this.stringYOffset(1)
+        const beginningOffset = this.props.layout.measureSideOffset(),
+            subDivSize = this.props.layout.subdivisionOffset(),
+            clickBoxHeight = this.props.layout.stringClickBoxHeight(),
+            bottomStringHeight = this.stringYOffset(this.props.measure.strings.length) - this.stringYOffset(1),
+            refAtt = {}
 
-        const refAtt = {};
         if (this.props.forwardedRef) {
             refAtt.ref = this.props.forwardedRef;
         } else {

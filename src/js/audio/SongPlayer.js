@@ -77,7 +77,7 @@ class SongPlayer {
      * @param {any} effectObj
      */
     addSoundEffect(playResult, effectObj) {
-        const { start, stop, effect } = effectObj,
+        const { effect } = effectObj,
             node = playResult.bufferSource,
             gain = playResult.gain
 

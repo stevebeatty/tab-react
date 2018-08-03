@@ -55,6 +55,7 @@ class SettingsEditor extends Component {
     }
 }
 
+
 class FileLoader extends Component {
 
     constructor(props) {
@@ -127,8 +128,6 @@ class FileLoader extends Component {
         )
     }
 }
-
-
 
 
 class SaveDialog extends Component {

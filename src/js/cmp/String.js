@@ -1,11 +1,13 @@
 import React, { Component } from 'react'
 
+/**
+ * Renders a line that represents a string which can receive clicks and drag events
+ */
 export class String extends Component {
 
     constructor(props) {
         super(props);
 
-        // This binding is necessary to make `this` work in the callback
         this.handleClick = this.handleClick.bind(this);
         this.handleDragOver = this.handleDragOver.bind(this);
         this.handleDrop = this.handleDrop.bind(this);
@@ -21,7 +23,6 @@ export class String extends Component {
 
     handleDrop(evt) {
         evt.preventDefault()
-
         this.props.onDrop(this.props.index, evt)
     }
 

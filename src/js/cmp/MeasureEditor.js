@@ -1,5 +1,8 @@
 import React, { Component } from 'react';
 
+/**
+ * Renders a floating dialog under the currently selected measure
+ */
 class MeasureEditor extends Component {
 
     constructor(props) {

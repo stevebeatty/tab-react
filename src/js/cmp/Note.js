@@ -1,6 +1,9 @@
 import React, { Component } from 'react'
 import { SvgWavePath, SvgBend, SvgArc } from './SvgEffects'
 
+/**
+ * Renders a SVG image to represent a musical note
+ */
 export class Note extends Component {
 
     constructor(props) {
@@ -18,7 +21,6 @@ export class Note extends Component {
     }
 
     handleClick(e) {
-        const bound = e.target.getBoundingClientRect()
         this.props.onClick(this.props.string, this.props.index, this.props.note, e)
     }
 
@@ -74,13 +76,7 @@ export class Note extends Component {
             imgLeft = .75,
             imgMiddle = imgHeight / 2,
             hasEffects = 'effects' in this.props.note,
-            isContinued = 'continues' in this.props.note
-
-
-        const x = this.props.x + 'em';
-        const y = this.props.y + 'em';
-
-        const slideHeight = 0.35
+            slideHeight = 0.35
 
         return (
             <div draggable={this.props.canDrag} onDragStart={this.handleDragStart} onDragEnd={this.handleDragEnd}

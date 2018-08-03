@@ -45,21 +45,21 @@ export class Measure {
      * The interval specified in the measure or the default interval in the song
      */
     interval() {
-        return this.i || this.context && this.context.song && this.context.song.interval()
+        return this.i || (this.context && this.context.song && this.context.song.interval())
     }
 
     /**
      * The duration specified in the measure or the default duration in the song
      */
     duration() {
-        return this.d || this.context && this.context.song && this.context.song.duration()
+        return this.d || (this.context && this.context.song && this.context.song.duration())
     }
 
     /**
      * The tempo specified in the measure or the default tempo in the song
      */
     tempo() {
-        return this.t || this.context && this.context.song && this.context.song.tempo()
+        return this.t || (this.context && this.context.song && this.context.song.tempo())
     }
 
     /**

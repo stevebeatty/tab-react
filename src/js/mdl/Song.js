@@ -1,6 +1,6 @@
 import { Measure } from './Measure'
-import { Effect, NoEffect, BaseSlideEffect, VibratoEffect, BasePullEffect, PreBendEffect, HarmonicEffect } from './Effect'
-import { IdGenerator, range } from 'js/util/Util';
+import { NoEffect, BaseSlideEffect, VibratoEffect, BasePullEffect, PreBendEffect, HarmonicEffect } from './Effect'
+import { IdGenerator } from 'js/util/Util';
 
 /**
  * Encapsulates properties of a song such as tempo and meter and internally
@@ -127,7 +127,6 @@ export class Song {
      */
     measuresInTimeRange(startTime, endTime) {
         let elapsedTime = 0,
-            measureEnd = endTime,
             measures = [],
             index = 0
 
@@ -399,7 +398,6 @@ export class Song {
         while (mIndex < this.measures.length && dist > 0) {
             let measure = this.measures[mIndex],
                 noteDist = measure.nextNoteDistance(string, pos, skipKeys),
-                i = measure.interval() / interval,
                 span = Math.min(noteDist === -1 ? measure.duration() - pos : noteDist, dist)
 
             if ((noteDist >= 0 && noteDist < dist) || span <= 0) {
@@ -695,7 +693,6 @@ export class Song {
      */
     distanceToDurationAndInterval(distance, measure) {
         const baseInterval = measure.interval(),
-            intDist = 1 / baseInterval,
             whole = Math.floor(distance),
             fract = distance % 1,
             safeFract = fract > 0 ? fract : 1,
@@ -720,7 +717,6 @@ export class Song {
         let startIndex = this.measureIndexWithKey(startMeasureKey),
             endIndex = this.measureIndexWithKey(endMeasureKey),
             direction = Math.sign(endIndex - startIndex),
-            measure = this.measures[startIndex],
             pos = startPos,
             currIndex = startIndex,
             result = []
@@ -875,5 +871,7 @@ function effectForName(name) {
             return addEffectToMap(new PreBendEffect())
         case 'harmonic':
             return addEffectToMap(new HarmonicEffect())
+        default:
+            console.log('unknown effect name: ' + name)
     }
 }

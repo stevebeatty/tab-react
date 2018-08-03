@@ -32,7 +32,9 @@ function getRuler(intervals, subdivisions) {
     }
 }
 
-
+/**
+ * Renders a ruler underneath a measure that responds to clicks on tick marks
+ */
 export class Ruler extends Component {
 
     constructor(props) {
@@ -74,7 +76,8 @@ export class Ruler extends Component {
                     // timing options
                     duration: this.props.totalTime * 1000,
                     iterations: 1
-                })
+                }
+            )
 
             animation.onfinish = this.endAnimation
 
@@ -136,7 +139,6 @@ export class Ruler extends Component {
 
     rulerMarkClick(evt) {
         const pos = parseFloat(evt.target.dataset.position, 10)
-
         this.props.onRulerClick(pos)
     }
 

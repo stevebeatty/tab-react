@@ -7,6 +7,9 @@ import { Measure } from 'js/mdl/Measure'
 //  dragging={} canDragNote={} measureRef={} />
 //
 
+/**
+ * Renders all measures for song and handles events from child components
+ */
 class MeasureController extends Component {
 
     constructor(props) {
@@ -21,16 +24,24 @@ class MeasureController extends Component {
         this.handleRulerClick = this.handleRulerClick.bind(this)
     }
 
-    stringEventDistance(measure, stringIndex, bound, e, noteKey) {
-        const x = e.pageX - bound.left,
-            w = x / bound.width,
-            pos = measure.closestPosition(w),
-            dist = measure.nextNoteDistanceOrRemaining(stringIndex, pos, noteKey);
+    
 
-        return {
-            p: pos,
-            d: dist
+    // Event handlers
+
+    handleDragOver(measure, string, bound, evt) {
+        evt.preventDefault()
+
+        const stringDelta = string - this.props.dragging.dragOrigin.string
+        const fits = this.checkNoteListFit(this.props.dragging, measure, stringDelta, bound, evt)
+
+        if (fits.status) {
+            evt.dataTransfer.dropEffect = 'move'
+            this.updateSequenceFromListFit(fits)
+      
+        } else {
+            evt.dataTransfer.dropEffect = 'none'
         }
+
     }
 
     handleStringClick(measure, string, bound, e) {
@@ -64,7 +75,7 @@ class MeasureController extends Component {
 
         const stringDelta = string - this.props.dragging.dragOrigin.string,
             fits = this.checkNoteListFit(this.props.dragging, measure, stringDelta, bound, evt)
-            
+
         console.log('drop', this.props.dragging, fits)
 
         if (fits.status) {
@@ -97,93 +108,6 @@ class MeasureController extends Component {
         this.props.onDragging({})
     }
 
-    checkNoteFit(drag, endPoint, stringIndex, processed, skipKeys) {
-        const measures = this.props.song.measures,
-            measureIndex = endPoint.measureIndex
-
-        if (measureIndex < 0 || measureIndex >= this.props.song.measures.length ||
-                stringIndex < 0 || stringIndex >= measures[measureIndex].strings.length) {
-            return { status: false }
-        }
-
-        const measure = measures[measureIndex],
-            noteSeq = this.props.song.getNoteSequence(drag.note.key, drag.measure.key),
-			noteKey = noteSeq[0].note.key
-
-		if (processed.has(noteKey)) {
-			return { status: true, duplicate: noteKey }
-		}
-		
-		processed.add(noteKey)
-
-        const fits = this.props.song.sequenceSpan(noteSeq, measure.key, stringIndex, endPoint.p, skipKeys)
-        return fits
-    }
-
-    checkNoteListFit(drag, measure, stringDelta, bound, evt) {
-        let fitResult = [],
-            fits = true,
-
-            value = Array.isArray(drag.value) ? drag.value : [drag.value],
-            first = value[0],
-            origin = drag.dragOrigin,
-            dragNoteKeys = value.map(v => { return v.note.key })
-
-        const stringDist = this.stringEventDistance(measure, origin.string + stringDelta, bound, evt, origin.note.key),
-            posDelta = stringDist.p - origin.note.p,
-			processed = new Set()
-        const distResult = this.props.song.findDistance(origin
-            .measure.key, origin.note.p, measure.props.measure.key, stringDist.p)
-
-        for (let i = 0; i < value.length; i++) {
-            let d = value[i],
-                string = d.string + stringDelta,
-                endPoint = this.props.song.movePositionList(d.measure, d.note.p, distResult),
-                fit = this.checkNoteFit(d, endPoint, string, processed, dragNoteKeys)
-
-			if (!fit.duplicate) {
-				fits = fits && fit.status
-				fit.string = string
-				fitResult.push(fit)
-			}
-        }
-
-        return {
-            status: fits && fitResult.length > 0,
-            result: fitResult
-        }
-    }
-
-    updateSequenceFromListFit(fits) {
-        let result = []
-
-        for (const fit of fits.result) {
-            let upd = this.props.song.updateSequence(fit)
-
-            result.push({ updated: upd, string: fit.string })
-        }
-
-        return result
-    }
-
-    handleDragOver(measure, string, bound, evt) {
-        evt.preventDefault()
-
-        const stringDelta = string - this.props.dragging.dragOrigin.string
-        const fits = this.checkNoteListFit(this.props.dragging, measure, stringDelta, bound, evt)
-
-        if (fits.status) {
-            evt.dataTransfer.dropEffect = 'move'
-            this.updateSequenceFromListFit(fits)
-      
-        } else {
-            evt.dataTransfer.dropEffect = 'none'
-        }
-
-    }
-
-
-
     handleDragStart(info, evt) {
         this.props.onDragging(info)
     }
@@ -214,6 +138,86 @@ class MeasureController extends Component {
 
         this.props.onNoteSelect(selection)
     }
+
+    // Size methods
+
+    stringEventDistance(measure, stringIndex, bound, e, noteKey) {
+        const x = e.pageX - bound.left,
+            w = x / bound.width,
+            pos = measure.closestPosition(w),
+            dist = measure.nextNoteDistanceOrRemaining(stringIndex, pos, noteKey);
+
+        return {
+            p: pos,
+            d: dist
+        }
+    }
+
+    checkNoteFit(drag, endPoint, stringIndex, processed, skipKeys) {
+        const measures = this.props.song.measures,
+            measureIndex = endPoint.measureIndex
+
+        if (measureIndex < 0 || measureIndex >= this.props.song.measures.length ||
+            stringIndex < 0 || stringIndex >= measures[measureIndex].strings.length) {
+            return { status: false }
+        }
+
+        const measure = measures[measureIndex],
+            noteSeq = this.props.song.getNoteSequence(drag.note.key, drag.measure.key),
+            noteKey = noteSeq[0].note.key
+
+        if (processed.has(noteKey)) {
+            return { status: true, duplicate: noteKey }
+        }
+
+        processed.add(noteKey)
+
+        const fits = this.props.song.sequenceSpan(noteSeq, measure.key, stringIndex, endPoint.p, skipKeys)
+        return fits
+    }
+
+    checkNoteListFit(drag, measure, stringDelta, bound, evt) {
+        let fitResult = [],
+            fits = true,
+            value = Array.isArray(drag.value) ? drag.value : [drag.value],
+            origin = drag.dragOrigin,
+            dragNoteKeys = value.map(v => { return v.note.key })
+
+        const stringDist = this.stringEventDistance(measure, origin.string + stringDelta, bound, evt, origin.note.key),
+            processed = new Set(),
+            distResult = this.props.song.findDistance(origin.measure.key, origin.note.p, measure.props.measure.key, stringDist.p)
+
+        for (let i = 0; i < value.length; i++) {
+            let d = value[i],
+                string = d.string + stringDelta,
+                endPoint = this.props.song.movePositionList(d.measure, d.note.p, distResult),
+                fit = this.checkNoteFit(d, endPoint, string, processed, dragNoteKeys)
+
+            if (!fit.duplicate) {
+                fits = fits && fit.status
+                fit.string = string
+                fitResult.push(fit)
+            }
+        }
+
+        return {
+            status: fits && fitResult.length > 0,
+            result: fitResult
+        }
+    }
+
+    updateSequenceFromListFit(fits) {
+        let result = []
+
+        for (const fit of fits.result) {
+            let upd = this.props.song.updateSequence(fit)
+
+            result.push({ updated: upd, string: fit.string })
+        }
+
+        return result
+    }
+
 
     createMeasureTag(measure) {
         const optionalAtts = {},

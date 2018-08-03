@@ -138,9 +138,6 @@ export class NoEffect extends Effect {
  * Used for effects that are slides or for bending
  */
 export class BaseSlideEffect extends Effect {
-    constructor(name) {
-        super(name)
-    }
 
     canApplyEffect(last, curr) {
         return last && curr && this.unappliedEffectObjIn(last.effects)
@@ -182,9 +179,6 @@ export class VibratoEffect extends Effect {
  * Used for pull-off or hammer-on effects
  */
 export class BasePullEffect extends Effect {
-    constructor(name) {
-        super(name)
-    }
 
     canApplyEffect(last, curr) {
         return last && curr && this.unappliedEffectObjIn(last.effects)

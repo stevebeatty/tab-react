@@ -2,10 +2,6 @@ import React, { Component } from 'react'
 
 export class SvgWavePath extends Component {
 
-    constructor(props) {
-        super(props)
-    }
-
     generateCycles(cycleCount, cfg) {
         const unit = cfg.unit
 
@@ -69,9 +65,6 @@ export class SvgBend extends Component {
     render() {
         const width = this.props.width - this.props.x,
             height = this.props.height,
-            ctrlY = 0.1 * height,
-            heightExtent = 0.6,
-            widthExtent = 0.9 * width,
             direction = this.props.direction || 1,
             offset = this.props.offset || 0,
             pathD = `M 0 ${.5 * height + offset} l ${width * .25} 0 c ${width * .25} 0 ${width * .25} 0 ${width * .25} ${-0.4 * direction * height}`
@@ -98,7 +91,6 @@ export class SvgArc extends Component {
         const width = this.props.width - this.props.x,
             height = this.props.height,
             ctrlY = 0.9 * height,
-            heightExtent = 0.6,
             widthExtent = 0.95 * width,
             direction = this.props.direction || 1,
             pathD = `M 0.1 ${.5 * height} q ${width * .5} ${direction * -ctrlY}, ${widthExtent} 0`
@@ -110,4 +102,3 @@ export class SvgArc extends Component {
         )
     }
 }
-

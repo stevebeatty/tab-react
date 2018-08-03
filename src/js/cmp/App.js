@@ -5,9 +5,8 @@ import MeasureController from './MeasureController';
 import NoteEditor from './NoteEditor'
 import MeasureEditor from './MeasureEditor'
 import { Song } from 'js/mdl/Song'
-import { NavBar, ModalDialog } from './BaseBoot'
+import { NavBar } from './BaseBoot'
 import { FileLoader, SaveDialog, SettingsEditor } from './Dialogs'
-import SoundPlayer from 'js/audio/SoundPlayer';
 import SongPlayer from 'js/audio/SongPlayer'
 import testTab from 'songs/test1.json'
 
@@ -59,12 +58,12 @@ class App extends Component {
         this.songPlayer = new SongPlayer({
             soundPath: 'sounds/clean/',
             soundMap: {
-                0: [{ begin: 0, end: 12, file: 'e.mp3' }],
+                0: [{ begin: 0, end: 12, file: 'ee.mp3' }],
                 1: [{ begin: 0, end: 12, file: 'b.mp3'}],
                 2: [{ begin: 0, end: 12, file: 'g.mp3' }],
                 3: [{ begin: 0, end: 12, file: 'd.mp3' }],
                 4: [{ begin: 0, end: 12, file: 'a.mp3' }],
-                5: [{ begin: 0, end: 12, file: 'ee.mp3' }]
+                5: [{ begin: 0, end: 12, file: 'e.mp3' }]
             }
         })
 
@@ -86,6 +85,8 @@ class App extends Component {
         this.saveFile = this.saveFile.bind(this)
 	}
 
+    // Component events
+
     componentDidMount() {
         this.songPlayer.initialize()
         this.songPlayer.loadSounds().then(resp => {
@@ -97,6 +98,8 @@ class App extends Component {
     componentWillUnmount() {
         this.stopSong()
     }
+
+    // Timer methods
 
     startTimer(reset=true) {
         if (this.state.timerId) {
@@ -140,6 +143,12 @@ class App extends Component {
         }
     }
 
+    scheduleNext() {
+        this.songPlayer.scheduleNotesInTimeRange(this.state.currentTime, this.state.timerInterval / 1000)
+    }
+
+    // Song methods
+
     loadSong(json) {
         const song = new Song(json)
         this.setState({
@@ -148,10 +157,6 @@ class App extends Component {
         })
 
         this.songPlayer.loadSong(song)
-    }
-
-    scheduleNext() {
-        this.songPlayer.scheduleNotesInTimeRange(this.state.currentTime, this.state.timerInterval/1000)
     }
 
     playSong() {
@@ -211,6 +216,8 @@ class App extends Component {
     }
 
     insertNewOffsetFromSelectedMeasure(offset = 0) {
+        // TODO: will need to do something about inserting a new measure
+        // between continued notes
         const song = this.state.song,
             index = song.measureIndexWithKey(this.state.selectedMeasure.key),
             newM = song.newMeasure()
@@ -302,29 +309,14 @@ class App extends Component {
         })
     }
 
-    
-
 
     render() {
         const hasSelectedNote = this.state.selection.type === 'note',
             hasSelectedMeasure = this.state.selection.type === 'measure',
             currentlyPlaying = this.state.isPlayingSong ? this.findCurrentlyPlayingMeasure() : {},
-            showPlay = this.state.isPlayingSong && this.state.isPaused || !this.state.isPlayingSong
+            showPlay = (this.state.isPlayingSong && this.state.isPaused) || !this.state.isPlayingSong
 
-        const unit = '',
-            height = 160,
-            width = 400,
-            startPoint = { x: 10, y: height / 2 },
-            curveAmp = 70,
-            pointDist = 55,
-            ctrlOffset = 30,
-            curveDeltas = {
-                startCtrl: { dx: ctrlOffset, dy: -curveAmp },
-                endCtrl: { dx: pointDist, dy: -curveAmp },
-                end: { dx: ctrlOffset + pointDist, dy: 0 }
-            }
-
-
+            
     return (
         <React.Fragment>
 
@@ -375,24 +367,7 @@ class App extends Component {
 }
 
 
-class SvgArc extends Component {
 
-    render() {
-        const width = this.props.width - this.props.x,
-            height = this.props.height,
-            ctrlY = 0.9 * height,
-            heightExtent = 0.6,
-            widthExtent = 0.95 * width,
-            direction = this.props.direction || 1,
-            pathD = `M 0.1 ${.5 * height} q ${width * .5} ${direction * -ctrlY}, ${widthExtent} 0`
-
-        return (
-            <svg width={width + 'em'} height={height + 'em'} viewBox={`0 0 ${width} ${height}`} x={this.props.x + 'em'} >
-                <path d={pathD} fill="transparent" strokeWidth="1.5" stroke="black" vectorEffect="non-scaling-stroke" />
-            </svg>
-        )
-    }
-}
 
 class Canvas extends Component {
 

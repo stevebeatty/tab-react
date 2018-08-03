@@ -1,6 +1,10 @@
 import React, { Component } from 'react';
 import { range, iteratorToArray } from 'js/util/Util';
 
+/**
+ * Renders a floating dialog under the currently selected measure that allows
+ * notes to be edited
+ */
 class NoteEditor extends Component {
 
 	constructor(props) {
